@@ -196,10 +196,3 @@ if dashboard_type=="Comparison":
         # Summary for Comparison
         st.markdown("### 📝 Summary & Insights")
         st.markdown(f"<ul style='color:#424242'><li>📌 {selected_manager1} - Total Disbursed: {format_inr(d1)}, Total Revenue: {format_inr(r1)}, Avg Payout: {p1:.2f}%, Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}</li><li>📌 {selected_manager2} - Total Disbursed: {format_inr(d2)}, Total Revenue: {format_inr(r2)}, Avg Payout: {p2:.2f}%, Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}</li></ul>", unsafe_allow_html=True)
-
-        # Summary
-        st.markdown(f"""
-        ### 📝 Summary
-        - {m1}: Top Bank **{top_bank1}**, Campaign **{top_camp1}**, Caller **{top_call1}**
-        - {m2}: Top Bank **{top_bank2}**, Campaign **{top_camp2}**, Caller **{top_call2}**
-        """)
