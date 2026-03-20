@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
-import numpy as np
 
 # -----------------------------
 # Page Config
@@ -55,14 +54,11 @@ def plot_grouped_bar(f1,f2,col,label1,label2):
     y1 = [f1.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
     y2 = [f2.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
 
-    colors1 = ["#636EFA" for _ in keys]
-    colors2 = ["#EF553B" for _ in keys]
-
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=keys, y=y1, name=label1, marker_color=colors1))
-    fig.add_trace(go.Bar(x=keys, y=y2, name=label2, marker_color=colors2))
-    
-    # Delta text above bars
+    fig.add_trace(go.Bar(x=keys, y=y1, name=label1, marker_color="#636EFA"))
+    fig.add_trace(go.Bar(x=keys, y=y2, name=label2, marker_color="#EF553B"))
+
+    # Delta labels
     for i,(a,b) in enumerate(zip(y1,y2)):
         delta = b - a
         text = f"{delta:+.2f}L"
@@ -72,7 +68,6 @@ def plot_grouped_bar(f1,f2,col,label1,label2):
     return fig
 
 def plot_campaign_pie(f1,f2,label1,label2):
-    # Pie charts side-by-side
     summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
     summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
     colors1 = [base_colors[i%len(base_colors)] for i in range(len(summary1))]
@@ -139,8 +134,8 @@ if dashboard_type=="Comparison":
         delta_disb = d1 - d2
         delta_rev = r1 - r2
         delta_payout = p1 - p2
-        c1.metric(f"{selected_manager1} vs {selected_manager2} Total Disb", format_inr(d1), f"{delta_disb:+.0f}")
-        c2.metric(f"{selected_manager1} vs {selected_manager2} Total Revenue", format_inr(r1), f"{delta_rev:+.0f}")
+        c1.metric(f"{selected_manager1} Total Disbursed", format_inr(d1), f"{delta_disb:+.0f}")
+        c2.metric(f"{selected_manager1} Total Revenue", format_inr(r1), f"{delta_rev:+.0f}")
         c3.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", f"{delta_payout:+.2f}%")
         
         # Charts
