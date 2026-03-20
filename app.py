@@ -6,30 +6,15 @@ import numpy as np
 # -----------------------------
 # Page Config
 # -----------------------------
-st.set_page_config(page_title="Pro Manager Dashboard", layout="wide")
+st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
 # -----------------------------
-# Dark Mode Toggle
-# -----------------------------
-dark_mode = st.sidebar.checkbox("🌙 Dark Mode")
-bg_color = "#0E1117" if dark_mode else "white"
-text_color = "white" if dark_mode else "black"
-st.markdown(f"""
-<style>
-body {{background-color:{bg_color}; color:{text_color}}}
-.stDownloadButton button {{background-color:#4CAF50; color:white}}
-</style>
-""", unsafe_allow_html=True)
-
-# -----------------------------
-# Load Data
+# Load CSV
 # -----------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("data.csv")
     df.replace("null", None, inplace=True)
-    df["Disbursed AMT"] = pd.to_numeric(df["Disbursed AMT"], errors='coerce').fillna(0)
-    df["Total_Revenue"] = pd.to_numeric(df["Total_Revenue"], errors='coerce').fillna(0)
     return df
 
 df = load_data()
@@ -37,20 +22,22 @@ df = load_data()
 # -----------------------------
 # Helper Functions
 # -----------------------------
-colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-
-def format_inr(x):
-    if x == 0 or x is None: return "₹0"
-    s = str(int(x))
+def format_inr(number):
+    if number is None or number == 0:
+        return "₹0"
+    s = str(int(number))
     last3 = s[-3:]
     rest = s[:-3]
     parts = []
     while len(rest) > 2:
         parts.append(rest[-2:])
         rest = rest[:-2]
-    if rest: parts.append(rest)
+    if rest:
+        parts.append(rest)
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
+
+base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
@@ -59,98 +46,109 @@ def calc_metrics(f):
     txn_count = len(f)
     avg_disb = total_disb/txn_count if txn_count else 0
     top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    bottom_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmin() if not f.empty else "N/A"
     top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    return total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, bottom_bank, top_campaign, top_caller
+    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, highlight=None):
-    g = f.groupby(col)["Disbursed AMT"].sum()
-    fig = go.Figure(go.Bar(
-        x=g.index,
-        y=g.values/100000,
-        text=[f"{v/100000:.2f}L" for v in g.values],
-        textposition="auto",
-        marker_color=[("#FFD700" if i==highlight else colors[j%len(colors)]) for j,i in enumerate(g.index)]
-    ))
-    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
+def plot_grouped_bar(f1,f2,col,label1,label2):
+    keys = sorted(set(f1[col]).union(set(f2[col])))
+    y1 = [f1.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
+    y2 = [f2.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
+
+    colors1 = ["#636EFA" for _ in keys]
+    colors2 = ["#EF553B" for _ in keys]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=keys, y=y1, name=label1, marker_color=colors1))
+    fig.add_trace(go.Bar(x=keys, y=y2, name=label2, marker_color=colors2))
+    
+    # Delta text above bars
+    for i,(a,b) in enumerate(zip(y1,y2)):
+        delta = b - a
+        text = f"{delta:+.2f}L"
+        fig.add_annotation(x=keys[i], y=max(a,b)+0.5, text=text, showarrow=False, font=dict(color="green" if delta>0 else "red"))
+
+    fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
-def plot_pie(f, col):
-    g = f.groupby(col)["Disbursed AMT"].sum()
-    fig = go.Figure(go.Pie(
-        labels=g.index,
-        values=g.values/100000,
-        hole=0.4,
-        marker=dict(colors=[colors[i%len(colors)] for i in range(len(g))])
-    ))
-    return fig
+def plot_campaign_pie(f1,f2,label1,label2):
+    # Pie charts side-by-side
+    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+    colors1 = [base_colors[i%len(base_colors)] for i in range(len(summary1))]
+    colors2 = [base_colors[i%len(base_colors)] for i in range(len(summary2))]
 
-def sparkline(values):
-    fig = go.Figure(go.Scatter(y=values, mode='lines', line=dict(width=2,color="#636EFA")))
-    fig.update_layout(height=40, margin=dict(l=0,r=0,t=0,b=0), xaxis=dict(visible=False), yaxis=dict(visible=False))
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4,
+                         marker=dict(colors=colors1), name=label1, domain=dict(x=[0,0.48])))
+    fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4,
+                         marker=dict(colors=colors2), name=label2, domain=dict(x=[0.52,1])))
+    fig.update_layout(template="plotly_white", height=400,
+                      annotations=[dict(text=label1, x=0.22, y=0.5, font_size=14, showarrow=False),
+                                   dict(text=label2, x=0.78, y=0.5, font_size=14, showarrow=False)])
     return fig
 
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
-st.sidebar.title("Filters")
-dashboard_type = st.sidebar.radio("Dashboard Mode", ["Single Manager", "Comparison"])
+st.sidebar.title("Dashboard")
+dashboard_type = st.sidebar.radio("Select One", ["Single Manager", "Comparison"])
+
 managers = sorted(df["Manager"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 
-selected_manager1 = st.sidebar.selectbox("Manager 1", managers)
-selected_month1 = st.sidebar.selectbox("Month 1", months)
+selected_manager1 = st.sidebar.selectbox("Select Manager 1", managers)
+selected_month1 = st.sidebar.selectbox("Select Month 1", months)
+
 if dashboard_type=="Comparison":
-    selected_manager2 = st.sidebar.selectbox("Manager 2", managers, index=1)
-    selected_month2 = st.sidebar.selectbox("Month 2", months, index=1)
+    selected_manager2 = st.sidebar.selectbox("Select Manager 2", managers, index=1)
+    selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
 # -----------------------------
-# Dashboard Rendering
+# SINGLE DASHBOARD
 # -----------------------------
-def render_dashboard(f, manager, month):
-    st.subheader(f"📊 {manager} - {month}")
+if dashboard_type=="Single Manager":
+    st.header(f"📊 {selected_manager1} - {selected_month1} Dashboard")
+    f = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     if f.empty:
         st.warning("No data available")
-        return
-    d,r,p,txn,avg,top_bank,bottom_bank,top_camp,top_call = calc_metrics(f)
-    
-    # KPI Cards with Sparklines
-    c1,c2,c3 = st.columns(3)
-    c1.metric("Total Disbursed", format_inr(d))
-    c1.plotly_chart(sparkline(f.groupby("Disb Month")["Disbursed AMT"].sum()), use_container_width=True)
-    c2.metric("Total Revenue", format_inr(r))
-    c2.plotly_chart(sparkline(f.groupby("Disb Month")["Total_Revenue"].sum()), use_container_width=True)
-    c3.metric("Avg Payout %", f"{p:.2f}%")
-    
-    # Insights
-    st.markdown(f"**Top Bank:** {top_bank} | **Bottom Bank:** {bottom_bank} | **Top Campaign:** {top_camp} | **Top Caller:** {top_call}")
-    
-    # Charts
-    tab1,tab2,tab3 = st.tabs(["Bank","Campaign","Caller"])
-    with tab1: st.plotly_chart(plot_bar(f,"Bank",highlight=top_bank))
-    with tab2: st.plotly_chart(plot_pie(f,"Campaign"))
-    with tab3: st.plotly_chart(plot_bar(f,"Caller",highlight=top_call))
-    
-    # Trend
-    st.subheader("📈 Trend Over Months")
-    trend = df.groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
-    fig = go.Figure(go.Scatter(x=trend["Disb Month"], y=trend["Disbursed AMT"]/100000, mode="lines+markers"))
-    st.plotly_chart(fig)
-    
-    # Raw Data
-    st.subheader("📄 Raw Data")
-    st.dataframe(f)
-    csv = f.to_csv(index=False).encode("utf-8")
-    st.download_button(f"Download {manager}_{month}", data=csv, file_name=f"{manager}_{month}.csv", mime="text/csv")
+    else:
+        total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
+        k1,k2,k3 = st.columns(3)
+        k1.metric("Total Disbursed", format_inr(total_disb))
+        k2.metric("Total Revenue", format_inr(total_rev))
+        k3.metric("Avg Payout %", f"{avg_payout:.2f}%")
 
-# Render Dashboards
-if dashboard_type=="Single Manager":
-    f = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
-    render_dashboard(f, selected_manager1, selected_month1)
+# -----------------------------
+# COMPARISON DASHBOARD
+# -----------------------------
 if dashboard_type=="Comparison":
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
-    col1,col2 = st.columns(2)
-    with col1: render_dashboard(f1, selected_manager1, selected_month1)
-    with col2: render_dashboard(f2, selected_manager2, selected_month2)
+    
+    st.header("📊 Comparison Dashboard")
+    
+    if f1.empty and f2.empty:
+        st.warning("No data available for selected managers/months")
+    else:
+        d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
+        d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
+        
+        # KPI Cards with Delta
+        c1,c2,c3 = st.columns(3)
+        delta_disb = d1 - d2
+        delta_rev = r1 - r2
+        delta_payout = p1 - p2
+        c1.metric(f"{selected_manager1} vs {selected_manager2} Total Disb", format_inr(d1), f"{delta_disb:+.0f}")
+        c2.metric(f"{selected_manager1} vs {selected_manager2} Total Revenue", format_inr(r1), f"{delta_rev:+.0f}")
+        c3.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", f"{delta_payout:+.2f}%")
+        
+        # Charts
+        st.subheader("🏦 Bank-wise Comparison")
+        st.plotly_chart(plot_grouped_bar(f1,f2,"Bank",selected_manager1,selected_manager2), use_container_width=True)
+        
+        st.subheader("📢 Campaign-wise Comparison")
+        st.plotly_chart(plot_campaign_pie(f1,f2,selected_manager1,selected_manager2), use_container_width=True)
+        
+        st.subheader("📞 Caller-wise Comparison")
+        st.plotly_chart(plot_grouped_bar(f1,f2,"Caller",selected_manager1,selected_manager2), use_container_width=True)
