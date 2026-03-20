@@ -8,49 +8,6 @@ import plotly.graph_objs as go
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
 # -----------------------------
-# Simple Login System
-# -----------------------------
-USER_CREDENTIALS = {
-    "admin": "admin123",
-    "manager1": "pass123"
-}
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-
-def login():
-    st.title("🔐 Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            # ✅ Instead of experimental_rerun, use st.experimental_set_query_params to refresh
-            st.experimental_set_query_params()  # This will trigger rerun
-        else:
-            st.error("❌ Invalid username or password")
-
-def logout():
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.experimental_set_query_params()  # Refresh page
-
-# -----------------------------
-# Stop app if not logged in
-# -----------------------------
-if not st.session_state.logged_in:
-    login()
-    st.stop()
-
-# -----------------------------
-# Logout button in sidebar
-# -----------------------------
-st.sidebar.write(f"Logged in as: **{st.session_state.username}**")
-st.sidebar.button("Logout", on_click=logout)
-
-# -----------------------------
 # Load CSV
 # -----------------------------
 @st.cache_data
@@ -114,7 +71,7 @@ def plot_bar(f, col, top_value, manager_name):
     return fig
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters (Dropdown)
 # -----------------------------
 st.sidebar.title("Dashboard")
 dashboard_type = st.sidebar.radio("Select One", ["Single Manager", "Comparison"])
@@ -139,4 +96,103 @@ if dashboard_type=="Single Manager":
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-        # ... (rest of your dashboard code remains the same)
+
+        # KPI Cards
+        kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
+        with kpi_col1:
+            st.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Total Disbursed</b><br>{format_inr(total_disb)}</div>", unsafe_allow_html=True)
+        with kpi_col2:
+            st.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Total Revenue</b><br>{format_inr(total_rev)}</div>", unsafe_allow_html=True)
+        with kpi_col3:
+            st.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
+
+        # Tabs
+        tab1,tab2,tab3 = st.tabs(["🏦 Bank-wise","📢 Campaign-wise","📞 Caller-wise"])
+        with tab1: st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), use_container_width=True)
+
+        # Campaign Donut chart with multiple colors
+        with tab2:
+            summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+            colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
+            fig = go.Figure(go.Pie(
+                labels=summary.index,
+                values=summary.values/100000,
+                hole=0.4,
+                marker=dict(colors=colors)
+            ))
+            st.plotly_chart(fig, use_container_width=True)
+
+        with tab3: st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), use_container_width=True)
+
+        # Summary
+        st.markdown("### 📝 Summary & Insights")
+        st.markdown(f"<ul style='color:#424242'><li>📌 Top Bank: {top_bank}</li><li>📌 Top Campaign: {top_campaign}</li><li>📌 Top Caller: {top_caller}</li></ul>", unsafe_allow_html=True)
+
+        # Raw Data
+        st.subheader("📄 Raw Data")
+        st.dataframe(f)
+        csv = f.to_csv(index=False).encode("utf-8")
+        st.download_button(f"Download {selected_manager1}_{selected_month1} Data", data=csv, file_name=f"{selected_manager1}_{selected_month1}.csv", mime="text/csv")
+
+# -----------------------------
+# COMPARISON DASHBOARD
+# -----------------------------
+if dashboard_type=="Comparison":
+    st.header(f"📊 Comparison Dashboard")
+    f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
+    f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
+
+    if f1.empty and f2.empty:
+        st.warning("No data available for selected managers/months")
+    else:
+        d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
+        d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
+
+        # KPI Cards for Comparison
+        col1,col2,col3 = st.columns(3)
+        col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>{selected_manager1} Total Disbursed</b><br>{format_inr(d1)}</div>", unsafe_allow_html=True)
+        col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>{selected_manager2} Total Disbursed</b><br>{format_inr(d2)}</div>", unsafe_allow_html=True)
+        col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Avg Payout %</b><br>{p1:.2f}% vs {p2:.2f}%</div>", unsafe_allow_html=True)
+
+        # Tabs
+        tab1,tab2,tab3 = st.tabs(["🏦 Bank-wise","📢 Campaign-wise","📞 Caller-wise"])
+
+        # Bank-wise Bar
+        with tab1:
+            keys = sorted(set(f1["Bank"]).union(set(f2["Bank"])))
+            fig = go.Figure()
+            for k in keys:
+                fig.add_bar(x=[k], y=[f1.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
+                fig.add_bar(x=[k], y=[f2.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
+            fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Campaign Donut chart with multiple colors
+        with tab2:
+            fig = go.Figure()
+            # Manager1
+            summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+            colors1 = [base_colors[i%len(base_colors)] for i in range(len(summary1))]
+            fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4, marker=dict(colors=colors1), name=selected_manager1, domain=dict(x=[0,0.48])))
+            # Manager2
+            summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+            colors2 = [base_colors[i%len(base_colors)] for i in range(len(summary2))]
+            fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4, marker=dict(colors=colors2), name=selected_manager2, domain=dict(x=[0.52,1])))
+            fig.update_layout(template="plotly_white", height=400,
+                              annotations=[dict(text=selected_manager1, x=0.22, y=0.5, font_size=14, showarrow=False),
+                                           dict(text=selected_manager2, x=0.78, y=0.5, font_size=14, showarrow=False)])
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Caller-wise Bar
+        with tab3:
+            keys = sorted(set(f1["Caller"]).union(set(f2["Caller"])))
+            fig = go.Figure()
+            for k in keys:
+                fig.add_bar(x=[k], y=[f1.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
+                fig.add_bar(x=[k], y=[f2.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
+            fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Summary for Comparison
+        st.markdown("### 📝 Summary & Insights")
+        st.markdown(f"<ul style='color:#424242'><li>📌 {selected_manager1} - Total Disbursed: {format_inr(d1)}, Total Revenue: {format_inr(r1)}, Avg Payout: {p1:.2f}%, Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}</li><li>📌 {selected_manager2} - Total Disbursed: {format_inr(d2)}, Total Revenue: {format_inr(r2)}, Avg Payout: {p2:.2f}%, Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}</li></ul>", unsafe_allow_html=True)
