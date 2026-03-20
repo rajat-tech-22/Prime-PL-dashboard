@@ -110,14 +110,8 @@ if dashboard_type=="Single Manager":
         # Charts
         # -----------------------------
         st.markdown("### 📊 Charts")
-
-        # Bank-wise
-        fig_bank = plot_bar(f,"Bank",top_bank,selected_manager1)
-        st.plotly_chart(fig_bank, use_container_width=True)
-
-        # Caller-wise
-        fig_caller = plot_bar(f,"Caller",top_caller,selected_manager1)
-        st.plotly_chart(fig_caller, use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), use_container_width=True)
 
         # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
@@ -129,6 +123,20 @@ if dashboard_type=="Single Manager":
             marker=dict(colors=colors)
         ))
         st.plotly_chart(fig_campaign, use_container_width=True)
+
+        # -----------------------------
+        # Summary / Insights
+        # -----------------------------
+        st.markdown("### 📝 Summary & Insights")
+        st.markdown(f"""
+            <ul style='color:#424242'>
+                <li>📌 Top Bank: {top_bank}</li>
+                <li>📌 Top Campaign: {top_campaign}</li>
+                <li>📌 Top Caller: {top_caller}</li>
+                <li>📌 Total Transactions: {txn_count}</li>
+                <li>📌 Average Disbursed: {format_inr(avg_disb)}</li>
+            </ul>
+        """, unsafe_allow_html=True)
 
 # -----------------------------
 # COMPARISON DASHBOARD
@@ -175,7 +183,6 @@ if dashboard_type=="Comparison":
         # Comparison Charts
         # -----------------------------
         st.markdown("### 📊 Comparison Charts")
-
         # Bank-wise
         keys = sorted(set(f1["Bank"]).union(set(f2["Bank"])))
         fig_bank = go.Figure()
@@ -226,3 +233,14 @@ if dashboard_type=="Comparison":
                          dict(text=selected_manager2, x=0.78, y=0.5, font_size=14, showarrow=False)]
         )
         st.plotly_chart(fig_campaign, use_container_width=True)
+
+        # -----------------------------
+        # Summary / Insights
+        # -----------------------------
+        st.markdown("### 📝 Summary & Insights")
+        st.markdown(f"""
+            <ul style='color:#424242'>
+                <li>📌 {selected_manager1} - Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}</li>
+                <li>📌 {selected_manager2} - Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}</li>
+            </ul>
+        """, unsafe_allow_html=True)
