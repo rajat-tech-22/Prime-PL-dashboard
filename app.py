@@ -38,6 +38,12 @@ def format_inr(number):
 
 base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
+def get_colors(index_list, top_value):
+    colors = []
+    for val in index_list:
+        colors.append("#FFD700" if val==top_value else base_colors[index_list.get_loc(val)%len(base_colors)])
+    return colors
+
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
     total_rev = f["Total_Revenue"].sum()
@@ -51,9 +57,7 @@ def calc_metrics(f):
 
 def plot_bar(f, col, top_value, manager_name):
     summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = []
-    for val in summary.index:
-        colors.append("#FFD700" if val==top_value else base_colors[list(summary.index).index(val)%len(base_colors)])
+    colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
         x=summary.index,
         y=summary.values/100000,
@@ -70,11 +74,10 @@ def delta_color(val):
     return "green" if val>=0 else "red"
 
 def delta_str(val):
-    sign = "+" if val>=0 else ""
-    return f"{sign}{val:.2f}"
+    return f"+{format_inr(val)}" if val>=0 else f"{format_inr(val)}"
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters (Dropdown)
 # -----------------------------
 st.sidebar.title("Dashboard")
 dashboard_type = st.sidebar.radio("Select One", ["Single Manager", "Comparison"])
@@ -90,7 +93,7 @@ if dashboard_type=="Comparison":
     selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
 # -----------------------------
-# SINGLE MANAGER DASHBOARD
+# SINGLE DASHBOARD
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header(f"📊 {selected_manager1} - {selected_month1} Dashboard")
@@ -102,67 +105,56 @@ if dashboard_type=="Single Manager":
 
         # KPI Cards
         kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
-        kpi_col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(total_disb)}</div>", unsafe_allow_html=True)
-        kpi_col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(total_rev)}</div>", unsafe_allow_html=True)
-        kpi_col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
-
-        # Charts
-        tab1,tab2,tab3 = st.tabs(["🏦 Bank-wise","📢 Campaign-wise","📞 Caller-wise"])
-        with tab1: st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), use_container_width=True)
-        with tab2:
-            summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-            colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
-            fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4, marker=dict(colors=colors)))
-            st.plotly_chart(fig, use_container_width=True)
-        with tab3: st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), use_container_width=True)
+        with kpi_col1:
+            st.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(total_disb)}</div>", unsafe_allow_html=True)
+        with kpi_col2:
+            st.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(total_rev)}</div>", unsafe_allow_html=True)
+        with kpi_col3:
+            st.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
 
 # -----------------------------
-# COMPARISON DASHBOARD SIDE-BY-SIDE WITH KPI DELTA
+# COMPARISON DASHBOARD
 # -----------------------------
 if dashboard_type=="Comparison":
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
 
-    col1,col2 = st.columns(2)
+    if f1.empty and f2.empty:
+        st.warning("No data available for selected managers/months")
+    else:
+        d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1) if not f1.empty else (0,0,0,0,0,"N/A","N/A","N/A")
+        d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2) if not f2.empty else (0,0,0,0,0,"N/A","N/A","N/A")
 
-    # Calculate metrics
-    if not f1.empty: d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
-    if not f2.empty: d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
+        st.subheader("📊 Comparison Dashboard")
 
-    # KPI delta function
-    def kpi_with_delta(val1,val2,label,month):
-        delta = val1-val2
-        color = delta_color(delta)
-        return f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>{label} ({month})</b><br>{format_inr(val1)} <span style='color:{color}'>({delta_str(delta)})</span></div>"
+        # -----------------------------
+        # Original KPI Cards
+        # -----------------------------
+        col1,col2 = st.columns(2)
+        with col1:
+            st.markdown(f"### {selected_manager1} - {selected_month1}")
+            kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
+            kpi_col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(d1)}</div>", unsafe_allow_html=True)
+            kpi_col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(r1)}</div>", unsafe_allow_html=True)
+            kpi_col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{p1:.2f}%</div>", unsafe_allow_html=True)
 
-    # Manager 1 Column
-    with col1:
-        st.subheader(f"{selected_manager1} - {selected_month1}")
-        if f1.empty:
-            st.warning("No data")
-        else:
-            st.markdown(kpi_with_delta(d1,d2,"Total Disbursed",selected_month1), unsafe_allow_html=True)
-            st.markdown(kpi_with_delta(r1,r2,"Total Revenue",selected_month1), unsafe_allow_html=True)
-            st.markdown(kpi_with_delta(p1,p2,"Avg Payout %",selected_month1), unsafe_allow_html=True)
-            st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1), use_container_width=True)
-            summary = f1.groupby("Campaign")["Disbursed AMT"].sum()
-            colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
-            fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4, marker=dict(colors=colors)))
-            st.plotly_chart(fig, use_container_width=True)
-            st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1), use_container_width=True)
+        with col2:
+            st.markdown(f"### {selected_manager2} - {selected_month2}")
+            kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
+            kpi_col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(d2)}</div>", unsafe_allow_html=True)
+            kpi_col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(r2)}</div>", unsafe_allow_html=True)
+            kpi_col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{p2:.2f}%</div>", unsafe_allow_html=True)
 
-    # Manager 2 Column
-    with col2:
-        st.subheader(f"{selected_manager2} - {selected_month2}")
-        if f2.empty:
-            st.warning("No data")
-        else:
-            st.markdown(kpi_with_delta(d2,d1,"Total Disbursed",selected_month2), unsafe_allow_html=True)
-            st.markdown(kpi_with_delta(r2,r1,"Total Revenue",selected_month2), unsafe_allow_html=True)
-            st.markdown(kpi_with_delta(p2,p1,"Avg Payout %",selected_month2), unsafe_allow_html=True)
-            st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2), use_container_width=True)
-            summary = f2.groupby("Campaign")["Disbursed AMT"].sum()
-            colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
-            fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4, marker=dict(colors=colors)))
-            st.plotly_chart(fig, use_container_width=True)
-            st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2), use_container_width=True)
+        # -----------------------------
+        # KPI Delta Cards (new row)
+        # -----------------------------
+        st.markdown("### ⚡ KPI Differences")
+        delta_col1,delta_col2,delta_col3 = st.columns(3)
+
+        delta_val_d = d1-d2
+        delta_val_r = r1-r2
+        delta_val_p = p1-p2
+
+        delta_col1.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Total Disbursed Δ</b><br><span style='color:{delta_color(delta_val_d)}'>{delta_str(delta_val_d)}</span></div>", unsafe_allow_html=True)
+        delta_col2.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Total Revenue Δ</b><br><span style='color:{delta_color(delta_val_r)}'>{delta_str(delta_val_r)}</span></div>", unsafe_allow_html=True)
+        delta_col3.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Avg Payout % Δ</b><br><span style='color:{delta_color(delta_val_p)}'>{delta_val_p:+.2f}%</span></div>", unsafe_allow_html=True)
