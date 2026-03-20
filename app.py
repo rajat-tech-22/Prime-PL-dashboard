@@ -49,38 +49,31 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_grouped_bar(f1,f2,col,label1,label2):
-    keys = sorted(set(f1[col]).union(set(f2[col])))
-    y1 = [f1.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
-    y2 = [f2.groupby(col)["Disbursed AMT"].sum().get(k,0)/100000 for k in keys]
-
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=keys, y=y1, name=label1, marker_color="#636EFA"))
-    fig.add_trace(go.Bar(x=keys, y=y2, name=label2, marker_color="#EF553B"))
-
-    # Delta labels
-    for i,(a,b) in enumerate(zip(y1,y2)):
-        delta = b - a
-        text = f"{delta:+.2f}L"
-        fig.add_annotation(x=keys[i], y=max(a,b)+0.5, text=text, showarrow=False, font=dict(color="green" if delta>0 else "red"))
-
-    fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=400)
+def plot_bar(f, col, manager_name=None):
+    summary = f.groupby(col)["Disbursed AMT"].sum()
+    colors = [base_colors[i % len(base_colors)] for i in range(len(summary))]
+    fig = go.Figure(go.Bar(
+        x=summary.index,
+        y=summary.values/100000,
+        text=[f"{v/100000:.2f}L" for v in summary.values],
+        textposition="auto",
+        marker_color=colors,
+        name=manager_name,
+        width=0.5
+    ))
+    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
-def plot_campaign_pie(f1,f2,label1,label2):
-    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
-    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
-    colors1 = [base_colors[i%len(base_colors)] for i in range(len(summary1))]
-    colors2 = [base_colors[i%len(base_colors)] for i in range(len(summary2))]
-
-    fig = go.Figure()
-    fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4,
-                         marker=dict(colors=colors1), name=label1, domain=dict(x=[0,0.48])))
-    fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4,
-                         marker=dict(colors=colors2), name=label2, domain=dict(x=[0.52,1])))
-    fig.update_layout(template="plotly_white", height=400,
-                      annotations=[dict(text=label1, x=0.22, y=0.5, font_size=14, showarrow=False),
-                                   dict(text=label2, x=0.78, y=0.5, font_size=14, showarrow=False)])
+def plot_campaign_pie(f, manager_name=None):
+    summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+    colors = [base_colors[i % len(base_colors)] for i in range(len(summary))]
+    fig = go.Figure(go.Pie(
+        labels=summary.index,
+        values=summary.values/100000,
+        hole=0.4,
+        marker=dict(colors=colors),
+        name=manager_name
+    ))
     return fig
 
 # -----------------------------
@@ -113,37 +106,74 @@ if dashboard_type=="Single Manager":
         k1.metric("Total Disbursed", format_inr(total_disb))
         k2.metric("Total Revenue", format_inr(total_rev))
         k3.metric("Avg Payout %", f"{avg_payout:.2f}%")
+        
+        # Charts
+        st.subheader("🏦 Bank-wise")
+        st.plotly_chart(plot_bar(f,"Bank",selected_manager1), use_container_width=True)
+        
+        st.subheader("📢 Campaign-wise")
+        st.plotly_chart(plot_campaign_pie(f, selected_manager1), use_container_width=True)
+        
+        st.subheader("📞 Caller-wise")
+        st.plotly_chart(plot_bar(f,"Caller",selected_manager1), use_container_width=True)
+        
+        # Raw Data
+        st.subheader("📄 Raw Data")
+        st.dataframe(f)
+        csv = f.to_csv(index=False).encode("utf-8")
+        st.download_button(f"Download {selected_manager1}_{selected_month1} Data", data=csv, file_name=f"{selected_manager1}_{selected_month1}.csv", mime="text/csv")
 
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
 if dashboard_type=="Comparison":
+    st.header(f"📊 Comparison Dashboard")
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
-    
-    st.header("📊 Comparison Dashboard")
-    
+
     if f1.empty and f2.empty:
         st.warning("No data available for selected managers/months")
     else:
+        # Metrics
         d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
         d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
-        
-        # KPI Cards with Delta
-        c1,c2,c3 = st.columns(3)
-        delta_disb = d1 - d2
-        delta_rev = r1 - r2
-        delta_payout = p1 - p2
-        c1.metric(f"{selected_manager1} Total Disbursed", format_inr(d1), f"{delta_disb:+.0f}")
-        c2.metric(f"{selected_manager1} Total Revenue", format_inr(r1), f"{delta_rev:+.0f}")
-        c3.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", f"{delta_payout:+.2f}%")
-        
-        # Charts
+
+        # KPI Delta Cards
+        col1,col2,col3 = st.columns(3)
+        col1.metric(f"{selected_manager1} Total Disbursed", format_inr(d1), delta=f"{format_inr(d1-d2)} vs {selected_manager2}")
+        col2.metric(f"{selected_manager2} Total Disbursed", format_inr(d2), delta=f"{format_inr(d2-d1)} vs {selected_manager1}")
+        col3.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", delta=f"{p1-p2:.2f}%")
+
+        # Bank-wise grouped bar
         st.subheader("🏦 Bank-wise Comparison")
-        st.plotly_chart(plot_grouped_bar(f1,f2,"Bank",selected_manager1,selected_manager2), use_container_width=True)
-        
+        keys = sorted(set(f1["Bank"]).union(set(f2["Bank"])))
+        fig = go.Figure()
+        for k in keys:
+            fig.add_bar(x=[k], y=[f1.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
+            fig.add_bar(x=[k], y=[f2.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
+        fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Campaign-wise side-by-side pie
         st.subheader("📢 Campaign-wise Comparison")
-        st.plotly_chart(plot_campaign_pie(f1,f2,selected_manager1,selected_manager2), use_container_width=True)
-        
+        fig = go.Figure()
+        summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+        summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+        colors1 = [base_colors[i % len(base_colors)] for i in range(len(summary1))]
+        colors2 = [base_colors[i % len(base_colors)] for i in range(len(summary2))]
+        fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4, marker=dict(colors=colors1), name=selected_manager1, domain=dict(x=[0,0.48])))
+        fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4, marker=dict(colors=colors2), name=selected_manager2, domain=dict(x=[0.52,1])))
+        fig.update_layout(template="plotly_white", height=400,
+                          annotations=[dict(text=selected_manager1, x=0.22, y=0.5, font_size=14, showarrow=False),
+                                       dict(text=selected_manager2, x=0.78, y=0.5, font_size=14, showarrow=False)])
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Caller-wise grouped bar
         st.subheader("📞 Caller-wise Comparison")
-        st.plotly_chart(plot_grouped_bar(f1,f2,"Caller",selected_manager1,selected_manager2), use_container_width=True)
+        keys = sorted(set(f1["Caller"]).union(set(f2["Caller"])))
+        fig = go.Figure()
+        for k in keys:
+            fig.add_bar(x=[k], y=[f1.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
+            fig.add_bar(x=[k], y=[f2.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
+        fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
+        st.plotly_chart(fig, use_container_width=True)
