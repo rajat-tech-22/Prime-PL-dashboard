@@ -38,6 +38,12 @@ def format_inr(number):
 
 base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
+def get_colors(index_list, top_value):
+    colors = []
+    for val in index_list:
+        colors.append("#FFD700" if val==top_value else base_colors[index_list.get_loc(val)%len(base_colors)])
+    return colors
+
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
     total_rev = f["Total_Revenue"].sum()
@@ -49,9 +55,9 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, manager_name=None):
+def plot_bar(f, col, top_value, manager_name):
     summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = [base_colors[i % len(base_colors)] for i in range(len(summary))]
+    colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
         x=summary.index,
         y=summary.values/100000,
@@ -62,18 +68,6 @@ def plot_bar(f, col, manager_name=None):
         width=0.5
     ))
     fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
-    return fig
-
-def plot_campaign_pie(f, manager_name=None):
-    summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-    colors = [base_colors[i % len(base_colors)] for i in range(len(summary))]
-    fig = go.Figure(go.Pie(
-        labels=summary.index,
-        values=summary.values/100000,
-        hole=0.4,
-        marker=dict(colors=colors),
-        name=manager_name
-    ))
     return fig
 
 # -----------------------------
@@ -102,21 +96,37 @@ if dashboard_type=="Single Manager":
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-        k1,k2,k3 = st.columns(3)
-        k1.metric("Total Disbursed", format_inr(total_disb))
-        k2.metric("Total Revenue", format_inr(total_rev))
-        k3.metric("Avg Payout %", f"{avg_payout:.2f}%")
-        
-        # Charts
-        st.subheader("🏦 Bank-wise")
-        st.plotly_chart(plot_bar(f,"Bank",selected_manager1), use_container_width=True)
-        
-        st.subheader("📢 Campaign-wise")
-        st.plotly_chart(plot_campaign_pie(f, selected_manager1), use_container_width=True)
-        
-        st.subheader("📞 Caller-wise")
-        st.plotly_chart(plot_bar(f,"Caller",selected_manager1), use_container_width=True)
-        
+
+        # KPI Cards
+        kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
+        with kpi_col1:
+            st.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Total Disbursed</b><br>{format_inr(total_disb)}</div>", unsafe_allow_html=True)
+        with kpi_col2:
+            st.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Total Revenue</b><br>{format_inr(total_rev)}</div>", unsafe_allow_html=True)
+        with kpi_col3:
+            st.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center;box-shadow: 2px 2px 5px #aaa'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
+
+        # Tabs
+        tab1,tab2,tab3 = st.tabs(["🏦 Bank-wise","📢 Campaign-wise","📞 Caller-wise"])
+        with tab1: st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), use_container_width=True)
+
+        with tab2:
+            summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+            colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
+            fig = go.Figure(go.Pie(
+                labels=summary.index,
+                values=summary.values/100000,
+                hole=0.4,
+                marker=dict(colors=colors)
+            ))
+            st.plotly_chart(fig, use_container_width=True)
+
+        with tab3: st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), use_container_width=True)
+
+        # Summary
+        st.markdown("### 📝 Summary & Insights")
+        st.markdown(f"<ul style='color:#424242'><li>📌 Top Bank: {top_bank}</li><li>📌 Top Campaign: {top_campaign}</li><li>📌 Top Caller: {top_caller}</li></ul>", unsafe_allow_html=True)
+
         # Raw Data
         st.subheader("📄 Raw Data")
         st.dataframe(f)
@@ -134,46 +144,48 @@ if dashboard_type=="Comparison":
     if f1.empty and f2.empty:
         st.warning("No data available for selected managers/months")
     else:
-        # Metrics
         d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
         d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-        # KPI Delta Cards
-        col1,col2,col3 = st.columns(3)
-        col1.metric(f"{selected_manager1} Total Disbursed", format_inr(d1), delta=f"{format_inr(d1-d2)} vs {selected_manager2}")
-        col2.metric(f"{selected_manager2} Total Disbursed", format_inr(d2), delta=f"{format_inr(d2-d1)} vs {selected_manager1}")
-        col3.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", delta=f"{p1-p2:.2f}%")
+        # -----------------------------
+        # Delta function
+        # -----------------------------
+        def color_delta(value):
+            if isinstance(value,float):
+                return f"<span style='color:green'>+{value:.2f}</span>" if value>=0 else f"<span style='color:red'>{value:.2f}</span>"
+            return f"<span style='color:green'>+{format_inr(value)}</span>" if value>=0 else f"<span style='color:red'>{format_inr(value)}</span>"
 
-        # Bank-wise grouped bar
-        st.subheader("🏦 Bank-wise Comparison")
-        keys = sorted(set(f1["Bank"]).union(set(f2["Bank"])))
-        fig = go.Figure()
-        for k in keys:
-            fig.add_bar(x=[k], y=[f1.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
-            fig.add_bar(x=[k], y=[f2.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
-        fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Campaign-wise side-by-side pie
-        st.subheader("📢 Campaign-wise Comparison")
-        fig = go.Figure()
-        summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
-        summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
-        colors1 = [base_colors[i % len(base_colors)] for i in range(len(summary1))]
-        colors2 = [base_colors[i % len(base_colors)] for i in range(len(summary2))]
-        fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4, marker=dict(colors=colors1), name=selected_manager1, domain=dict(x=[0,0.48])))
-        fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4, marker=dict(colors=colors2), name=selected_manager2, domain=dict(x=[0.52,1])))
-        fig.update_layout(template="plotly_white", height=400,
-                          annotations=[dict(text=selected_manager1, x=0.22, y=0.5, font_size=14, showarrow=False),
-                                       dict(text=selected_manager2, x=0.78, y=0.5, font_size=14, showarrow=False)])
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Caller-wise grouped bar
-        st.subheader("📞 Caller-wise Comparison")
-        keys = sorted(set(f1["Caller"]).union(set(f2["Caller"])))
-        fig = go.Figure()
-        for k in keys:
-            fig.add_bar(x=[k], y=[f1.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager1, marker_color="#636EFA", width=0.4)
-            fig.add_bar(x=[k], y=[f2.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000], name=selected_manager2, marker_color="#EF553B", width=0.4)
-        fig.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=450)
-        st.plotly_chart(fig, use_container_width=True)
+        # -----------------------------
+        # KPI Cards
+        # -----------------------------
+        kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
+        # Manager 1 Card
+        kpi_col1.markdown(f"""
+        <div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center;box-shadow:2px 2px 5px #aaa'>
+            <b>{selected_manager1} - {selected_month1}</b><br><br>
+            Total Disbursed: {format_inr(d1)}<br>Δ vs {selected_manager2}: {color_delta(d1-d2)}<br>
+            Total Revenue: {format_inr(r1)}<br>Δ vs {selected_manager2}: {color_delta(r1-r2)}<br>
+            Avg Payout: {p1:.2f}%<br>Δ vs {selected_manager2}: <span style='color:{"green" if p1-p2>=0 else "red"}'>{p1-p2:.2f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
+        # Manager 2 Card
+        kpi_col2.markdown(f"""
+        <div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center;box-shadow:2px 2px 5px #aaa'>
+            <b>{selected_manager2} - {selected_month2}</b><br><br>
+            Total Disbursed: {format_inr(d2)}<br>Δ vs {selected_manager1}: {color_delta(d2-d1)}<br>
+            Total Revenue: {format_inr(r2)}<br>Δ vs {selected_manager1}: {color_delta(r2-r1)}<br>
+            Avg Payout: {p2:.2f}%<br>Δ vs {selected_manager1}: <span style='color:{"green" if p2-p1>=0 else "red"}'>{p2-p1:.2f}%</span>
+        </div>
+        """, unsafe_allow_html=True)
+        # Comparison Summary Card
+        kpi_col3.markdown(f"""
+        <div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center;box-shadow:2px 2px 5px #aaa'>
+            <b>Comparison Summary</b><br><br>
+            Total Disbursed Δ: {color_delta(d1-d2)}<br>
+            Revenue Δ: {color_delta(r1-r2)}<br>
+            Avg Payout Δ: <span style='color:{"green" if p1-p2>=0 else "red"}'>{p1-p2:.2f}%</span><br><br>
+            Top Bank: {top_bank1} vs {top_bank2}<br>
+            Top Campaign: {top_camp1} vs {top_camp2}<br>
+            Top Caller: {top_caller1} vs {top_caller2}
+        </div>
+        """, unsafe_allow_html=True)
