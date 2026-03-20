@@ -70,14 +70,8 @@ def plot_bar(f, col, top_value, manager_name):
     fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
-def delta_color(val):
-    return "green" if val>=0 else "red"
-
-def delta_str(val):
-    return f"+{format_inr(val)}" if val>=0 else f"{format_inr(val)}"
-
 # -----------------------------
-# Sidebar Filters (Dropdown)
+# Sidebar Filters
 # -----------------------------
 st.sidebar.title("Dashboard")
 dashboard_type = st.sidebar.radio("Select One", ["Single Manager", "Comparison"])
@@ -93,7 +87,7 @@ if dashboard_type=="Comparison":
     selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
 # -----------------------------
-# SINGLE DASHBOARD
+# SINGLE MANAGER DASHBOARD
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header(f"📊 {selected_manager1} - {selected_month1} Dashboard")
@@ -112,7 +106,30 @@ if dashboard_type=="Single Manager":
         with kpi_col3:
             st.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
 
-# -----------------------------
+        # -----------------------------
+        # Charts
+        # -----------------------------
+        st.markdown("### 📊 Charts")
+
+        # Bank-wise
+        fig_bank = plot_bar(f,"Bank",top_bank,selected_manager1)
+        st.plotly_chart(fig_bank, use_container_width=True)
+
+        # Caller-wise
+        fig_caller = plot_bar(f,"Caller",top_caller,selected_manager1)
+        st.plotly_chart(fig_caller, use_container_width=True)
+
+        # Campaign Pie
+        summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+        colors = [base_colors[i%len(base_colors)] for i in range(len(summary))]
+        fig_campaign = go.Figure(go.Pie(
+            labels=summary.index,
+            values=summary.values/100000,
+            hole=0.4,
+            marker=dict(colors=colors)
+        ))
+        st.plotly_chart(fig_campaign, use_container_width=True)
+
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
@@ -127,9 +144,7 @@ if dashboard_type=="Comparison":
         d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
         d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-        # -----------------------------
         # KPI CARDS
-        # -----------------------------
         col1,col2,col3 = st.columns(3)
         def kpi_card(manager, total_disb, total_rev, avg_payout, month):
             st.markdown(f"""
