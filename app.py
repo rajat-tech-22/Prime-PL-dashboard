@@ -113,48 +113,101 @@ if dashboard_type=="Single Manager":
             st.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{avg_payout:.2f}%</div>", unsafe_allow_html=True)
 
 # -----------------------------
+# -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
 if dashboard_type=="Comparison":
+    st.header(f"📊 Comparison Dashboard")
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
 
     if f1.empty and f2.empty:
         st.warning("No data available for selected managers/months")
     else:
-        d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1) if not f1.empty else (0,0,0,0,0,"N/A","N/A","N/A")
-        d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2) if not f2.empty else (0,0,0,0,0,"N/A","N/A","N/A")
-
-        st.subheader("📊 Comparison Dashboard")
+        d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
+        d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
         # -----------------------------
-        # Original KPI Cards
+        # KPI CARDS
         # -----------------------------
-        col1,col2 = st.columns(2)
-        with col1:
-            st.markdown(f"### {selected_manager1} - {selected_month1}")
-            kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
-            kpi_col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(d1)}</div>", unsafe_allow_html=True)
-            kpi_col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(r1)}</div>", unsafe_allow_html=True)
-            kpi_col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{p1:.2f}%</div>", unsafe_allow_html=True)
+        col1,col2,col3 = st.columns(3)
+        def kpi_card(manager, total_disb, total_rev, avg_payout, month):
+            st.markdown(f"""
+                <div style='background:#BBDEFB;padding:15px;border-radius:12px;text-align:center;box-shadow:2px 2px 5px #aaa'>
+                    <b>{manager} - {month} KPIs</b><br>
+                    Total Disbursed: {format_inr(total_disb)}<br>
+                    Total Revenue: {format_inr(total_rev)}<br>
+                    Avg Payout: <span style='color:{"green" if avg_payout>=0 else "red"}'>{avg_payout:.2f}%</span>
+                </div>
+            """, unsafe_allow_html=True)
 
-        with col2:
-            st.markdown(f"### {selected_manager2} - {selected_month2}")
-            kpi_col1,kpi_col2,kpi_col3 = st.columns(3)
-            kpi_col1.markdown(f"<div style='background:#BBDEFB;padding:20px;border-radius:12px;text-align:center'><b>Total Disbursed</b><br>{format_inr(d2)}</div>", unsafe_allow_html=True)
-            kpi_col2.markdown(f"<div style='background:#FFE082;padding:20px;border-radius:12px;text-align:center'><b>Total Revenue</b><br>{format_inr(r2)}</div>", unsafe_allow_html=True)
-            kpi_col3.markdown(f"<div style='background:#C8E6C9;padding:20px;border-radius:12px;text-align:center'><b>Avg Payout %</b><br>{p2:.2f}%</div>", unsafe_allow_html=True)
+        with col1: kpi_card(selected_manager1, d1, r1, p1, selected_month1)
+        with col2: kpi_card(selected_manager2, d2, r2, p2, selected_month2)
+        with col3:
+            diff_disb = d1-d2
+            diff_rev = r1-r2
+            diff_payout = p1-p2
+            st.markdown(f"""
+                <div style='background:#FFE082;padding:15px;border-radius:12px;text-align:center;box-shadow:2px 2px 5px #aaa'>
+                    <b>Difference (M1 - M2)</b><br>
+                    Disbursed: <span style='color:{"green" if diff_disb>=0 else "red"}'>{format_inr(diff_disb)}</span><br>
+                    Revenue: <span style='color:{"green" if diff_rev>=0 else "red"}'>{format_inr(diff_rev)}</span><br>
+                    Payout: <span style='color:{"green" if diff_payout>=0 else "red"}'>{diff_payout:.2f}%</span>
+                </div>
+            """, unsafe_allow_html=True)
 
         # -----------------------------
-        # KPI Delta Cards (new row)
+        # Comparison Charts
         # -----------------------------
-        st.markdown("### ⚡ KPI Differences")
-        delta_col1,delta_col2,delta_col3 = st.columns(3)
+        st.markdown("### 📊 Comparison Charts")
 
-        delta_val_d = d1-d2
-        delta_val_r = r1-r2
-        delta_val_p = p1-p2
+        # Bank-wise
+        keys = sorted(set(f1["Bank"]).union(set(f2["Bank"])))
+        fig_bank = go.Figure()
+        for k in keys:
+            fig_bank.add_bar(
+                x=[k],
+                y=[f1.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000],
+                name=selected_manager1, marker_color="#636EFA", width=0.4)
+            fig_bank.add_bar(
+                x=[k],
+                y=[f2.groupby("Bank")["Disbursed AMT"].sum().get(k,0)/100000],
+                name=selected_manager2, marker_color="#EF553B", width=0.4)
+        fig_bank.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=400)
+        st.plotly_chart(fig_bank, use_container_width=True)
 
-        delta_col1.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Total Disbursed Δ</b><br><span style='color:{delta_color(delta_val_d)}'>{delta_str(delta_val_d)}</span></div>", unsafe_allow_html=True)
-        delta_col2.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Total Revenue Δ</b><br><span style='color:{delta_color(delta_val_r)}'>{delta_str(delta_val_r)}</span></div>", unsafe_allow_html=True)
-        delta_col3.markdown(f"<div style='background:#E0E0E0;padding:15px;border-radius:12px;text-align:center'><b>Avg Payout % Δ</b><br><span style='color:{delta_color(delta_val_p)}'>{delta_val_p:+.2f}%</span></div>", unsafe_allow_html=True)
+        # Caller-wise
+        keys = sorted(set(f1["Caller"]).union(set(f2["Caller"])))
+        fig_caller = go.Figure()
+        for k in keys:
+            fig_caller.add_bar(
+                x=[k],
+                y=[f1.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000],
+                name=selected_manager1, marker_color="#636EFA", width=0.4)
+            fig_caller.add_bar(
+                x=[k],
+                y=[f2.groupby("Caller")["Disbursed AMT"].sum().get(k,0)/100000],
+                name=selected_manager2, marker_color="#EF553B", width=0.4)
+        fig_caller.update_layout(barmode='group', yaxis_title="Amount (L)", template="plotly_white", height=400)
+        st.plotly_chart(fig_caller, use_container_width=True)
+
+        # Campaign Pie Charts side-by-side
+        summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+        summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+        colors1 = [base_colors[i%len(base_colors)] for i in range(len(summary1))]
+        colors2 = [base_colors[i%len(base_colors)] for i in range(len(summary2))]
+
+        fig_campaign = go.Figure()
+        fig_campaign.add_trace(go.Pie(
+            labels=summary1.index, values=summary1.values/100000, hole=0.4,
+            marker=dict(colors=colors1), name=selected_manager1, domain=dict(x=[0,0.48])
+        ))
+        fig_campaign.add_trace(go.Pie(
+            labels=summary2.index, values=summary2.values/100000, hole=0.4,
+            marker=dict(colors=colors2), name=selected_manager2, domain=dict(x=[0.52,1])
+        ))
+        fig_campaign.update_layout(template="plotly_white", height=400,
+            annotations=[dict(text=selected_manager1, x=0.22, y=0.5, font_size=14, showarrow=False),
+                         dict(text=selected_manager2, x=0.78, y=0.5, font_size=14, showarrow=False)]
+        )
+        st.plotly_chart(fig_campaign, use_container_width=True)
