@@ -79,11 +79,19 @@ def plot_bar(f, col, top_value, manager_name, chart_key):
     return fig
 
 # -----------------------------
-# Sidebar Filters (Month First)
+# Sidebar Filters (All in Sidebar)
 # -----------------------------
-st.sidebar.title("Dashboard Selection")
+st.sidebar.title("Filters")
 selected_month = st.sidebar.selectbox("Select Month", sorted(df["Disb Month"].dropna().unique()))
 dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single Manager", "Comparison"])
+
+# Manager selection(s)
+managers = sorted(df["Manager"].dropna().unique())
+if dashboard_type=="Single Manager":
+    selected_manager = st.sidebar.selectbox("Select Manager", managers)
+elif dashboard_type=="Comparison":
+    selected_manager1 = st.sidebar.selectbox("Select Manager 1", managers)
+    selected_manager2 = st.sidebar.selectbox("Select Manager 2", managers, index=1)
 
 # -----------------------------
 # ALL MANAGERS DASHBOARD
@@ -131,8 +139,6 @@ if dashboard_type=="All Managers":
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header("📊 Single Manager Dashboard")
-    managers = sorted(df["Manager"].dropna().unique())
-    selected_manager = st.selectbox("Select Manager", managers)
 
     f = df[(df["Manager"]==selected_manager)&(df["Disb Month"]==selected_month)]
     if f.empty:
@@ -158,9 +164,6 @@ if dashboard_type=="Single Manager":
 # -----------------------------
 if dashboard_type=="Comparison":
     st.header("📊 Comparison Dashboard")
-    managers = sorted(df["Manager"].dropna().unique())
-    selected_manager1 = st.selectbox("Select Manager 1", managers)
-    selected_manager2 = st.selectbox("Select Manager 2", managers, index=1)
 
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
