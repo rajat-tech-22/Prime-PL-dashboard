@@ -39,8 +39,9 @@ def format_inr(number):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
 
-# Colors and icons for KPI cards
-kpi_colors = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A"]
+# Unique colors for comparison cards
+comparison_colors1 = ["#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A"]
+comparison_colors2 = ["#B6E880", "#FF6692", "#19D3F3", "#FECB52", "#AA00FF"]
 kpi_icons = ["💰", "📈", "📊", "📝", "🏦"]
 
 def calc_metrics(f):
@@ -105,7 +106,7 @@ if dashboard_type=="Single Manager":
         for idx, col in enumerate([col1,col2,col3,col4,col5]):
             value = kpi_values[idx]
             display = format_inr(value) if idx in [0,1,4] else f"{value:.2f}%"
-            col.markdown(f"<div style='background-color:{kpi_colors[idx]};padding:20px;border-radius:10px;color:white;text-align:center;font-size:18px;'>{kpi_icons[idx]}<br><b>{display}</b><br>{kpi_labels[idx]}</div>", unsafe_allow_html=True)
+            col.markdown(f"<div style='background-color:{comparison_colors1[idx]};padding:20px;border-radius:10px;color:white;text-align:center;font-size:18px;'>{kpi_icons[idx]}<br><b>{display}</b><br>{kpi_labels[idx]}</div>", unsafe_allow_html=True)
 
         # Charts
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,"bank1"), use_container_width=True, key="bank1_chart")
@@ -119,6 +120,8 @@ if dashboard_type=="Single Manager":
         st.write(f"Top Bank: {top_bank}")
         st.write(f"Top Campaign: {top_campaign}")
         st.write(f"Top Caller: {top_caller}")
+        st.write(f"Transactions: {txn_count}")
+        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
 # -----------------------------
 # Comparison Dashboard
@@ -141,19 +144,19 @@ if dashboard_type=="Comparison":
 
     # Colorful KPI Cards Comparison
     st.markdown("### KPI Comparison")
-    kpi_values = [d1,r1,p1,txn1,avg1]
+    kpi_values1 = [d1,r1,p1,txn1,avg1]
     kpi_values2 = [d2,r2,p2,txn2,avg2]
     kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %","Transactions","Avg Disbursed"]
 
     for idx,label in enumerate(kpi_labels):
         col1,col2 = st.columns(2)
-        val1 = kpi_values[idx]
+        val1 = kpi_values1[idx]
         val2 = kpi_values2[idx]
         display1 = format_inr(val1) if idx in [0,1,4] else f"{val1:.2f}%"
         display2 = format_inr(val2) if idx in [0,1,4] else f"{val2:.2f}%"
         # Highlight higher value
-        color1 = "#FFD700" if val1>val2 else kpi_colors[idx]
-        color2 = "#FFD700" if val2>val1 else kpi_colors[idx]
+        color1 = "#FFD700" if val1>val2 else comparison_colors1[idx]
+        color2 = "#FFD700" if val2>val1 else comparison_colors2[idx]
         col1.markdown(f"<div style='background-color:{color1};padding:20px;border-radius:10px;color:white;text-align:center;font-size:18px;'>{kpi_icons[idx]}<br><b>{display1}</b><br>{label}</div>", unsafe_allow_html=True)
         col2.markdown(f"<div style='background-color:{color2};padding:20px;border-radius:10px;color:white;text-align:center;font-size:18px;'>{kpi_icons[idx]}<br><b>{display2}</b><br>{label}</div>", unsafe_allow_html=True)
 
@@ -175,3 +178,8 @@ if dashboard_type=="Comparison":
     fig2.update_layout(title=f"{selected_manager2} Campaign Distribution")
     st.plotly_chart(fig1, use_container_width=True, key="pie1_chart")
     st.plotly_chart(fig2, use_container_width=True, key="pie2_chart")
+
+    # Enhanced Summary
+    st.markdown("### 📝 Summary Insights")
+    st.write(f"**{selected_manager1}:** Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}, Transactions: {txn1}, Avg Disbursed: {format_inr(avg1)}")
+    st.write(f"**{selected_manager2}:** Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}, Transactions: {txn2}, Avg Disbursed: {format_inr(avg2)}")
