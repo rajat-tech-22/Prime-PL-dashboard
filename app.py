@@ -40,15 +40,24 @@ def format_inr(number):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
 
+def get_kpi_color(value, top_value=None):
+    # Conditional coloring logic
+    if top_value is not None:
+        return "green" if value == top_value else "orange"
+    else:
+        if value > 0:
+            return "green"
+        elif value == 0:
+            return "yellow"
+        else:
+            return "red"
+
 base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
 def get_colors(index_list, top_value):
     colors = []
     for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
+        colors.append("#FFD700" if val==top_value else base_colors[i % len(base_colors)])
     return colors
 
 def calc_metrics(f):
@@ -108,12 +117,12 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards
+        # KPI Cards with color
         col1,col2,col3,col4 = st.columns(4)
-        col1.metric("💰 Total Disbursed", format_inr(total_disb))
-        col2.metric("📈 Total Revenue", format_inr(total_rev))
-        col3.metric("📊 Avg Payout %", f"{avg_payout:.2f}%")
-        col4.metric("📝 Transactions", txn_count)
+        col1.metric("💰 Total Disbursed", format_inr(total_disb), delta="", delta_color=get_kpi_color(total_disb))
+        col2.metric("📈 Total Revenue", format_inr(total_rev), delta="", delta_color=get_kpi_color(total_rev))
+        col3.metric("📊 Avg Payout %", f"{avg_payout:.2f}%", delta="", delta_color=get_kpi_color(avg_payout))
+        col4.metric("📝 Transactions", txn_count, delta="", delta_color=get_kpi_color(txn_count))
 
         # Charts
         plot_bar(f,"Bank",top_bank,selected_manager1,"bank_chart")
@@ -131,9 +140,9 @@ if dashboard_type=="Single Manager":
 
         # Summary Cards
         st.markdown("### 📝 Summary Insights")
-        st.info(f"Top Bank: {top_bank}")
+        st.success(f"Top Bank: {top_bank}")
         st.info(f"Top Campaign: {top_campaign}")
-        st.info(f"Top Caller: {top_caller}")
+        st.warning(f"Top Caller: {top_caller}")
         st.info(f"Average Disbursed: {format_inr(avg_disb)}")
 
 # -----------------------------
@@ -152,16 +161,12 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # KPI Cards
+    # KPI Cards with conditional colors
     col1,col2,col3,col4 = st.columns(4)
-    delta_disb = f"▲ {format_inr(d1-d2)}" if d1>d2 else f"▼ {format_inr(d2-d1)}"
-    delta_rev = f"▲ {format_inr(r1-r2)}" if r1>r2 else f"▼ {format_inr(r2-r1)}"
-    delta_payout = f"▲ {p1-p2:.2f}%" if p1>p2 else f"▼ {p2-p1:.2f}%"
-
-    col1.metric(f"{selected_manager1} Total Disb", format_inr(d1), delta=delta_disb)
-    col2.metric(f"{selected_manager2} Total Disb", format_inr(d2), delta="")
-    col3.metric("Payout %", f"{p1:.2f}% vs {p2:.2f}%", delta=delta_payout)
-    col4.metric("Transactions", f"{txn1} vs {txn2}")
+    col1.metric(f"{selected_manager1} Total Disb", format_inr(d1), delta=f"{'▲' if d1>d2 else '▼'} {format_inr(abs(d1-d2))}", delta_color="inverse")
+    col2.metric(f"{selected_manager2} Total Disb", format_inr(d2), delta="", delta_color=get_kpi_color(d2))
+    col3.metric("Payout %", f"{p1:.2f}% vs {p2:.2f}%", delta=f"{'▲' if p1>p2 else '▼'} {abs(p1-p2):.2f}%", delta_color="inverse")
+    col4.metric("Transactions", f"{txn1} vs {txn2}", delta_color=get_kpi_color(txn1))
 
     # Charts
     plot_bar(f1,"Bank",top_bank1,selected_manager1,"comp_bank_1")
@@ -169,12 +174,12 @@ if dashboard_type=="Comparison":
     plot_bar(f1,"Caller",top_caller1,selected_manager1,"comp_caller_1")
     plot_bar(f2,"Caller",top_caller2,selected_manager2,"comp_caller_2")
 
-    # Campaign Pie Comparison
+    # Campaign Comparison
     fig = go.Figure()
     summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
     summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
-    fig.add_trace(go.Bar(x=summary1.index, y=summary1.values/100000, name=selected_manager1))
-    fig.add_trace(go.Bar(x=summary2.index, y=summary2.values/100000, name=selected_manager2))
+    fig.add_trace(go.Bar(x=summary1.index, y=summary1.values/100000, name=selected_manager1, marker_color="#636EFA"))
+    fig.add_trace(go.Bar(x=summary2.index, y=summary2.values/100000, name=selected_manager2, marker_color="#EF553B"))
     fig.update_layout(
         barmode='group',
         title="Campaign Comparison (Lacs)",
