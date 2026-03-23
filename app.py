@@ -128,6 +128,7 @@ if dashboard_type=="All Managers":
     if selected_month1:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month1]
 
+    # Aggregated table
     agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
         Total_Disbursed=("Disbursed AMT","sum"),
         Total_Revenue=("Total_Revenue","sum"),
@@ -141,6 +142,27 @@ if dashboard_type=="All Managers":
     st.dataframe(agg_df, use_container_width=True, height=500)
     st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
 
+    # Bank-wise Bar Chart
+    bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
+    if not bank_summary.empty:
+        top_bank = bank_summary.idxmax()
+        bank_colors = get_colors(bank_summary.index, top_bank)
+        fig_bank = go.Figure(go.Bar(
+            x=bank_summary.index,
+            y=bank_summary.values/100000,
+            text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+            textposition="auto",
+            marker_color=bank_colors,
+            name="Banks"
+        ))
+        fig_bank.update_layout(
+            yaxis_title="Amount (L)",
+            template="plotly_white",
+            height=400,
+            title="Bank-wise Disbursed Amount"
+        )
+        st.plotly_chart(fig_bank, use_container_width=True)
+
 # -----------------------------
 # SINGLE MANAGER DASHBOARD
 # -----------------------------
@@ -152,7 +174,7 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards with colors
+        # KPI Cards
         col1,col2,col3,col4 = st.columns(4)
         with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
         with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
@@ -160,13 +182,13 @@ if dashboard_type=="Single Manager":
         with col4: colored_metric("Transactions", txn_count, "#FFA15A")
 
         # Charts
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,key_val="bank1"), width='stretch')
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,key_val="caller1"), width='stretch')
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,key_val="bank1"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,key_val="caller1"), use_container_width=True)
 
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
         fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
         fig.update_layout(title="Campaign Distribution")
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("### 📝 Insights")
         st.write(f"Top Bank: {top_bank}")
@@ -194,7 +216,7 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # KPI Cards with colors
+    # KPI Cards
     col1,col2,col3,col4 = st.columns(4)
     with col1: colored_metric(selected_manager1, format_inr(d1), "#636EFA")
     with col2: colored_metric(selected_manager2, format_inr(d2), "#00CC96")
@@ -202,10 +224,10 @@ if dashboard_type=="Comparison":
     with col4: colored_metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", "#FFA15A")
 
     # Charts
-    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), width='stretch')
-    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), width='stretch')
-    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), width='stretch')
-    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), width='stretch')
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), use_container_width=True)
 
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
