@@ -103,14 +103,33 @@ if dashboard_type == "All Managers":
     st.header(f"📊 All Managers Dashboard - {selected_month}")
     filtered_df = df[df["Disb Month"]==selected_month]
 
+    # Aggregate metrics per manager
     agg_df = filtered_df.groupby("Manager").agg(
         Total_Disbursed=("Disbursed AMT","sum"),
-        Total_Revenue=("Total_Revenue","sum")
+        Total_Revenue=("Total_Revenue","sum"),
+        Transactions=("Manager","count")
     ).reset_index()
+
     agg_df["Avg_Payout_%"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
     agg_df = agg_df.sort_values(by="Total_Disbursed", ascending=False)
+    
+    # Add vertical index column
+    agg_df.insert(0, "No", range(1, len(agg_df)+1))
 
-    st.dataframe(agg_df.style.format({"Total_Disbursed": "₹{:,.0f}", "Total_Revenue": "₹{:,.0f}", "Avg_Payout_%":"{:.2f}%"}), use_container_width=True)
+    # Styling function for table
+    def style_table(df):
+        return df.style.format({
+            "Total_Disbursed": "₹{:,.0f}",
+            "Total_Revenue": "₹{:,.0f}",
+            "Avg_Payout_%":"{:.2f}%"
+        }).background_gradient(subset=["Total_Disbursed","Total_Revenue"], cmap="YlGnBu") \
+          .apply(lambda x: ["font-weight:bold;color:green" if v==x.max() else "" for v in x], subset=["Total_Disbursed"]) \
+          .set_properties(**{'text-align': 'center'}) \
+          .set_table_styles([{'selector': 'th','props':[('text-align', 'center')]}])
+
+    st.dataframe(style_table(agg_df), use_container_width=True)
+
+    # Download CSV
     csv_all = convert_df_to_csv(agg_df)
     st.download_button("Download All Managers Data CSV", csv_all, file_name=f"all_managers_{selected_month}.csv", mime='text/csv')
 
