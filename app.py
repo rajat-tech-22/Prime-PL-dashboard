@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
-import numpy as np
 
 # -----------------------------
 # Page Config
@@ -77,19 +76,6 @@ def plot_bar(f, col, top_value, manager_name, key):
     fig.update_layout(title=f"{manager_name} - {col} wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
-def sparkline(data):
-    return go.Figure(go.Scatter(
-        y=data,
-        mode='lines',
-        line=dict(color="#FF6600"),
-        fill='tozeroy'
-    )).update_layout(
-        margin=dict(l=0,r=0,t=0,b=0),
-        height=50,
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False)
-    )
-
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
@@ -118,26 +104,11 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards with mini sparklines
+        # Simple Colorful KPI Cards
         col1,col2,col3 = st.columns(3)
-        col1.markdown(f"""
-            <div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;">
-            <h4>Total Disbursed</h4>
-            <p>{format_inr(total_disb)}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        col2.markdown(f"""
-            <div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;">
-            <h4>Total Revenue</h4>
-            <p>{format_inr(total_rev)}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        col3.markdown(f"""
-            <div style="background-color:#FF6692;padding:15px;border-radius:10px;text-align:center;">
-            <h4>Avg Payout %</h4>
-            <p>{avg_payout:.2f}%</p>
-            </div>
-            """, unsafe_allow_html=True)
+        col1.markdown(f'<div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;"><h4>Total Disbursed</h4><p>{format_inr(total_disb)}</p></div>', unsafe_allow_html=True)
+        col2.markdown(f'<div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;"><h4>Total Revenue</h4><p>{format_inr(total_rev)}</p></div>', unsafe_allow_html=True)
+        col3.markdown(f'<div style="background-color:#FF6692;padding:15px;border-radius:10px;text-align:center;"><h4>Avg Payout %</h4><p>{avg_payout:.2f}%</p></div>', unsafe_allow_html=True)
 
         # Charts
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,key="single_bank"), use_container_width=True)
@@ -177,32 +148,13 @@ if dashboard_type == "Comparison":
     d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
     d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
 
-    # KPI Cards for both managers + delta
+    # Colorful KPI Cards for both managers
     col1,col2,col3 = st.columns(3)
-    col1.markdown(f"""
-        <div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;">
-        <h4>{selected_manager1}</h4>
-        <p>Total Disbursed: {format_inr(d1)}</p>
-        <p>Total Revenue: {format_inr(r1)}</p>
-        <p>Avg Payout: {p1:.2f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
-    col2.markdown(f"""
-        <div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;">
-        <h4>{selected_manager2}</h4>
-        <p>Total Disbursed: {format_inr(d2)}</p>
-        <p>Total Revenue: {format_inr(r2)}</p>
-        <p>Avg Payout: {p2:.2f}%</p>
-        </div>
-        """, unsafe_allow_html=True)
+    col1.markdown(f'<div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;"><h4>{selected_manager1}</h4><p>Total Disbursed: {format_inr(d1)}</p><p>Total Revenue: {format_inr(r1)}</p><p>Avg Payout: {p1:.2f}%</p></div>', unsafe_allow_html=True)
+    col2.markdown(f'<div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;"><h4>{selected_manager2}</h4><p>Total Disbursed: {format_inr(d2)}</p><p>Total Revenue: {format_inr(r2)}</p><p>Avg Payout: {p2:.2f}%</p></div>', unsafe_allow_html=True)
     delta_disb = d1 - d2
     delta_color = "green" if delta_disb > 0 else "red"
-    col3.markdown(f"""
-        <div style="background-color:#FFA15A;padding:15px;border-radius:10px;text-align:center;">
-        <h4>Delta Disbursed</h4>
-        <p style="color:{delta_color};font-size:24px;">{'▲' if delta_disb>0 else '▼'} {format_inr(abs(delta_disb))}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    col3.markdown(f'<div style="background-color:#FFA15A;padding:15px;border-radius:10px;text-align:center;"><h4>Delta Disbursed</h4><p style="color:{delta_color};font-size:24px;">{"▲" if delta_disb>0 else "▼"} {format_inr(abs(delta_disb))}</p></div>', unsafe_allow_html=True)
 
     # Charts with manager names
     st.subheader("Bank-wise Disbursed Amount")
@@ -226,13 +178,7 @@ if dashboard_type == "Comparison":
         x=summary2.index, y=summary2.values/100000,
         name=selected_manager2, marker_color="#00CC96"
     ))
-    fig_cmp.update_layout(
-        title="Campaign-wise Disbursed Amount",
-        yaxis_title="Amount (L)",
-        template="plotly_white",
-        barmode="group",
-        height=400
-    )
+    fig_cmp.update_layout(title="Campaign-wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", barmode="group", height=400)
     st.plotly_chart(fig_cmp, use_container_width=True)
 
     # Comparison Insights
