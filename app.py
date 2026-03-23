@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
+from io import BytesIO
 
 # -----------------------------
 # Page Config
@@ -76,6 +77,9 @@ def plot_bar(f, col, top_value, manager_name, key):
     fig.update_layout(title=f"{manager_name} - {col} wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
+def convert_df_to_csv(df):
+    return df.to_csv(index=False).encode('utf-8')
+
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
@@ -104,7 +108,7 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # Simple Colorful KPI Cards
+        # Colorful KPI Cards
         col1,col2,col3 = st.columns(3)
         col1.markdown(f'<div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;"><h4>Total Disbursed</h4><p>{format_inr(total_disb)}</p></div>', unsafe_allow_html=True)
         col2.markdown(f'<div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;"><h4>Total Revenue</h4><p>{format_inr(total_rev)}</p></div>', unsafe_allow_html=True)
@@ -132,6 +136,12 @@ if dashboard_type=="Single Manager":
         st.write(f"Transactions: {txn_count}")
         st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
+        # Show Data and Download
+        st.markdown("### 📋 Data Table")
+        st.dataframe(f)
+        csv = convert_df_to_csv(f)
+        st.download_button("Download CSV", csv, file_name=f"{selected_manager1}_{selected_month1}.csv", mime='text/csv')
+
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
@@ -148,7 +158,7 @@ if dashboard_type == "Comparison":
     d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
     d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
 
-    # Colorful KPI Cards for both managers
+    # Colorful KPI Cards
     col1,col2,col3 = st.columns(3)
     col1.markdown(f'<div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;"><h4>{selected_manager1}</h4><p>Total Disbursed: {format_inr(d1)}</p><p>Total Revenue: {format_inr(r1)}</p><p>Avg Payout: {p1:.2f}%</p></div>', unsafe_allow_html=True)
     col2.markdown(f'<div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;"><h4>{selected_manager2}</h4><p>Total Disbursed: {format_inr(d2)}</p><p>Total Revenue: {format_inr(r2)}</p><p>Avg Payout: {p2:.2f}%</p></div>', unsafe_allow_html=True)
@@ -185,3 +195,14 @@ if dashboard_type == "Comparison":
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}, Transactions: {txn1}, Avg Disbursed: {format_inr(avg1)}")
     st.write(f"{selected_manager2}: Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}, Transactions: {txn2}, Avg Disbursed: {format_inr(avg2)}")
+
+    # Show Data and Download
+    st.markdown("### 📋 Data Table - Manager 1")
+    st.dataframe(f1)
+    csv1 = convert_df_to_csv(f1)
+    st.download_button(f"Download CSV - {selected_manager1}", csv1, file_name=f"{selected_manager1}_{selected_month1}.csv", mime='text/csv')
+
+    st.markdown("### 📋 Data Table - Manager 2")
+    st.dataframe(f2)
+    csv2 = convert_df_to_csv(f2)
+    st.download_button(f"Download CSV - {selected_manager2}", csv2, file_name=f"{selected_manager2}_{selected_month2}.csv", mime='text/csv')
