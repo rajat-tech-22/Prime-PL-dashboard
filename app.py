@@ -8,7 +8,7 @@ from streamlit_autorefresh import st_autorefresh
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
-# 🔄 Auto Refresh every 60 sec
+# 🔄 Auto Refresh हर 60 sec
 st_autorefresh(interval=60 * 1000, key="refresh")
 
 # -----------------------------
@@ -47,7 +47,7 @@ def get_colors(index_list, top_value):
     colors = []
     for i, val in enumerate(index_list):
         if val == top_value:
-            colors.append("#FFD700")
+            colors.append("#FFD700")  # Highlight top
         else:
             colors.append(base_colors[i % len(base_colors)])
     return colors
@@ -63,7 +63,7 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, top_value, manager_name, key_suffix):
+def plot_bar(f, col, top_value, manager_name, key):
     summary = f.groupby(col)["Disbursed AMT"].sum()
     colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
@@ -75,8 +75,9 @@ def plot_bar(f, col, top_value, manager_name, key_suffix):
         name=manager_name,
         width=0.5
     ))
-    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_suffix}_{col}")
+    fig.update_layout(title=f"{manager_name} - {col} wise Disbursement",
+                      yaxis_title="Amount (L)", template="plotly_white", height=400)
+    return fig
 
 # -----------------------------
 # Sidebar Filters
@@ -108,33 +109,24 @@ if dashboard_type=="Single Manager":
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
         # KPI Cards
-        kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %"]
-        kpi_values = [total_disb,total_rev,avg_payout]
-        kpi_colors = ["#636EFA","#EF553B","#00CC96"]
-        icons = ["💰","📈","⚡"]
-
-        cols = st.columns(3)
-        for i, col_obj in enumerate(cols):
-            with col_obj:
-                st.markdown(f"""
-                    <div style="background-color:{kpi_colors[i]}; padding:20px; border-radius:15px; color:white; text-align:center;">
-                        <h3>{icons[i]} {kpi_labels[i]}</h3>
-                        <h2>{format_inr(kpi_values[i]) if i<2 else f'{kpi_values[i]:.2f}%'} </h2>
-                    </div>
-                    """, unsafe_allow_html=True)
+        col1,col2,col3 = st.columns(3)
+        col1.metric("Total Disbursed", format_inr(total_disb))
+        col2.metric("Total Revenue", format_inr(total_rev))
+        col3.metric("Avg Payout %", f"{avg_payout:.2f}%")
 
         # Charts
-        plot_bar(f,"Bank",top_bank,selected_manager1,"single")
-        plot_bar(f,"Caller",top_caller,selected_manager1,"single")
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,"bank1"), use_container_width=True, key="bank1_chart")
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,"caller1"), use_container_width=True, key="caller1_chart")
 
         # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-        fig_pie = go.Figure(go.Pie(
+        fig = go.Figure(go.Pie(
             labels=summary.index,
             values=summary.values/100000,
             hole=0.4
         ))
-        st.plotly_chart(fig_pie, use_container_width=True, key="single_campaign_pie")
+        fig.update_layout(title=f"{selected_manager1} - Campaign Distribution")
+        st.plotly_chart(fig, use_container_width=True, key="pie_chart")
 
         # Summary
         st.markdown("### 📝 Insights")
@@ -160,49 +152,52 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # KPI Cards for both managers
-    kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %"]
-    kpi_colors = ["#636EFA","#EF553B","#00CC96"]
-    icons = ["💰","📈","⚡"]
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(f"### 📊 {selected_manager1}")
-        for i, label in enumerate(kpi_labels):
-            value = [d1,r1,p1][i]
-            st.markdown(f"""
-                <div style="background-color:{kpi_colors[i]}; padding:15px; border-radius:15px; color:white; text-align:center; margin-bottom:5px;">
-                    <h4>{icons[i]} {label}</h4>
-                    <h3>{format_inr(value) if i<2 else f'{value:.2f}%'} </h3>
-                </div>
-            """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"### 📊 {selected_manager2}")
-        for i, label in enumerate(kpi_labels):
-            value = [d2,r2,p2][i]
-            st.markdown(f"""
-                <div style="background-color:{kpi_colors[i]}; padding:15px; border-radius:15px; color:white; text-align:center; margin-bottom:5px;">
-                    <h4>{icons[i]} {label}</h4>
-                    <h3>{format_inr(value) if i<2 else f'{value:.2f}%'} </h3>
-                </div>
-            """, unsafe_allow_html=True)
-
-    # Charts
-    plot_bar(f1,"Bank",top_bank1,selected_manager1,"comp1")
-    plot_bar(f1,"Caller",top_caller1,selected_manager1,"comp1")
-    plot_bar(f2,"Bank",top_bank2,selected_manager2,"comp2")
-    plot_bar(f2,"Caller",top_caller2,selected_manager2,"comp2")
-
-    # Campaign Pies
-    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
-    fig_camp1 = go.Figure(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4))
-    st.plotly_chart(fig_camp1, use_container_width=True, key="comp_camp1")
-
-    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
-    fig_camp2 = go.Figure(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4))
-    st.plotly_chart(fig_camp2, use_container_width=True, key="comp_camp2")
-
-    # Winner
+    # Top Performer
     winner = selected_manager1 if d1 > d2 else selected_manager2
     st.success(f"🏆 Top Performer: {winner}")
+
+    # -----------------------------
+    # KPI Summary Side-by-Side
+    # -----------------------------
+    st.markdown("### KPI Summary")
+    metrics = {
+        "Total Disbursed": [d1, d2],
+        "Total Revenue": [r1, r2],
+        "Avg Payout %": [p1, p2],
+        "Transactions": [txn1, txn2],
+        "Avg Disbursed": [avg1, avg2],
+    }
+
+    for metric_name, values in metrics.items():
+        col1, col2 = st.columns(2)
+        val1, val2 = values
+        if val1 > val2:
+            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2), delta="↑", delta_color="normal")
+            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2))
+        elif val2 > val1:
+            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2))
+            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2), delta="↑", delta_color="normal")
+        else:
+            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2))
+            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2))
+
+    # -----------------------------
+    # Charts Comparison
+    # -----------------------------
+    st.markdown("### Bank-wise Disbursement")
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,"bank1"), use_container_width=True, key="bank1_chart")
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,"bank2"), use_container_width=True, key="bank2_chart")
+
+    st.markdown("### Caller-wise Disbursement")
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,"caller1"), use_container_width=True, key="caller1_chart")
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,"caller2"), use_container_width=True, key="caller2_chart")
+
+    st.markdown("### Campaign-wise Distribution")
+    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+    fig1 = go.Figure(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4))
+    fig1.update_layout(title=f"{selected_manager1} Campaign Distribution")
+    fig2 = go.Figure(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4))
+    fig2.update_layout(title=f"{selected_manager2} Campaign Distribution")
+    st.plotly_chart(fig1, use_container_width=True, key="pie1_chart")
+    st.plotly_chart(fig2, use_container_width=True, key="pie2_chart")
