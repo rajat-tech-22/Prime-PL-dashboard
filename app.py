@@ -93,7 +93,7 @@ if dashboard_type=="All Managers":
     filtered_df = df[df["Disb Month"]==selected_month]
 
     # Aggregate per manager
-    agg_df = filtered_df.groupby("Manager").agg(
+    agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
         Total_Disbursed=("Disbursed AMT","sum"),
         Total_Revenue=("Total_Revenue","sum"),
         Transactions=("Manager","count")
