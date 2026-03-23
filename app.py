@@ -169,6 +169,10 @@ if dashboard_type=="Single Manager":
         st.write(f"Transactions: {txn_count}")
         st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
+        st.markdown("### 📄 Data")
+        st.dataframe(f, use_container_width=True, height=400)
+        st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
+
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
@@ -200,3 +204,11 @@ if dashboard_type=="Comparison":
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
     st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
+
+    st.markdown("### 📄 Data - Manager 1")
+    st.dataframe(f1, use_container_width=True, height=300)
+    st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
+
+    st.markdown("### 📄 Data - Manager 2")
+    st.dataframe(f2, use_container_width=True, height=300)
+    st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
