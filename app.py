@@ -78,21 +78,6 @@ def plot_bar(f, col, top_value, manager_name, key_suffix):
     fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
     st.plotly_chart(fig, use_container_width=True, key=f"{key_suffix}_{col}")
 
-def sparkline(data, color="#FFFFFF"):
-    fig = go.Figure(go.Scatter(
-        y=data,
-        mode='lines+markers',
-        line=dict(color=color, width=2),
-        marker=dict(size=4),
-    ))
-    fig.update_layout(
-        margin=dict(l=0,r=0,t=0,b=0),
-        height=50,
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False)
-    )
-    return fig
-
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
@@ -122,7 +107,7 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards with mini sparklines
+        # KPI Cards
         kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %"]
         kpi_values = [total_disb,total_rev,avg_payout]
         kpi_colors = ["#636EFA","#EF553B","#00CC96"]
@@ -137,9 +122,6 @@ if dashboard_type=="Single Manager":
                         <h2>{format_inr(kpi_values[i]) if i<2 else f'{kpi_values[i]:.2f}%'} </h2>
                     </div>
                     """, unsafe_allow_html=True)
-                # Mini sparkline
-                trend_data = f["Disbursed AMT"].rolling(3).sum() if i==0 else f["Total_Revenue"].rolling(3).sum() if i==1 else f["Total_Revenue"].pct_change().fillna(0)
-                st.plotly_chart(sparkline(trend_data), use_container_width=True, key=f"kpi_spark_{i}")
 
         # Charts
         plot_bar(f,"Bank",top_bank,selected_manager1,"single")
@@ -175,13 +157,36 @@ if dashboard_type=="Comparison":
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
 
-    d1,r1,p1,_,_,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
-    d2,r2,p2,_,_,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
+    d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
+    d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    col1,col2,col3 = st.columns(3)
-    col1.metric(selected_manager1, format_inr(d1))
-    col2.metric(selected_manager2, format_inr(d2))
-    col3.metric("Payout %", f"{p1:.2f}% vs {p2:.2f}%")
+    # KPI Cards for both managers
+    kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %"]
+    kpi_colors = ["#636EFA","#EF553B","#00CC96"]
+    icons = ["💰","📈","⚡"]
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"### 📊 {selected_manager1}")
+        for i, label in enumerate(kpi_labels):
+            value = [d1,r1,p1][i]
+            st.markdown(f"""
+                <div style="background-color:{kpi_colors[i]}; padding:15px; border-radius:15px; color:white; text-align:center; margin-bottom:5px;">
+                    <h4>{icons[i]} {label}</h4>
+                    <h3>{format_inr(value) if i<2 else f'{value:.2f}%'} </h3>
+                </div>
+            """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"### 📊 {selected_manager2}")
+        for i, label in enumerate(kpi_labels):
+            value = [d2,r2,p2][i]
+            st.markdown(f"""
+                <div style="background-color:{kpi_colors[i]}; padding:15px; border-radius:15px; color:white; text-align:center; margin-bottom:5px;">
+                    <h4>{icons[i]} {label}</h4>
+                    <h3>{format_inr(value) if i<2 else f'{value:.2f}%'} </h3>
+                </div>
+            """, unsafe_allow_html=True)
 
     # Charts
     plot_bar(f1,"Bank",top_bank1,selected_manager1,"comp1")
