@@ -8,7 +8,7 @@ from streamlit_autorefresh import st_autorefresh
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
-# 🔄 Auto Refresh हर 60 sec
+# 🔄 Auto Refresh every 60 sec
 st_autorefresh(interval=60 * 1000, key="refresh")
 
 # -----------------------------
