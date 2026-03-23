@@ -79,20 +79,18 @@ def plot_bar(f, col, top_value, manager_name, chart_key):
     return fig
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters (Month First)
 # -----------------------------
 st.sidebar.title("Dashboard Selection")
+selected_month = st.sidebar.selectbox("Select Month", sorted(df["Disb Month"].dropna().unique()))
 dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single Manager", "Comparison"])
-
-months = sorted(df["Disb Month"].dropna().unique())
-selected_month_all = st.sidebar.selectbox("Select Month (All Managers)", months, index=0)
 
 # -----------------------------
 # ALL MANAGERS DASHBOARD
 # -----------------------------
 if dashboard_type=="All Managers":
     st.header("📋 All Managers Dashboard")
-    filtered_df = df[df["Disb Month"] == selected_month_all]
+    filtered_df = df[df["Disb Month"] == selected_month]
 
     agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
         Total_Disbursed=("Disbursed AMT","sum"),
@@ -124,7 +122,7 @@ if dashboard_type=="All Managers":
     st.download_button(
         label="Download CSV",
         data=csv,
-        file_name=f'all_managers_{selected_month_all}.csv',
+        file_name=f'all_managers_{selected_month}.csv',
         mime='text/csv'
     )
 
@@ -135,7 +133,6 @@ if dashboard_type=="Single Manager":
     st.header("📊 Single Manager Dashboard")
     managers = sorted(df["Manager"].dropna().unique())
     selected_manager = st.selectbox("Select Manager", managers)
-    selected_month = st.selectbox("Select Month", months)
 
     f = df[(df["Manager"]==selected_manager)&(df["Disb Month"]==selected_month)]
     if f.empty:
@@ -164,15 +161,13 @@ if dashboard_type=="Comparison":
     managers = sorted(df["Manager"].dropna().unique())
     selected_manager1 = st.selectbox("Select Manager 1", managers)
     selected_manager2 = st.selectbox("Select Manager 2", managers, index=1)
-    selected_month1 = st.selectbox("Select Month Manager 1", months)
-    selected_month2 = st.selectbox("Select Month Manager 2", months, index=1)
 
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
 
-    f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
-    f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
+    f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month)]
+    f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month)]
 
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
