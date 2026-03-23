@@ -7,9 +7,7 @@ from streamlit_autorefresh import st_autorefresh
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-
-# Auto-refresh every 60 seconds
-st_autorefresh(interval=60*1000, key="refresh")
+st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
 # Load Data
@@ -83,6 +81,17 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     return fig
 
 # -----------------------------
+# Colored KPI Card
+# -----------------------------
+def colored_metric(label, value, color="#000000"):
+    st.markdown(f"""
+        <div style="background-color:{color}; padding:20px; border-radius:10px; text-align:center; color:white; margin-bottom:10px;">
+            <h4 style="margin:0">{label}</h4>
+            <h2 style="margin:0">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+# -----------------------------
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("Filters")
@@ -113,18 +122,13 @@ if dashboard_type=="All Managers":
     if selected_month1:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month1]
 
-    # Aggregate by Vertical + Manager
     agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
         Total_Disbursed=("Disbursed AMT","sum"),
         Total_Revenue=("Total_Revenue","sum"),
         Transactions=("Manager","count")
     ).reset_index()
     agg_df["Avg_Payout"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
-
-    # Sort by Vertical and Total Disbursed
     agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
-
-    # Format currency
     agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
     agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
 
@@ -136,35 +140,28 @@ if dashboard_type=="All Managers":
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header(f"📊 {selected_manager1} - {selected_month1_m1} Dashboard")
-
     f = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1_m1)]
     if f.empty:
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards
+        # KPI Cards with colors
         col1,col2,col3,col4 = st.columns(4)
-        col1.metric("Total Disbursed", format_inr(total_disb))
-        col2.metric("Total Revenue", format_inr(total_rev))
-        col3.metric("Avg Payout %", f"{avg_payout:.2f}%")
-        col4.metric("Transactions", txn_count)
+        with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+        with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
+        with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+        with col4: colored_metric("Transactions", txn_count, "#FFA15A")
 
         # Charts
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,key_val="bank1"), width='stretch')
         st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,key_val="caller1"), width='stretch')
 
-        # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-        fig = go.Figure(go.Pie(
-            labels=summary.index,
-            values=summary.values/100000,
-            hole=0.4
-        ))
+        fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
         fig.update_layout(title="Campaign Distribution")
         st.plotly_chart(fig, width='stretch')
 
-        # Summary
         st.markdown("### 📝 Insights")
         st.write(f"Top Bank: {top_bank}")
         st.write(f"Top Campaign: {top_campaign}")
@@ -177,7 +174,6 @@ if dashboard_type=="Single Manager":
 # -----------------------------
 if dashboard_type=="Comparison":
     st.header("📊 Comparison Dashboard")
-
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
@@ -188,11 +184,12 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
+    # KPI Cards with colors
     col1,col2,col3,col4 = st.columns(4)
-    col1.metric(selected_manager1, format_inr(d1))
-    col2.metric(selected_manager2, format_inr(d2))
-    col3.metric("Total Revenue", f"{format_inr(r1)} vs {format_inr(r2)}")
-    col4.metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%")
+    with col1: colored_metric(selected_manager1, format_inr(d1), "#636EFA")
+    with col2: colored_metric(selected_manager2, format_inr(d2), "#00CC96")
+    with col3: colored_metric("Total Revenue", f"{format_inr(r1)} vs {format_inr(r2)}", "#EF553B")
+    with col4: colored_metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", "#FFA15A")
 
     # Charts
     st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), width='stretch')
@@ -200,7 +197,6 @@ if dashboard_type=="Comparison":
     st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), width='stretch')
     st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), width='stretch')
 
-    # Summary
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
     st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
