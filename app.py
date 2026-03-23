@@ -7,7 +7,7 @@ from streamlit_autorefresh import st_autorefresh
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
+st_autorefresh(interval=60*1000, key="refresh")
 
 # -----------------------------
 # Load Data
@@ -99,6 +99,7 @@ months = sorted(df["Disb Month"].dropna().unique())
 latest_month_index = len(months)-1
 managers = sorted(df["Manager"].dropna().unique())
 
+# ---------- Filters per dashboard ----------
 if dashboard_type == "All Managers":
     selected_month = st.sidebar.selectbox("Month", months, index=latest_month_index, key="all_month")
     selected_vertical = st.sidebar.selectbox("Vertical", verticals, key="all_vertical")
@@ -132,3 +133,54 @@ elif dashboard_type == "Comparison":
     filtered_for_campaigns2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
     campaigns2 = sorted(filtered_for_campaigns2["Campaign"].dropna().unique())
     selected_campaigns2 = st.sidebar.multiselect(f"Campaigns - {selected_manager2}", campaigns2, default=campaigns2, key="cmp_campaign2")
+
+# -----------------------------
+# DASHBOARD DATA FILTERING
+# -----------------------------
+def filter_dashboard(df, vertical=None, month=None, campaigns=None, manager=None):
+    f = df.copy()
+    if vertical and vertical != "All":
+        f = f[f["Vertical"]==vertical]
+    if month:
+        f = f[f["Disb Month"]==month]
+    if campaigns:
+        f = f[f["Campaign"].isin(campaigns)]
+    if manager:
+        f = f[f["Manager"]==manager]
+    return f
+
+# -----------------------------
+# ALL MANAGERS DASHBOARD
+# -----------------------------
+if dashboard_type=="All Managers":
+    st.header("📊 Enterprise Overview")
+    filtered_df = filter_dashboard(df, vertical=selected_vertical, month=selected_month, campaigns=selected_campaigns)
+
+    # Aggregated table
+    agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
+        Total_Disbursed=("Disbursed AMT","sum"),
+        Total_Revenue=("Total_Revenue","sum"),
+        Transactions=("Manager","count")
+    ).reset_index()
+    agg_df["Avg_Payout"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
+    agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
+    agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
+    agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
+
+    st.dataframe(agg_df, use_container_width=True, height=500)
+    st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
+
+    # Bank-wise Bar Chart
+    if not filtered_df.empty:
+        bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
+        top_bank = bank_summary.idxmax()
+        fig_bank = go.Figure(go.Bar(
+            x=bank_summary.index,
+            y=bank_summary.values/100000,
+            text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+            textposition="auto",
+            marker_color=get_colors(bank_summary.index, top_bank),
+            name="Banks"
+        ))
+        fig_bank.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400, title="Bank-wise Disbursed Amount")
+        st.plotly_chart(fig_bank, use_container_width=True)
