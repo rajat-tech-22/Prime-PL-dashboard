@@ -8,11 +8,11 @@ from streamlit_autorefresh import st_autorefresh
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
-# 🔄 Auto Refresh हर 60 sec
+# Auto-refresh
 st_autorefresh(interval=60 * 1000, key="refresh")
 
 # -----------------------------
-# Load Data from Google Sheets
+# Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
@@ -47,7 +47,7 @@ def get_colors(index_list, top_value):
     colors = []
     for i, val in enumerate(index_list):
         if val == top_value:
-            colors.append("#FFD700")  # Highlight top
+            colors.append("#FFD700")
         else:
             colors.append(base_colors[i % len(base_colors)])
     return colors
@@ -96,48 +96,43 @@ if dashboard_type=="Comparison":
     selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
 # -----------------------------
-# SINGLE DASHBOARD
+# Single Manager Dashboard
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header(f"📊 {selected_manager1} - {selected_month1} Dashboard")
 
     f = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
-
     if f.empty:
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards
-        col1,col2,col3 = st.columns(3)
-        col1.metric("Total Disbursed", format_inr(total_disb))
-        col2.metric("Total Revenue", format_inr(total_rev))
-        col3.metric("Avg Payout %", f"{avg_payout:.2f}%")
+        # ----------------------------- KPI Cards (Power BI style) -----------------------------
+        st.markdown("### KPI Overview")
+        col1, col2, col3, col4, col5 = st.columns(5)
+        col1.metric("💰 Total Disbursed", format_inr(total_disb))
+        col2.metric("📈 Total Revenue", format_inr(total_rev))
+        col3.metric("📊 Avg Payout %", f"{avg_payout:.2f}%")
+        col4.metric("📝 Transactions", txn_count)
+        col5.metric("🏦 Avg Disbursed", format_inr(avg_disb))
 
-        # Charts
+        # ----------------------------- Charts -----------------------------
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,"bank1"), use_container_width=True, key="bank1_chart")
         st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,"caller1"), use_container_width=True, key="caller1_chart")
 
-        # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-        fig = go.Figure(go.Pie(
-            labels=summary.index,
-            values=summary.values/100000,
-            hole=0.4
-        ))
+        fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
         fig.update_layout(title=f"{selected_manager1} - Campaign Distribution")
         st.plotly_chart(fig, use_container_width=True, key="pie_chart")
 
-        # Summary
-        st.markdown("### 📝 Insights")
+        # Summary insights
+        st.markdown("### 📝 Summary Insights")
         st.write(f"Top Bank: {top_bank}")
         st.write(f"Top Campaign: {top_campaign}")
         st.write(f"Top Caller: {top_caller}")
-        st.write(f"Transactions: {txn_count}")
-        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
 # -----------------------------
-# COMPARISON DASHBOARD
+# Comparison Dashboard
 # -----------------------------
 if dashboard_type=="Comparison":
     st.header("📊 Comparison Dashboard")
@@ -152,47 +147,41 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # Top Performer
     winner = selected_manager1 if d1 > d2 else selected_manager2
     st.success(f"🏆 Top Performer: {winner}")
 
-    # -----------------------------
-    # KPI Summary Side-by-Side
-    # -----------------------------
-    st.markdown("### KPI Summary")
-    metrics = {
-        "Total Disbursed": [d1, d2],
-        "Total Revenue": [r1, r2],
-        "Avg Payout %": [p1, p2],
-        "Transactions": [txn1, txn2],
-        "Avg Disbursed": [avg1, avg2],
+    # ----------------------------- KPI Cards Comparison -----------------------------
+    st.markdown("### KPI Comparison")
+    kpis = {
+        "Total Disbursed": (d1,d2),
+        "Total Revenue": (r1,r2),
+        "Avg Payout %": (p1,p2),
+        "Transactions": (txn1,txn2),
+        "Avg Disbursed": (avg1,avg2)
     }
 
-    for metric_name, values in metrics.items():
+    for name, (val1,val2) in kpis.items():
         col1, col2 = st.columns(2)
-        val1, val2 = values
-        if val1 > val2:
-            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2), delta="↑", delta_color="normal")
-            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2))
-        elif val2 > val1:
-            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2))
-            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2), delta="↑", delta_color="normal")
+        if val1>val2:
+            col1.metric(f"{selected_manager1} {name}", format_inr(val1) if "Disbursed" in name or "Revenue" in name else round(val1,2), delta="↑", delta_color="normal")
+            col2.metric(f"{selected_manager2} {name}", format_inr(val2) if "Disbursed" in name or "Revenue" in name else round(val2,2))
+        elif val2>val1:
+            col1.metric(f"{selected_manager1} {name}", format_inr(val1) if "Disbursed" in name or "Revenue" in name else round(val1,2))
+            col2.metric(f"{selected_manager2} {name}", format_inr(val2) if "Disbursed" in name or "Revenue" in name else round(val2,2), delta="↑", delta_color="normal")
         else:
-            col1.metric(f"{selected_manager1} {metric_name}", format_inr(val1) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val1,2))
-            col2.metric(f"{selected_manager2} {metric_name}", format_inr(val2) if "Disbursed" in metric_name or "Revenue" in metric_name else round(val2,2))
+            col1.metric(f"{selected_manager1} {name}", format_inr(val1) if "Disbursed" in name or "Revenue" in name else round(val1,2))
+            col2.metric(f"{selected_manager2} {name}", format_inr(val2) if "Disbursed" in name or "Revenue" in name else round(val2,2))
 
-    # -----------------------------
-    # Charts Comparison
-    # -----------------------------
-    st.markdown("### Bank-wise Disbursement")
+    # Charts
+    st.markdown("### Bank-wise Disbursement Comparison")
     st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,"bank1"), use_container_width=True, key="bank1_chart")
     st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,"bank2"), use_container_width=True, key="bank2_chart")
 
-    st.markdown("### Caller-wise Disbursement")
+    st.markdown("### Caller-wise Disbursement Comparison")
     st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,"caller1"), use_container_width=True, key="caller1_chart")
     st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,"caller2"), use_container_width=True, key="caller2_chart")
 
-    st.markdown("### Campaign-wise Distribution")
+    st.markdown("### Campaign-wise Distribution Comparison")
     summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
     summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
     fig1 = go.Figure(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4))
