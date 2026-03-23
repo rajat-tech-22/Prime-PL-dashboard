@@ -121,7 +121,7 @@ elif dashboard_type == "Comparison":
 # ALL MANAGERS DASHBOARD
 # -----------------------------
 if dashboard_type=="All Managers":
-    st.header("📊 All Managers Dashboard")
+    st.header("📊 Enterprise Overview")
     filtered_df = df.copy()
     if selected_vertical != "All":
         filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
@@ -145,7 +145,7 @@ if dashboard_type=="All Managers":
 # SINGLE MANAGER DASHBOARD
 # -----------------------------
 if dashboard_type=="Single Manager":
-    st.header(f"📊 {selected_manager1} - {selected_month1_m1} Dashboard")
+    st.header("📈 Manager Insights")
     f = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1_m1)]
     if f.empty:
         st.warning("No data available")
@@ -183,7 +183,7 @@ if dashboard_type=="Single Manager":
 # COMPARISON DASHBOARD
 # -----------------------------
 if dashboard_type=="Comparison":
-    st.header("📊 Comparison Dashboard")
+    st.header("⚖️ Manager Benchmark")
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
