@@ -8,11 +8,11 @@ from streamlit_autorefresh import st_autorefresh
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 
-# 🔄 Auto Refresh हर 60 sec
-st_autorefresh(interval=60 * 1000, key="refresh")
+# Auto-refresh every 60 sec
+st_autorefresh(interval=60*1000, key="refresh")
 
 # -----------------------------
-# Load Data from Google Sheets
+# Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
@@ -28,11 +28,9 @@ df = load_data()
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("Filters")
-dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers","Single Manager", "Comparison"])
+dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single Manager", "Comparison"])
 months = sorted(df["Disb Month"].dropna().unique())
 selected_month = st.sidebar.selectbox("Select Month", months)
-
-# Filter month for all dashboards
 df = df[df["Disb Month"]==selected_month]
 
 managers = sorted(df["Manager"].dropna().unique())
@@ -60,15 +58,6 @@ def format_inr(number):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
 
-def get_colors(index_list, top_value):
-    colors = []
-    for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
-    return colors
-
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
     total_rev = f["Total_Revenue"].sum()
@@ -80,9 +69,9 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, top_value, manager_name):
+def plot_bar(f, col, manager_name, key):
     summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = get_colors(summary.index, top_value)
+    colors = [base_colors[i % len(base_colors)] for i in range(len(summary))]
     fig = go.Figure(go.Bar(
         x=summary.index,
         y=summary.values/100000,
@@ -91,8 +80,8 @@ def plot_bar(f, col, top_value, manager_name):
         marker_color=colors,
         name=manager_name
     ))
-    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400)
-    return fig
+    fig.update_layout(title=f"{manager_name} - {col} Distribution", yaxis_title="Amount (L)", template="plotly_white", height=400)
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 # -----------------------------
 # ALL MANAGERS DASHBOARD
@@ -107,11 +96,10 @@ if dashboard_type=="All Managers":
         Transactions=("Manager","count")
     ).reset_index()
     
-    # Sorting vertical wise
+    # Sort vertical-wise by Total Disbursed
     agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True, False], inplace=True)
     
-    st.dataframe(agg_df.style.background_gradient(subset=["Total_Disbursed","Total_Revenue"], cmap="Blues"))
-    
+    st.dataframe(agg_df)
     st.download_button("📥 Download CSV", agg_df.to_csv(index=False), file_name="all_managers.csv")
 
 # -----------------------------
@@ -135,13 +123,14 @@ elif dashboard_type=="Single Manager":
         col4.metric("Avg Payout %", f"{avg_payout:.2f}%")
         
         # Charts
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), key="bank_single")
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), key="caller_single")
+        plot_bar(f,"Bank",selected_manager1,"bank_single")
+        plot_bar(f,"Caller",selected_manager1,"caller_single")
         
         # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
         fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
-        st.plotly_chart(fig, key="campaign_single")
+        fig.update_layout(title=f"{selected_manager1} - Campaign Distribution")
+        st.plotly_chart(fig, use_container_width=True, key="campaign_single")
         
         # Insights
         st.markdown("### 📝 Insights")
@@ -179,16 +168,20 @@ elif dashboard_type=="Comparison":
     col8.metric(f"{selected_manager2} Transactions", t2)
     
     # Charts
-    st.plotly_chart(plot_bar(f1,"Bank",bank1,selected_manager1), key="bank_comp1")
-    st.plotly_chart(plot_bar(f2,"Bank",bank2,selected_manager2), key="bank_comp2")
-    
-    st.plotly_chart(plot_bar(f1,"Caller",caller1,selected_manager1), key="caller_comp1")
-    st.plotly_chart(plot_bar(f2,"Caller",caller2,selected_manager2), key="caller_comp2")
+    plot_bar(f1,"Bank",selected_manager1,"bank_comp1")
+    plot_bar(f2,"Bank",selected_manager2,"bank_comp2")
+    plot_bar(f1,"Caller",selected_manager1,"caller_comp1")
+    plot_bar(f2,"Caller",selected_manager2,"caller_comp2")
     
     # Campaign Pie
-    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
-    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
-    fig = go.Figure()
-    fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, name=selected_manager1, hole=0.4))
-    fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, name=selected_manager2, hole=0.4))
-    st.plotly_chart(fig, key="campaign_comp")
+    fig1 = go.Figure(go.Pie(labels=f1.groupby("Campaign")["Disbursed AMT"].sum().index,
+                            values=f1.groupby("Campaign")["Disbursed AMT"].sum().values/100000,
+                            hole=0.4))
+    fig1.update_layout(title=f"{selected_manager1} Campaign Distribution")
+    st.plotly_chart(fig1, key="campaign_comp1")
+    
+    fig2 = go.Figure(go.Pie(labels=f2.groupby("Campaign")["Disbursed AMT"].sum().index,
+                            values=f2.groupby("Campaign")["Disbursed AMT"].sum().values/100000,
+                            hole=0.4))
+    fig2.update_layout(title=f"{selected_manager2} Campaign Distribution")
+    st.plotly_chart(fig2, key="campaign_comp2")
