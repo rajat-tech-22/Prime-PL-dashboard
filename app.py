@@ -95,19 +95,25 @@ def colored_metric(label, value, color="#000000"):
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("Filters")
+
 dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single Manager", "Comparison"])
 
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
 
-selected_vertical = st.sidebar.selectbox("Select Vertical", verticals)
-selected_month1 = st.sidebar.selectbox("Select Month", months)
+# ---- Filters based on dashboard type ----
+if dashboard_type == "All Managers":
+    selected_month1 = st.sidebar.selectbox("Select Month", months)
+    selected_vertical = st.sidebar.selectbox("Select Vertical", verticals)
 
-selected_manager1 = st.sidebar.selectbox("Select Manager 1", managers)
-selected_month1_m1 = st.sidebar.selectbox("Select Month 1", months, index=0)
+elif dashboard_type == "Single Manager":
+    selected_manager1 = st.sidebar.selectbox("Select Manager", managers)
+    selected_month1_m1 = st.sidebar.selectbox("Select Month", months)
 
-if dashboard_type=="Comparison":
+elif dashboard_type == "Comparison":
+    selected_manager1 = st.sidebar.selectbox("Select Manager 1", managers)
+    selected_month1 = st.sidebar.selectbox("Select Month 1", months, index=0)
     selected_manager2 = st.sidebar.selectbox("Select Manager 2", managers, index=1)
     selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
