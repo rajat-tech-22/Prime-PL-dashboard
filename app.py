@@ -100,10 +100,10 @@ managers = sorted(df["Manager"].dropna().unique())
 campaigns = sorted(df["Campaign"].dropna().unique())
 
 selected_vertical = st.sidebar.selectbox("Business Vertical", verticals)
-selected_month = st.sidebar.selectbox("Month", months)
+# Latest month selected by default
+selected_month = st.sidebar.selectbox("Month", months, index=len(months)-1)
 selected_campaigns = st.sidebar.multiselect("Campaigns (Multiple)", ["All"] + campaigns, default=["All"])
 
-# Manager filter only for Single Manager & Comparison dashboards
 if dashboard_type in ["Single Manager", "Comparison"]:
     selected_manager1 = st.sidebar.selectbox("Manager / First Manager", managers)
     if dashboard_type == "Comparison":
@@ -142,7 +142,6 @@ if dashboard_type=="All Managers":
     st.dataframe(agg_df, use_container_width=True, height=500)
     st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
 
-    # Bank-wise chart
     bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
     if not bank_summary.empty:
         top_bank = bank_summary.idxmax()
