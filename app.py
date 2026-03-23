@@ -2,14 +2,13 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
+import numpy as np
 
 # -----------------------------
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-
-# 🔄 Auto Refresh every 60 sec
-st_autorefresh(interval=60 * 1000, key="refresh")
+st_autorefresh(interval=60*1000, key="refresh")
 
 # -----------------------------
 # Load Data from Google Sheets
@@ -75,21 +74,21 @@ def plot_bar(f, col, top_value, manager_name, key):
         name=manager_name,
         width=0.5
     ))
-    fig.update_layout(title=f"{col} wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", height=400)
+    fig.update_layout(title=f"{manager_name} - {col} wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", height=400)
     return fig
 
-# -----------------------------
-# Full-Color KPI Card Function
-# -----------------------------
-def colored_kpi(title, value, color="#4CAF50", delta_text="", icon="💰"):
-    card_html = f"""
-    <div style='background-color:{color}; padding:20px; border-radius:10px; text-align:center; color:white; margin-bottom:10px'>
-        <div style='font-size:25px'>{icon} {title}</div>
-        <div style='font-size:30px; font-weight:bold; margin-top:5px'>{value}</div>
-        <div style='font-size:20px; margin-top:5px'>{delta_text}</div>
-    </div>
-    """
-    st.markdown(card_html, unsafe_allow_html=True)
+def sparkline(data):
+    return go.Figure(go.Scatter(
+        y=data,
+        mode='lines',
+        line=dict(color="#FF6600"),
+        fill='tozeroy'
+    )).update_layout(
+        margin=dict(l=0,r=0,t=0,b=0),
+        height=50,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False)
+    )
 
 # -----------------------------
 # Sidebar Filters
@@ -119,20 +118,30 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # Colorful KPI Cards
-        col1,col2,col3,col4 = st.columns(4)
-        with col1:
-            colored_kpi("Total Disbursed", format_inr(total_disb), color="#1f77b4", icon="💰")
-        with col2:
-            colored_kpi("Total Revenue", format_inr(total_rev), color="#ff7f0e", icon="📈")
-        with col3:
-            colored_kpi("Avg Payout %", f"{avg_payout:.2f}%", color="#2ca02c", icon="📊")
-        with col4:
-            colored_kpi("Transactions", txn_count, color="#d62728", icon="📝")
+        # KPI Cards with mini sparklines
+        col1,col2,col3 = st.columns(3)
+        col1.markdown(f"""
+            <div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;">
+            <h4>Total Disbursed</h4>
+            <p>{format_inr(total_disb)}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        col2.markdown(f"""
+            <div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;">
+            <h4>Total Revenue</h4>
+            <p>{format_inr(total_rev)}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        col3.markdown(f"""
+            <div style="background-color:#FF6692;padding:15px;border-radius:10px;text-align:center;">
+            <h4>Avg Payout %</h4>
+            <p>{avg_payout:.2f}%</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         # Charts
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1, key="bank_chart_single"), use_container_width=True)
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1, key="caller_chart_single"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1,key="single_bank"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1,key="single_caller"), use_container_width=True)
 
         # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
@@ -141,10 +150,10 @@ if dashboard_type=="Single Manager":
             values=summary.values/100000,
             hole=0.4
         ))
-        fig.update_layout(title="Campaign wise Disbursed Amount")
+        fig.update_layout(title=f"{selected_manager1} - Campaign-wise Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
-        # Summary
+        # Summary Insights
         st.markdown("### 📝 Insights")
         st.write(f"Top Bank: {top_bank}")
         st.write(f"Top Campaign: {top_campaign}")
@@ -155,8 +164,9 @@ if dashboard_type=="Single Manager":
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
-if dashboard_type=="Comparison":
+if dashboard_type == "Comparison":
     st.header("📊 Comparison Dashboard")
+
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
@@ -164,31 +174,68 @@ if dashboard_type=="Comparison":
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
 
-    d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
-    d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
+    d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
+    d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
 
-    # Side-by-side Colorful KPI Cards
-    col1,col2,col3,col4 = st.columns(4)
-    with col1:
-        colored_kpi(f"{selected_manager1} Disbursed", format_inr(d1), color="#636EFA", 
-                    delta_text=f"{'▲' if d1>d2 else '▼'} {format_inr(abs(d1-d2))}", icon="💰")
-    with col2:
-        colored_kpi(f"{selected_manager2} Disbursed", format_inr(d2), color="#EF553B", 
-                    delta_text=f"{'▲' if d2>d1 else '▼'} {format_inr(abs(d1-d2))}", icon="💰")
-    with col3:
-        colored_kpi("Payout %", f"{p1:.2f}% vs {p2:.2f}%", color="#00CC96", icon="📊")
-    with col4:
-        colored_kpi("Transactions", f"{txn1} vs {txn2}", color="#AB63FA", icon="📝")
+    # KPI Cards for both managers + delta
+    col1,col2,col3 = st.columns(3)
+    col1.markdown(f"""
+        <div style="background-color:#FFD700;padding:15px;border-radius:10px;text-align:center;">
+        <h4>{selected_manager1}</h4>
+        <p>Total Disbursed: {format_inr(d1)}</p>
+        <p>Total Revenue: {format_inr(r1)}</p>
+        <p>Avg Payout: {p1:.2f}%</p>
+        </div>
+        """, unsafe_allow_html=True)
+    col2.markdown(f"""
+        <div style="background-color:#00CC96;padding:15px;border-radius:10px;text-align:center;">
+        <h4>{selected_manager2}</h4>
+        <p>Total Disbursed: {format_inr(d2)}</p>
+        <p>Total Revenue: {format_inr(r2)}</p>
+        <p>Avg Payout: {p2:.2f}%</p>
+        </div>
+        """, unsafe_allow_html=True)
+    delta_disb = d1 - d2
+    delta_color = "green" if delta_disb > 0 else "red"
+    col3.markdown(f"""
+        <div style="background-color:#FFA15A;padding:15px;border-radius:10px;text-align:center;">
+        <h4>Delta Disbursed</h4>
+        <p style="color:{delta_color};font-size:24px;">{'▲' if delta_disb>0 else '▼'} {format_inr(abs(delta_disb))}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Charts
-    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1, key="bank_chart_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2, key="bank_chart_cmp2"), use_container_width=True)
-    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1, key="caller_chart_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2, key="caller_chart_cmp2"), use_container_width=True)
+    # Charts with manager names
+    st.subheader("Bank-wise Disbursed Amount")
+    st.plotly_chart(plot_bar(f1, "Bank", top_bank1, selected_manager1, key="bank_chart_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2, "Bank", top_bank2, selected_manager2, key="bank_chart_cmp2"), use_container_width=True)
 
-    # Summary Insights
+    st.subheader("Caller-wise Disbursed Amount")
+    st.plotly_chart(plot_bar(f1, "Caller", top_caller1, selected_manager1, key="caller_chart_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2, "Caller", top_caller2, selected_manager2, key="caller_chart_cmp2"), use_container_width=True)
+
+    # Campaign Summary
+    st.subheader("Campaign-wise Summary")
+    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
+    fig_cmp = go.Figure()
+    fig_cmp.add_trace(go.Bar(
+        x=summary1.index, y=summary1.values/100000,
+        name=selected_manager1, marker_color="#FFD700"
+    ))
+    fig_cmp.add_trace(go.Bar(
+        x=summary2.index, y=summary2.values/100000,
+        name=selected_manager2, marker_color="#00CC96"
+    ))
+    fig_cmp.update_layout(
+        title="Campaign-wise Disbursed Amount",
+        yaxis_title="Amount (L)",
+        template="plotly_white",
+        barmode="group",
+        height=400
+    )
+    st.plotly_chart(fig_cmp, use_container_width=True)
+
+    # Comparison Insights
     st.markdown("### 📝 Insights")
-    st.write(f"Top Bank: {top_bank1} vs {top_bank2}")
-    st.write(f"Top Campaign: {top_camp1} vs {top_camp2}")
-    st.write(f"Top Caller: {top_caller1} vs {top_caller2}")
-    st.write(f"Avg Disbursed: {format_inr(avg1)} vs {format_inr(avg2)}")
+    st.write(f"{selected_manager1}: Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}, Transactions: {txn1}, Avg Disbursed: {format_inr(avg1)}")
+    st.write(f"{selected_manager2}: Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}, Transactions: {txn2}, Avg Disbursed: {format_inr(avg2)}")
