@@ -7,10 +7,10 @@ from streamlit_autorefresh import st_autorefresh
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")
+st_autorefresh(interval=60 * 1000, key="refresh")  # Auto-refresh
 
 # -----------------------------
-# Load Data from Google Sheets
+# Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
@@ -44,10 +44,7 @@ base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6
 def get_colors(index_list, top_value):
     colors = []
     for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
+        colors.append("#FFD700" if val==top_value else base_colors[i % len(base_colors)])
     return colors
 
 def calc_metrics(f):
@@ -61,7 +58,7 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, top_value, manager_name, key):
+def plot_bar(f, col, top_value, manager_name):
     summary = f.groupby(col)["Disbursed AMT"].sum()
     colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
@@ -73,15 +70,19 @@ def plot_bar(f, col, top_value, manager_name, key):
         name=manager_name,
         width=0.5
     ))
-    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400, title=f"{col} Summary")
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    fig.update_layout(
+        title=f"{col} Wise Disbursed Amount for {manager_name}",
+        yaxis_title="Amount (L)",
+        template="plotly_white",
+        height=400
+    )
+    return fig
 
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("Dashboard")
 dashboard_type = st.sidebar.radio("Select One", ["Single Manager", "Comparison"])
-
 managers = sorted(df["Manager"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 
@@ -93,7 +94,7 @@ if dashboard_type=="Comparison":
     selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
 
 # -----------------------------
-# SINGLE DASHBOARD
+# SINGLE MANAGER DASHBOARD
 # -----------------------------
 if dashboard_type=="Single Manager":
     st.header(f"📊 {selected_manager1} - {selected_month1} Dashboard")
@@ -104,34 +105,37 @@ if dashboard_type=="Single Manager":
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        # KPI Cards
-        col1,col2,col3 = st.columns(3)
-        col1.markdown(f"<div style='background-color:#636EFA;padding:25px;border-radius:12px;color:white;text-align:center;font-size:20px;'>💰<br><b>{format_inr(total_disb)}</b><br>Total Disbursed</div>", unsafe_allow_html=True)
-        col2.markdown(f"<div style='background-color:#00CC96;padding:25px;border-radius:12px;color:white;text-align:center;font-size:20px;'>📈<br><b>{format_inr(total_rev)}</b><br>Total Revenue</div>", unsafe_allow_html=True)
-        col3.markdown(f"<div style='background-color:#EF553B;padding:25px;border-radius:12px;color:white;text-align:center;font-size:20px;'>📊<br><b>{avg_payout:.2f}%</b><br>Avg Payout %</div>", unsafe_allow_html=True)
+        # Colorful KPI Cards
+        kpi_cols = st.columns(3)
+        kpi_cols[0].metric("💰 Total Disbursed", format_inr(total_disb))
+        kpi_cols[1].metric("📈 Total Revenue", format_inr(total_rev))
+        kpi_cols[2].metric("🤑 Avg Payout %", f"{avg_payout:.2f}%")
 
         # Charts
-        plot_bar(f,"Bank",top_bank,selected_manager1,key="bank_chart")
-        plot_bar(f,"Caller",top_caller,selected_manager1,key="caller_chart")
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager1), key="bank_single")
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager1), key="caller_single")
 
         # Campaign Pie
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
         fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
-        st.plotly_chart(fig, use_container_width=True, key="campaign_pie")
+        fig.update_layout(title=f"Campaign Distribution - {selected_manager1}")
+        st.plotly_chart(fig, key="campaign_single")
 
-        # Summary
+        # Insights Summary
         st.markdown("### 📝 Insights")
-        st.write(f"Top Bank: {top_bank}")
-        st.write(f"Top Campaign: {top_campaign}")
-        st.write(f"Top Caller: {top_caller}")
-        st.write(f"Transactions: {txn_count}")
-        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
+        st.markdown(f"""
+        - **Top Bank:** {top_bank}  
+        - **Top Campaign:** {top_campaign}  
+        - **Top Caller:** {top_caller}  
+        - **Total Transactions:** {txn_count}  
+        - **Average Disbursed:** {format_inr(avg_disb)}
+        """)
 
 # -----------------------------
 # COMPARISON DASHBOARD
 # -----------------------------
 if dashboard_type=="Comparison":
-    st.header("📊 Comparison Dashboard")
+    st.header(f"📊 Comparison: {selected_manager1} vs {selected_manager2}")
 
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
@@ -143,46 +147,44 @@ if dashboard_type=="Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # -----------------------------
-    # KPI Cards Comparison
-    # -----------------------------
-    st.markdown("### KPI Comparison")
-    kpi_values1 = [d1,r1,p1,txn1,avg1]
-    kpi_values2 = [d2,r2,p2,txn2,avg2]
-    kpi_labels = ["Total Disbursed","Total Revenue","Avg Payout %","Transactions","Avg Disbursed"]
-    kpi_icons = ["💰","📈","📊","📝","💵"]
+    # KPI Cards comparison style
+    comp_cols = st.columns(3)
+    comp_cols[0].metric(f"💰 {selected_manager1}", format_inr(d1), f"Δ {format_inr(d1-d2)}")
+    comp_cols[1].metric(f"💰 {selected_manager2}", format_inr(d2), f"Δ {format_inr(d2-d1)}")
+    comp_cols[2].metric("🤑 Payout %", f"{p1:.2f}% vs {p2:.2f}%", f"Δ {p1-p2:.2f}%")
 
-    for idx,label in enumerate(kpi_labels):
-        col1,col2 = st.columns(2)
-        val1 = kpi_values1[idx]
-        val2 = kpi_values2[idx]
-        display1 = format_inr(val1) if idx in [0,1,4] else f"{val1:.2f}%"
-        display2 = format_inr(val2) if idx in [0,1,4] else f"{val2:.2f}%"
+    # Charts side by side
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1), key="bank_comp1")
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2), key="bank_comp2")
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1), key="caller_comp1")
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2), key="caller_comp2")
 
-        if val1 > val2:
-            color1, color2 = "#FFD700", "#636EFA"
-            delta = "⬆️"
-        elif val2 > val1:
-            color1, color2 = "#636EFA", "#FFD700"
-            delta = "⬇️"
-        else:
-            color1 = color2 = "#636EFA"
-            delta = "➡️"
+    # Campaign Pie Charts
+    summary1 = f1.groupby("Campaign")["Disbursed AMT"].sum()
+    summary2 = f2.groupby("Campaign")["Disbursed AMT"].sum()
 
-        col1.markdown(f"<div style='background-color:{color1};padding:25px;border-radius:12px;color:white;text-align:center;font-size:20px;'>{kpi_icons[idx]}<br><b>{display1} {delta if val1!=val2 else ''}</b><br>{label}</div>", unsafe_allow_html=True)
-        col2.markdown(f"<div style='background-color:{color2};padding:25px;border-radius:12px;color:white;text-align:center;font-size:20px;'>{kpi_icons[idx]}<br><b>{display2} {delta if val2!=val1 else ''}</b><br>{label}</div>", unsafe_allow_html=True)
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=summary1.index, values=summary1.values/100000, hole=0.4, domain=dict(x=[0,0.48]), name=selected_manager1))
+    fig.add_trace(go.Pie(labels=summary2.index, values=summary2.values/100000, hole=0.4, domain=dict(x=[0.52,1]), name=selected_manager2))
+    fig.update_layout(title="Campaign Distribution Comparison",
+                      annotations=[dict(text=selected_manager1, x=0.22, y=0.5, showarrow=False),
+                                   dict(text=selected_manager2, x=0.78, y=0.5, showarrow=False)])
+    st.plotly_chart(fig, key="campaign_comp")
 
-    # Charts
-    plot_bar(f1,"Bank",top_bank1,selected_manager1,key="comp_bank1")
-    plot_bar(f2,"Bank",top_bank2,selected_manager2,key="comp_bank2")
-    plot_bar(f1,"Caller",top_caller1,selected_manager1,key="comp_caller1")
-    plot_bar(f2,"Caller",top_caller2,selected_manager2,key="comp_caller2")
+    # Summary insights
+    st.markdown("### 📝 Insights Comparison")
+    st.markdown(f"""
+    **{selected_manager1}:**  
+    - Top Bank: {top_bank1}  
+    - Top Campaign: {top_camp1}  
+    - Top Caller: {top_caller1}  
+    - Transactions: {txn1}  
+    - Avg Disbursed: {format_inr(avg1)}  
 
-    # Summary
-    st.markdown("### 📝 Insights")
-    st.write(f"{selected_manager1} - Top Bank: {top_bank1}, Top Campaign: {top_camp1}, Top Caller: {top_caller1}, Transactions: {txn1}, Avg Disbursed: {format_inr(avg1)}")
-    st.write(f"{selected_manager2} - Top Bank: {top_bank2}, Top Campaign: {top_camp2}, Top Caller: {top_caller2}, Transactions: {txn2}, Avg Disbursed: {format_inr(avg2)}")
-
-    # Winner
-    winner = selected_manager1 if d1 > d2 else selected_manager2
-    st.success(f"🏆 Top Performer: {winner}")
+    **{selected_manager2}:**  
+    - Top Bank: {top_bank2}  
+    - Top Campaign: {top_camp2}  
+    - Top Caller: {top_caller2}  
+    - Transactions: {txn2}  
+    - Avg Disbursed: {format_inr(avg2)}
+    """)
