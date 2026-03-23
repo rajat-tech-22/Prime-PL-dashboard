@@ -92,22 +92,32 @@ if dashboard_type=="All Managers":
     st.header(f"📊 All Managers Dashboard - {selected_month}")
     filtered_df = df[df["Disb Month"]==selected_month]
 
-    # Aggregate per manager
-    agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
-        Total_Disbursed=("Disbursed AMT","sum"),
-        Total_Revenue=("Total_Revenue","sum"),
-        Transactions=("Manager","count")
-    ).reset_index()
-    agg_df["Avg_Payout_%"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
-    agg_df = agg_df.sort_values(by="Total_Disbursed", ascending=False)
-    agg_df.insert(0, "No", range(1, len(agg_df)+1))
+    
+   # Aggregate per Vertical and Manager
+agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
+    Total_Disbursed=("Disbursed AMT","sum"),
+    Total_Revenue=("Total_Revenue","sum"),
+    Transactions=("Manager","count")
+).reset_index()
 
-    # Display interactive table
-    st.dataframe(agg_df.style.format({
-        "Total_Disbursed":"₹{:,.0f}",
-        "Total_Revenue":"₹{:,.0f}",
-        "Avg_Payout_%":"{:.2f}%"
-    }), width='stretch')
+# Calculate Avg Payout
+agg_df["Avg_Payout_%"] = (agg_df["Total_Revenue"] / agg_df["Total_Disbursed"] * 100).round(2)
+
+# Sort by Vertical, then Total_Disbursed descending within each Vertical
+agg_df = agg_df.sort_values(by=["Vertical", "Total_Disbursed"], ascending=[True, False]).reset_index(drop=True)
+
+# Add vertical numbering
+agg_df.insert(0, "No", range(1, len(agg_df)+1))
+
+# Display interactive table with formatting
+st.dataframe(
+    agg_df.style.format({
+        "Total_Disbursed": "₹{:,.0f}",
+        "Total_Revenue": "₹{:,.0f}",
+        "Avg_Payout_%": "{:.2f}%"
+    }),
+    width='stretch'
+)
 
     # Download CSV
     csv_all = agg_df.to_csv(index=False).encode('utf-8')
