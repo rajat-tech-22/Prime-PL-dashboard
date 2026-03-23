@@ -92,7 +92,7 @@ def colored_metric(label, value, color="#000000"):
         """, unsafe_allow_html=True)
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters (Professional Names)
 # -----------------------------
 st.sidebar.title("Filters")
 
@@ -104,18 +104,18 @@ managers = sorted(df["Manager"].dropna().unique())
 
 # ---- Filters based on dashboard type ----
 if dashboard_type == "All Managers":
-    selected_month1 = st.sidebar.selectbox("Select Month", months)
-    selected_vertical = st.sidebar.selectbox("Select Vertical", verticals)
+    selected_month1 = st.sidebar.selectbox("Select Reporting Month", months)
+    selected_vertical = st.sidebar.selectbox("Choose Business Vertical", verticals)
 
 elif dashboard_type == "Single Manager":
     selected_manager1 = st.sidebar.selectbox("Select Manager", managers)
-    selected_month1_m1 = st.sidebar.selectbox("Select Month", months)
+    selected_month1_m1 = st.sidebar.selectbox("Select Performance Month", months)
 
 elif dashboard_type == "Comparison":
-    selected_manager1 = st.sidebar.selectbox("Select Manager 1", managers)
-    selected_month1 = st.sidebar.selectbox("Select Month 1", months, index=0)
-    selected_manager2 = st.sidebar.selectbox("Select Manager 2", managers, index=1)
-    selected_month2 = st.sidebar.selectbox("Select Month 2", months, index=1)
+    selected_manager1 = st.sidebar.selectbox("Select First Manager", managers)
+    selected_month1 = st.sidebar.selectbox("Select Month for First Manager", months, index=0)
+    selected_manager2 = st.sidebar.selectbox("Select Second Manager", managers, index=1)
+    selected_month2 = st.sidebar.selectbox("Select Month for Second Manager", months, index=1)
 
 # -----------------------------
 # ALL MANAGERS DASHBOARD
