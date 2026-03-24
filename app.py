@@ -41,51 +41,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# Page Styling (Background & Text)
-# -----------------------------
-st.markdown("""
-    <style>
-    /* Page background */
-    [data-testid="stAppViewContainer"] {
-        background-color: #f5f5f5;  /* Light grey background */
-    }
-
-    /* Page text color */
-    [data-testid="stAppViewContainer"] h1,
-    [data-testid="stAppViewContainer"] h2,
-    [data-testid="stAppViewContainer"] h3,
-    [data-testid="stAppViewContainer"] h4,
-    [data-testid="stAppViewContainer"] h5,
-    [data-testid="stAppViewContainer"] h6,
-    [data-testid="stAppViewContainer"] p {
-        color: #111111;  /* Dark text for readability */
-    }
-
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background-color: #0e1117;
-        color: white;
-    }
-    [data-testid="stSidebar"] .st-expander {
-        background-color: #1a1c23;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-    [data-testid="stSidebar"] .stRadio > div,
-    [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
-    }
-    [data-testid="stSidebar"] ::-webkit-scrollbar {
-        width: 8px;
-    }
-    [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
-        background-color: rgba(255,255,255,0.2);
-        border-radius: 4px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-# -----------------------------
 # Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
