@@ -153,7 +153,7 @@ managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# All Managers Dashboard
+# All Managers Dashboard (Updated with Cards)
 # -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
@@ -176,19 +176,32 @@ if dashboard_type == "All Managers":
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
-        agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
+        # Aggregate per Manager
+        agg_df = filtered_df.groupby(["Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
-            Total_Revenue=("Total_Revenue","sum"),
             Transactions=("Manager","count")
         ).reset_index()
-        agg_df["Avg_Payout"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
-        agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
-        agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
-        agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
+        agg_df.sort_values("Total_Disbursed", ascending=False, inplace=True)
 
-        st.dataframe(agg_df, use_container_width=True, height=500)
-        st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
+        # -----------------------------
+        # Display dynamic cards per manager
+        # -----------------------------
+        st.subheader("Manager Performance Cards")
+        cols_per_row = 4
+        for i in range(0, len(agg_df), cols_per_row):
+            cols = st.columns(cols_per_row)
+            for j, idx in enumerate(range(i, min(i+cols_per_row, len(agg_df)))):
+                row = agg_df.iloc[idx]
+                with cols[j]:
+                    colored_metric(
+                        f"{row['Manager']} (Txn: {row['Transactions']})",
+                        format_inr(row['Total_Disbursed']),
+                        "#636EFA"
+                    )
 
+        # -----------------------------
+        # Bank-wise bar chart
+        # -----------------------------
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
             top_bank = bank_summary.idxmax()
@@ -205,9 +218,19 @@ if dashboard_type == "All Managers":
                 yaxis_title="Amount (L)",
                 template="plotly_white",
                 height=400,
-                title="Bank-wise Disbursed Amount"
+                title="Bank-wise Disbursed Amount",
+                xaxis_tickangle=-30
             )
             st.plotly_chart(fig_bank, use_container_width=True)
+
+        # -----------------------------
+        # Full table
+        # -----------------------------
+        agg_df_display = agg_df.copy()
+        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        st.subheader("📄 Detailed Table")
+        st.dataframe(agg_df_display, use_container_width=True, height=500)
+        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
 # -----------------------------
 # Sidebar + Logout
