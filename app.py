@@ -199,21 +199,7 @@ if dashboard_type == "All Managers":
             colored_metric("Total Transactions", total_txn, "#EF553B")
         with col3:
             colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
-        # -----------------------------
-        # Display dynamic cards per manager
-        # -----------------------------
-        st.subheader("Manager Performance Cards")
-        cols_per_row = 4
-        for i in range(0, len(agg_df), cols_per_row):
-            cols = st.columns(cols_per_row)
-            for j, idx in enumerate(range(i, min(i+cols_per_row, len(agg_df)))):
-                row = agg_df.iloc[idx]
-                with cols[j]:
-                    colored_metric(
-                        f"{row['Manager']} (Txn: {row['Transactions']})",
-                        format_inr(row['Total_Disbursed']),
-                        "#636EFA"
-                    )
+     
 
         # -----------------------------
         # Bank-wise bar chart
