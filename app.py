@@ -37,7 +37,7 @@ if not st.session_state.login:
 # -----------------------------
 # Sidebar + Logout
 # -----------------------------
-st.sidebar.title("📊 Filters")
+st.sidebar.title("")
 
 if st.sidebar.button("🚪 Logout"):
     st.session_state.login = False
