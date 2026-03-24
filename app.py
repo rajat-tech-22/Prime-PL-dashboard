@@ -151,7 +151,7 @@ if dashboard_type == "All Managers":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    st.header("📊 Enterprise Overview")
+    st.header("📊 Overview")
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
