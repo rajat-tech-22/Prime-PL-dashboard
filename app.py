@@ -34,14 +34,7 @@ if not st.session_state.login:
 
     st.stop()
 
-# -----------------------------
-# Sidebar + Logout
-# -----------------------------
-st.sidebar.title("")
 
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.rerun()
 
 # -----------------------------
 # Sidebar CSS
@@ -215,6 +208,15 @@ if dashboard_type == "All Managers":
                 title="Bank-wise Disbursed Amount"
             )
             st.plotly_chart(fig_bank, use_container_width=True)
+
+# -----------------------------
+# Sidebar + Logout
+# -----------------------------
+st.sidebar.title("")
+
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.login = False
+    st.rerun()
 
 # -----------------------------
 # Single Manager Dashboard
