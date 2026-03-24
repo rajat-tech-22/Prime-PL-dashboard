@@ -10,29 +10,51 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# Sidebar CSS for Black Theme
+# Sidebar CSS for Dark Theme + Selected Highlight
 # -----------------------------
 st.markdown("""
     <style>
+    /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #0e1117;
         color: white;
     }
+
+    /* Sidebar title */
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3,
     [data-testid="stSidebar"] .css-1d391kg {
         color: white;
-        font-size: 20px;
         font-weight: bold;
     }
+
+    /* Expander style */
     [data-testid="stSidebar"] .st-expander {
         background-color: #1a1c23;
         border-radius: 8px;
         margin-bottom: 10px;
+        color: white;
     }
-    [data-testid="stSidebar"] .stRadio > div, 
+
+    /* Radio buttons and selectboxes */
+    [data-testid="stSidebar"] .stRadio > div,
     [data-testid="stSidebar"] .stSelectbox > div,
     [data-testid="stSidebar"] .stMultiselect > div {
         color: white;
+        background-color: #1a1c23;
+        border-radius: 4px;
     }
+
+    /* Selected radio button / multiselect highlight */
+    [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
+    [data-testid="stSidebar"] .stSelectbox option:checked,
+    [data-testid="stSidebar"] .stMultiselect option:checked {
+        background-color: #636EFA !important;
+        color: white !important;
+    }
+
+    /* Scrollbar */
     [data-testid="stSidebar"] ::-webkit-scrollbar {
         width: 8px;
     }
@@ -135,7 +157,7 @@ managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# Filters for All Managers
+# All Managers Dashboard
 # -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
@@ -154,7 +176,6 @@ if dashboard_type == "All Managers":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    # All Managers Dashboard
     st.header("📊 Enterprise Overview")
     if filtered_df.empty:
         st.warning("No data available for selected filters")
@@ -193,7 +214,7 @@ if dashboard_type == "All Managers":
             st.plotly_chart(fig_bank, use_container_width=True)
 
 # -----------------------------
-# Filters & Dashboard for Single Manager
+# Single Manager Dashboard
 # -----------------------------
 elif dashboard_type == "Single Manager":
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
@@ -241,7 +262,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Filters & Dashboard for Comparison
+# Comparison Dashboard
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
