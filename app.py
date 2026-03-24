@@ -179,7 +179,7 @@ if dashboard_type == "All Managers":
         # Aggregate per manager
         agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
-            Transactions=("Manager","count")
+            Transactions=("Manager","count"),
             AVG_Payout=("AVG_Payout","sum")
         ).reset_index()
 
