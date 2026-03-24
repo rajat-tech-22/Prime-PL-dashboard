@@ -177,7 +177,7 @@ if dashboard_type == "All Managers":
         st.warning("No data available for selected filters")
     else:
         # Aggregate per manager
-        agg_df = filtered_df.groupby("Manager").agg(
+        agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count")
         ).reset_index()
