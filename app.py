@@ -122,7 +122,7 @@ def colored_metric(label, value, color="#000000"):
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
-st.sidebar.title("📊 Dashboard Filters")
+st.sidebar.title("📊 Filters")
 with st.sidebar.expander("Select Dashboard Type", expanded=True):
     dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
 
