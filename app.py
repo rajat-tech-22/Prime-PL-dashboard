@@ -29,7 +29,7 @@ st.markdown("""
     [data-testid="stSidebar"] .stMultiselect > div {
         color: white;
         background-color: #1a1c23;
-        border-radius: 4px;
+        border-radius: 5px;
     }
     [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
     [data-testid="stSidebar"] .stSelectbox option:checked,
