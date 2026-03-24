@@ -19,7 +19,7 @@ st.markdown("""
         color: #4287f5;
     }
     [data-testid="stSidebar"] .st-expander {
-        background-color: #1a1c23;
+        background-color: #42f5da;
         border-radius: 8px;
         margin-bottom: 10px;
         color:#4287f5;
@@ -28,7 +28,7 @@ st.markdown("""
     [data-testid="stSidebar"] .stSelectbox > div,
     [data-testid="stSidebar"] .stMultiselect > div {
         color: white;
-        background-color: #1a1c23;
+        background-color: #42f5da;
         border-radius: 5px;
     }
     [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
