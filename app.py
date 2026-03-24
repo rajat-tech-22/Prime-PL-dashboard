@@ -7,7 +7,7 @@ from streamlit_autorefresh import st_autorefresh
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")
+st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
 # Load Data
@@ -89,10 +89,12 @@ def colored_metric(label, value, color="#000000"):
         """, unsafe_allow_html=True)
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters - Improved Layout
 # -----------------------------
 st.sidebar.title("📊 Dashboard Filters")
-dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single Manager", "Comparison"])
+
+with st.sidebar.expander("Select Dashboard", expanded=True):
+    dashboard_type = st.radio("Dashboard Type", ["All Managers", "Single Manager", "Comparison"])
 
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
@@ -100,53 +102,52 @@ managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# Initialize filtered dataframes
-# -----------------------------
-filtered_df = df.copy()
-filtered_df1 = df.copy()
-filtered_df2 = df.copy()
-
-# -----------------------------
-# All Managers Filters
+# All Managers Sidebar
 # -----------------------------
 if dashboard_type == "All Managers":
-    selected_month = st.sidebar.selectbox("Select Month", months, index=latest_month_index)
-    selected_vertical = st.sidebar.selectbox("Business Vertical", verticals)
+    with st.sidebar.expander("Month & Vertical Filters", expanded=True):
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
+        selected_vertical = st.selectbox("Business Vertical", verticals)
+
+    filtered_df = df.copy()
     if selected_vertical != "All":
         filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
     if selected_month:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
+
     campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
-    selected_campaigns = st.sidebar.multiselect("Campaigns", campaigns_available, default=campaigns_available)
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
 # -----------------------------
-# Single Manager Filters
+# Single Manager Sidebar
 # -----------------------------
 elif dashboard_type == "Single Manager":
-    selected_manager = st.sidebar.selectbox("Select Manager", managers)
-    selected_month = st.sidebar.selectbox("Select Month", months, index=latest_month_index)
+    with st.sidebar.expander("Manager & Month Filters", expanded=True):
+        selected_manager = st.selectbox("Select Manager", managers)
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
+
     filtered_df = df[df["Manager"]==selected_manager]
     if selected_month:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
+
     campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
-    selected_campaigns = st.sidebar.multiselect("Campaigns", campaigns_available, default=campaigns_available)
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
 # -----------------------------
-# Comparison Filters
+# Comparison Sidebar
 # -----------------------------
 elif dashboard_type == "Comparison":
-    selected_manager1 = st.sidebar.selectbox("Select First Manager", managers)
-    selected_month1 = st.sidebar.selectbox("Month for First Manager", months, index=latest_month_index)
-    selected_manager2 = st.sidebar.selectbox("Select Second Manager", managers)
-    selected_month2 = st.sidebar.selectbox("Month for Second Manager", months, index=latest_month_index)
+    with st.sidebar.expander("Manager & Month Selection", expanded=True):
+        selected_manager1 = st.selectbox("First Manager", managers)
+        selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
+        selected_manager2 = st.selectbox("Second Manager", managers)
+        selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
+
     filtered_df1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
     filtered_df2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
-
-# -----------------------------
-# Dashboard content (charts, metrics, tables) remains exactly same as original
-# -----------------------------
-# All Managers / Single Manager / Comparison code untouched
