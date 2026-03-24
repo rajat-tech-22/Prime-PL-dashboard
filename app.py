@@ -153,7 +153,7 @@ managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# All Managers Dashboard (Updated with Cards)
+# All Managers Dashboard - 3 Summary Cards
 # -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
@@ -172,17 +172,33 @@ if dashboard_type == "All Managers":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    st.header("📊 Overview")
+    st.header("📊 Overview - Summary Cards")
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
-        # Aggregate per Manager
-        agg_df = filtered_df.groupby(["Manager"]).agg(
+        # Aggregate per manager
+        agg_df = filtered_df.groupby("Manager").agg(
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count")
         ).reset_index()
-        agg_df.sort_values("Total_Disbursed", ascending=False, inplace=True)
 
+        # Card 1: Total Disbursed Amount (All managers)
+        total_disbursed = agg_df["Total_Disbursed"].sum()
+        # Card 2: Total Transaction Count (All managers)
+        total_txn = agg_df["Transactions"].sum()
+        # Card 3: Top Manager by Disbursed Amount
+        top_manager_row = agg_df.loc[agg_df["Total_Disbursed"].idxmax()]
+        top_manager_name = top_manager_row["Manager"]
+        top_manager_amt = top_manager_row["Total_Disbursed"]
+
+        # Display 3 cards in one row
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            colored_metric("Total Disbursed Amount", format_inr(total_disbursed), "#636EFA")
+        with col2:
+            colored_metric("Total Transactions", total_txn, "#EF553B")
+        with col3:
+            colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
         # -----------------------------
         # Display dynamic cards per manager
         # -----------------------------
