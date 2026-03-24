@@ -200,6 +200,14 @@ if dashboard_type == "All Managers":
         with col3:
             colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
      
+        # -----------------------------
+        # Full table
+        # -----------------------------
+        agg_df_display = agg_df.copy()
+        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        st.subheader("📄 Detailed Table")
+        st.dataframe(agg_df_display, use_container_width=True, height=500)
+        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
         # -----------------------------
         # Bank-wise bar chart
@@ -225,14 +233,6 @@ if dashboard_type == "All Managers":
             )
             st.plotly_chart(fig_bank, use_container_width=True)
 
-        # -----------------------------
-        # Full table
-        # -----------------------------
-        agg_df_display = agg_df.copy()
-        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
-        st.subheader("📄 Detailed Table")
-        st.dataframe(agg_df_display, use_container_width=True, height=500)
-        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
 # -----------------------------
 # Sidebar + Logout
