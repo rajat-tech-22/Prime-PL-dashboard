@@ -96,63 +96,56 @@ dashboard_type = st.sidebar.radio("Select Dashboard", ["All Managers", "Single M
 
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
-managers = sorted(df["Manager"].dropna().unique())
-
 latest_month_index = len(months)-1
 
-# -----------------------------
-# All Managers Filters
-# -----------------------------
+# Filters for dashboards
 if dashboard_type == "All Managers":
     selected_month = st.sidebar.selectbox("Select Month", months, index=latest_month_index)
     selected_vertical = st.sidebar.selectbox("Business Vertical", verticals)
     
-    # Base filter
-    filtered_df = df.copy()
+    filtered_for_campaigns = df.copy()
     if selected_vertical != "All":
-        filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
+        filtered_for_campaigns = filtered_for_campaigns[filtered_for_campaigns["Vertical"]==selected_vertical]
     if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
-    
-    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+        filtered_for_campaigns = filtered_for_campaigns[filtered_for_campaigns["Disb Month"]==selected_month]
+    campaigns_available = sorted(filtered_for_campaigns["Campaign"].dropna().unique())
     selected_campaigns = st.sidebar.multiselect("Campaigns", campaigns_available, default=campaigns_available)
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-# -----------------------------
-# Single Manager Filters
-# -----------------------------
 elif dashboard_type == "Single Manager":
+    managers = sorted(df["Manager"].dropna().unique())
     selected_manager = st.sidebar.selectbox("Select Manager", managers)
     selected_month = st.sidebar.selectbox("Select Month", months, index=latest_month_index)
     
-    filtered_df = df[(df["Manager"]==selected_manager)]
-    if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
-    
-    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+    filtered_for_campaigns = df[(df["Manager"]==selected_manager)&(df["Disb Month"]==selected_month)]
+    campaigns_available = sorted(filtered_for_campaigns["Campaign"].dropna().unique())
     selected_campaigns = st.sidebar.multiselect("Campaigns", campaigns_available, default=campaigns_available)
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-# -----------------------------
-# Comparison Filters
-# -----------------------------
 elif dashboard_type == "Comparison":
+    managers = sorted(df["Manager"].dropna().unique())
     selected_manager1 = st.sidebar.selectbox("Select First Manager", managers)
     selected_month1 = st.sidebar.selectbox("Month for First Manager", months, index=latest_month_index)
+    
     selected_manager2 = st.sidebar.selectbox("Select Second Manager", managers)
     selected_month2 = st.sidebar.selectbox("Month for Second Manager", months, index=latest_month_index)
-
-    filtered_df1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
-    filtered_df2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
+    
+    f1_campaigns = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
+    f2_campaigns = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
+    selected_campaigns1 = st.sidebar.multiselect(f"Campaigns - {selected_manager1}", sorted(f1_campaigns["Campaign"].dropna().unique()), default=f1_campaigns["Campaign"].dropna().unique())
+    selected_campaigns2 = st.sidebar.multiselect(f"Campaigns - {selected_manager2}", sorted(f2_campaigns["Campaign"].dropna().unique()), default=f2_campaigns["Campaign"].dropna().unique())
 
 # -----------------------------
 # All Managers Dashboard
 # -----------------------------
 if dashboard_type == "All Managers":
     st.header("📊 Enterprise Overview")
-
+    filtered_df = df.copy()
+    if selected_vertical != "All":
+        filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
+    if selected_month:
+        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
+    
     agg_df = filtered_df.groupby(["Vertical","Manager"]).agg(
         Total_Disbursed=("Disbursed AMT","sum"),
         Total_Revenue=("Total_Revenue","sum"),
@@ -162,45 +155,48 @@ if dashboard_type == "All Managers":
     agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
     agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
     agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
-
+    
     st.dataframe(agg_df, use_container_width=True, height=500)
     st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
 
     bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
     if not bank_summary.empty:
         top_bank = bank_summary.idxmax()
-        bank_colors = get_colors(bank_summary.index, top_bank)
         fig_bank = go.Figure(go.Bar(
             x=bank_summary.index,
             y=bank_summary.values/100000,
             text=[f"{v/100000:.2f}L" for v in bank_summary.values],
             textposition="auto",
-            marker_color=bank_colors,
+            marker_color=get_colors(bank_summary.index, top_bank),
             name="Banks"
         ))
-        fig_bank.update_layout(
-            yaxis_title="Amount (L)",
-            template="plotly_white",
-            height=400,
-            title="Bank-wise Disbursed Amount"
-        )
+        fig_bank.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400, title="Bank-wise Disbursed Amount")
         st.plotly_chart(fig_bank, use_container_width=True)
 
 # -----------------------------
-# Single Manager Dashboard
+# Single Manager Dashboard (Cards + Charts)
 # -----------------------------
 if dashboard_type == "Single Manager":
     st.header(f"📈 Insights - {selected_manager}")
     f = filtered_df
+    if selected_campaigns:
+        f = f[f["Campaign"].isin(selected_campaigns)]
     if f.empty:
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-        col1,col2,col3,col4 = st.columns(4)
-        with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
-        with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
-        with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
-        with col4: colored_metric("Transactions", txn_count, "#FFA15A")
+        # Card Layout
+        cols = st.columns(3)
+        cols2 = st.columns(3)
+        cols3 = st.columns(2)
+        with cols[0]: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+        with cols[1]: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
+        with cols[2]: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+        with cols2[0]: colored_metric("Transactions", txn_count, "#FFA15A")
+        with cols2[1]: colored_metric("Avg Disbursed", format_inr(avg_disb), "#AB63FA")
+        with cols2[2]: colored_metric("Top Bank", top_bank, "#FF6692")
+        with cols3[0]: colored_metric("Top Campaign", top_campaign, "#19D3F3")
+        with cols3[1]: colored_metric("Top Caller", top_caller, "#B6E880")
 
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
         st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
@@ -209,19 +205,12 @@ if dashboard_type == "Single Manager":
         fig.update_layout(title="Campaign Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("### 📝 Insights")
-        st.write(f"Top Bank: {top_bank}")
-        st.write(f"Top Campaign: {top_campaign}")
-        st.write(f"Top Caller: {top_caller}")
-        st.write(f"Transactions: {txn_count}")
-        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
-
-        st.markdown("### 📄 Data")
+        st.markdown("### 📄 Detailed Data")
         st.dataframe(f, use_container_width=True, height=400)
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard
+# Comparison Dashboard (Cards + Charts)
 # -----------------------------
 if dashboard_type == "Comparison":
     st.header("⚖️ Manager Benchmark")
@@ -229,34 +218,45 @@ if dashboard_type == "Comparison":
         st.warning("Select different managers")
         st.stop()
 
-    f1 = filtered_df1
-    f2 = filtered_df2
+    f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
+    if selected_campaigns1:
+        f1 = f1[f1["Campaign"].isin(selected_campaigns1)]
+    f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
+    if selected_campaigns2:
+        f2 = f2[f2["Campaign"].isin(selected_campaigns2)]
 
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    col1,col2 = st.columns(2)
+    # Cards side by side
+    col1, col2 = st.columns(2)
     with col1:
         st.subheader(selected_manager1)
         colored_metric("Total Disbursed", format_inr(d1), "#636EFA")
         colored_metric("Total Revenue", format_inr(r1), "#00CC96")
         colored_metric("Avg Payout %", f"{p1:.2f}%", "#EF553B")
         colored_metric("Transactions", txn1, "#FFA15A")
+        colored_metric("Avg Disbursed", format_inr(avg1), "#AB63FA")
+        colored_metric("Top Bank", top_bank1, "#FF6692")
+        colored_metric("Top Campaign", top_camp1, "#19D3F3")
+        colored_metric("Top Caller", top_caller1, "#B6E880")
+
     with col2:
         st.subheader(selected_manager2)
         colored_metric("Total Disbursed", format_inr(d2), "#636EFA")
         colored_metric("Total Revenue", format_inr(r2), "#00CC96")
         colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
         colored_metric("Transactions", txn2, "#FFA15A")
+        colored_metric("Avg Disbursed", format_inr(avg2), "#AB63FA")
+        colored_metric("Top Bank", top_bank2, "#FF6692")
+        colored_metric("Top Campaign", top_camp2, "#19D3F3")
+        colored_metric("Top Caller", top_caller2, "#B6E880")
 
+    # Charts
     st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), use_container_width=True)
     st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), use_container_width=True)
     st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), use_container_width=True)
     st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), use_container_width=True)
-
-    st.markdown("### 📝 Insights")
-    st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
-    st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
 
     st.markdown("### 📄 Data - Manager 1")
     st.dataframe(f1, use_container_width=True, height=300)
