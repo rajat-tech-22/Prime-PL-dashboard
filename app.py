@@ -16,7 +16,7 @@ st.markdown("""
     <style>
     [data-testid="stSidebar"] {
         background-color: #2596be;
-        color: #4287f5;
+        color: Black;
     }
     [data-testid="stSidebar"] .st-expander {
         background-color: #42f5da;
