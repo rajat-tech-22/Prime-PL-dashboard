@@ -10,37 +10,6 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# Sidebar CSS - Fixed Dark Theme
-# -----------------------------
-st.markdown("""
-    <style>
-    [data-testid="stSidebar"] {
-        background-color: #0e1117;
-        color: #4287f5;
-    }
-    [data-testid="stSidebar"] .st-expander {
-        background-color: #1a1c23;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        color:#4287f5;
-    }
-    [data-testid="stSidebar"] .stRadio > div,
-    [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
-        background-color: #1a1c23;
-        border-radius: 4px;
-    }
-    [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
-    [data-testid="stSidebar"] .stSelectbox option:checked,
-    [data-testid="stSidebar"] .stMultiselect option:checked {
-        background-color: #636EFA !important;
-        color: white !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# -----------------------------
 # Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
@@ -92,7 +61,7 @@ def calc_metrics(f):
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, top_value, manager_name):
+def plot_bar(f, col, top_value, manager_name, key_val):
     summary = f.groupby(col)["Disbursed AMT"].sum()
     colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
@@ -124,7 +93,7 @@ def colored_metric(label, value, color="#000000"):
 # -----------------------------
 st.sidebar.title("📊 Dashboard Filters")
 with st.sidebar.expander("Select Dashboard Type", expanded=True):
-    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison"])
+    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
 
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
@@ -164,10 +133,10 @@ if dashboard_type == "All Managers":
         agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
         agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
         agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
+
         st.dataframe(agg_df, use_container_width=True, height=500)
         st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
 
-        # Bank Summary Chart
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
             top_bank = bank_summary.idxmax()
@@ -218,9 +187,8 @@ elif dashboard_type == "Single Manager":
         with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
         with col4: colored_metric("Transactions", txn_count, "#FFA15A")
 
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager), use_container_width=True)
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager), use_container_width=True)
-
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
         fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
         fig.update_layout(title="Campaign Distribution")
@@ -272,10 +240,10 @@ elif dashboard_type == "Comparison":
         colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
         colored_metric("Transactions", txn2, "#FFA15A")
 
-    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2), use_container_width=True)
-    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), use_container_width=True)
 
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
@@ -288,3 +256,56 @@ elif dashboard_type == "Comparison":
     st.markdown("### 📄 Data - Manager 2")
     st.dataframe(f2, use_container_width=True, height=300)
     st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
+
+# -----------------------------
+# Campaign Performance Dashboard
+# -----------------------------
+elif dashboard_type == "Campaign Performance":
+    with st.sidebar.expander("Month & Campaign Filter", expanded=True):
+        camp_months = sorted(df["Disb Month"].dropna().unique())
+        selected_camp_month = st.selectbox("Select Month", camp_months, index=len(camp_months)-1)
+        camp_list = sorted(df["Campaign"].dropna().unique())
+        selected_camps = st.multiselect("Select Campaigns", camp_list, default=camp_list)
+
+    camp_df = df.copy()
+    if selected_camp_month:
+        camp_df = camp_df[camp_df["Disb Month"]==selected_camp_month]
+    if selected_camps:
+        camp_df = camp_df[camp_df["Campaign"].isin(selected_camps)]
+
+    st.header("📊 Campaign Performance Dashboard")
+    if camp_df.empty:
+        st.warning("No data available for selected filters")
+    else:
+        camp_summary = camp_df.groupby("Manager").agg(
+            Total_Disbursed=("Disbursed AMT","sum"),
+            Total_Revenue=("Total_Revenue","sum"),
+            Transactions=("Manager","count")
+        ).reset_index()
+        camp_summary["Avg_Payout"] = (camp_summary["Total_Revenue"]/camp_summary["Total_Disbursed"]*100).round(2)
+        camp_summary["Total_Disbursed"] = camp_summary["Total_Disbursed"].apply(format_inr)
+        camp_summary["Total_Revenue"] = camp_summary["Total_Revenue"].apply(format_inr)
+
+        st.subheader("📄 Manager Performance Table")
+        st.dataframe(camp_summary, use_container_width=True, height=400)
+        st.download_button("Download CSV", camp_summary.to_csv(index=False), "campaign_performance.csv", "text/csv")
+
+        bank_summary = camp_df.groupby("Bank")["Disbursed AMT"].sum()
+        if not bank_summary.empty:
+            top_bank = bank_summary.idxmax()
+            bank_colors = get_colors(bank_summary.index, top_bank)
+            fig_bank = go.Figure(go.Bar(
+                x=bank_summary.index,
+                y=bank_summary.values/100000,
+                text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+                textposition="auto",
+                marker_color=bank_colors,
+                name="Banks"
+            ))
+            fig_bank.update_layout(
+                yaxis_title="Amount (L)",
+                template="plotly_white",
+                height=400,
+                title="Bank-wise Disbursed Amount"
+            )
+            st.plotly_chart(fig_bank, use_container_width=True)
