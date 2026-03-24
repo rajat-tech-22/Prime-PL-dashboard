@@ -10,58 +10,62 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# Sidebar CSS for Dark Theme + Selected Highlight
+# Theme Selection
 # -----------------------------
-st.markdown("""
+theme = st.sidebar.radio("Select Theme", ["Dark", "Light"])
+
+if theme == "Dark":
+    sidebar_bg = "#0e1117"
+    expander_bg = "#1a1c23"
+    text_color = "white"
+    selected_color = "#636EFA"
+    chart_template = "plotly_dark"
+else:
+    sidebar_bg = "#f0f2f6"
+    expander_bg = "#e6e6e6"
+    text_color = "black"
+    selected_color = "#1f77b4"
+    chart_template = "plotly_white"
+
+# -----------------------------
+# Sidebar CSS with Theme
+# -----------------------------
+st.markdown(f"""
     <style>
-    /* Sidebar background */
-    [data-testid="stSidebar"] {
-        background-color: #0e1117;
-        color: white;
-    }
-
-    /* Sidebar title */
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] .css-1d391kg {
-        color: white;
+    [data-testid="stSidebar"] {{
+        background-color: {sidebar_bg};
+        color: {text_color};
+    }}
+    [data-testid="stSidebar"] .css-1d391kg {{
+        color: {text_color};
         font-weight: bold;
-    }
-
-    /* Expander style */
-    [data-testid="stSidebar"] .st-expander {
-        background-color: #1a1c23;
+    }}
+    [data-testid="stSidebar"] .st-expander {{
+        background-color: {expander_bg};
         border-radius: 8px;
         margin-bottom: 10px;
-        color: white;
-    }
-
-    /* Radio buttons and selectboxes */
+        color: {text_color};
+    }}
     [data-testid="stSidebar"] .stRadio > div,
     [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
-        background-color: #1a1c23;
+    [data-testid="stSidebar"] .stMultiselect > div {{
+        color: {text_color};
+        background-color: {expander_bg};
         border-radius: 4px;
-    }
-
-    /* Selected radio button / multiselect highlight */
+    }}
     [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
     [data-testid="stSidebar"] .stSelectbox option:checked,
-    [data-testid="stSidebar"] .stMultiselect option:checked {
-        background-color: #636EFA !important;
-        color: white !important;
-    }
-
-    /* Scrollbar */
-    [data-testid="stSidebar"] ::-webkit-scrollbar {
+    [data-testid="stSidebar"] .stMultiselect option:checked {{
+        background-color: {selected_color} !important;
+        color: {text_color} !important;
+    }}
+    [data-testid="stSidebar"] ::-webkit-scrollbar {{
         width: 8px;
-    }
-    [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
+    }}
+    [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {{
         background-color: rgba(255,255,255,0.2);
         border-radius: 4px;
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -130,7 +134,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     ))
     fig.update_layout(
         yaxis_title="Amount (L)",
-        template="plotly_white",
+        template=chart_template,
         height=400,
         title=f"{manager_name} - {col} Summary"
     )
@@ -157,7 +161,8 @@ managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# All Managers Dashboard
+# -----------------------------
+# ALL MANAGERS DASHBOARD
 # -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
@@ -189,10 +194,10 @@ if dashboard_type == "All Managers":
         agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
         agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
         agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
-
         st.dataframe(agg_df, use_container_width=True, height=500)
         st.download_button("Download CSV", agg_df.to_csv(index=False), "all_managers.csv", "text/csv")
 
+        # Bank Summary Chart
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
             top_bank = bank_summary.idxmax()
@@ -207,14 +212,14 @@ if dashboard_type == "All Managers":
             ))
             fig_bank.update_layout(
                 yaxis_title="Amount (L)",
-                template="plotly_white",
+                template=chart_template,
                 height=400,
                 title="Bank-wise Disbursed Amount"
             )
             st.plotly_chart(fig_bank, use_container_width=True)
 
 # -----------------------------
-# Single Manager Dashboard
+# SINGLE MANAGER DASHBOARD
 # -----------------------------
 elif dashboard_type == "Single Manager":
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
@@ -245,9 +250,10 @@ elif dashboard_type == "Single Manager":
 
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
         st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
+
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
         fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
-        fig.update_layout(title="Campaign Distribution")
+        fig.update_layout(title="Campaign Distribution", template=chart_template)
         st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("### 📝 Insights")
@@ -262,7 +268,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard
+# COMPARISON DASHBOARD
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
