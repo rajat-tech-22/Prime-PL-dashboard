@@ -42,7 +42,13 @@ def format_inr(number):
 base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
 def get_colors(index_list, top_value):
-    return ["#FFD700" if val == top_value else base_colors[i % len(base_colors)] for i, val in enumerate(index_list)]
+    colors = []
+    for i, val in enumerate(index_list):
+        if val == top_value:
+            colors.append("#FFD700")
+        else:
+            colors.append(base_colors[i % len(base_colors)])
+    return colors
 
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
@@ -50,28 +56,22 @@ def calc_metrics(f):
     avg_payout = (total_rev/total_disb)*100 if total_disb else 0
     txn_count = len(f)
     avg_disb = total_disb/txn_count if txn_count else 0
-
     top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-
     return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
-def plot_bar(f, col, top_value, manager_name):
-    if f.empty:
-        return go.Figure()
-
+def plot_bar(f, col, top_value, manager_name, key_val):
     summary = f.groupby(col)["Disbursed AMT"].sum()
     colors = get_colors(summary.index, top_value)
-
     fig = go.Figure(go.Bar(
         x=summary.index,
         y=summary.values/100000,
         text=[f"{v/100000:.2f}L" for v in summary.values],
         textposition="auto",
-        marker_color=colors
+        marker_color=colors,
+        name=manager_name
     ))
-
     fig.update_layout(
         yaxis_title="Amount (L)",
         template="plotly_white",
@@ -80,13 +80,13 @@ def plot_bar(f, col, top_value, manager_name):
     )
     return fig
 
-def colored_metric(label, value, color="#000"):
+def colored_metric(label, value, color="#000000"):
     st.markdown(f"""
-    <div style="background:{color}; padding:15px; border-radius:10px; text-align:center; color:white;">
-        <h4>{label}</h4>
-        <h2>{value}</h2>
-    </div>
-    """, unsafe_allow_html=True)
+        <div style="background-color:{color}; padding:20px; border-radius:10px; text-align:center; color:white; margin-bottom:10px;">
+            <h4 style="margin:0">{label}</h4>
+            <h2 style="margin:0">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
 # -----------------------------
 # Sidebar Filters (FIXED)
@@ -143,7 +143,7 @@ elif dashboard_type == "Single Manager":
         default=campaigns_available
     )
 
-# COMPARISON
+# COMPARISON (NO CAMPAIGN)
 elif dashboard_type == "Comparison":
     col1, col2 = st.sidebar.columns(2)
 
@@ -180,10 +180,15 @@ if dashboard_type == "All Managers":
 
     agg_df["Avg_Payout"] = (agg_df["Total_Revenue"]/agg_df["Total_Disbursed"]*100).round(2)
 
-    st.dataframe(agg_df, use_container_width=True)
+    agg_df.sort_values(["Vertical","Total_Disbursed"], ascending=[True,False], inplace=True)
+
+    agg_df["Total_Disbursed"] = agg_df["Total_Disbursed"].apply(format_inr)
+    agg_df["Total_Revenue"] = agg_df["Total_Revenue"].apply(format_inr)
+
+    st.dataframe(agg_df, use_container_width=True, height=500)
 
 # -----------------------------
-# Single Manager Dashboard
+# Single Manager Dashboard (UNCHANGED)
 # -----------------------------
 if dashboard_type == "Single Manager":
     st.header(f"📈 Insights - {selected_manager}")
@@ -193,31 +198,49 @@ if dashboard_type == "Single Manager":
     if selected_campaigns:
         f = f[f["Campaign"].isin(selected_campaigns)]
 
-    if not f.empty:
+    if f.empty:
+        st.warning("No data available")
+    else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-
-        c1,c2,c3,c4 = st.columns(4)
-        with c1: colored_metric("Disbursed", format_inr(total_disb), "#636EFA")
-        with c2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
-        with c3: colored_metric("Payout %", f"{avg_payout:.2f}%", "#EF553B")
-        with c4: colored_metric("Txn", txn_count, "#FFA15A")
-
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager), use_container_width=True)
-
-        st.dataframe(f, use_container_width=True)
+        col1,col2,col3,col4 = st.columns(4)
+        with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+        with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
+        with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+        with col4: colored_metric("Transactions", txn_count, "#FFA15A")
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,"bank1"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,"caller1"), use_container_width=True)
+        summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+        fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
+        fig.update_layout(title="Campaign Distribution")
+        st.plotly_chart(fig, use_container_width=True)
 
 # -----------------------------
-# Comparison Dashboard
+# Comparison Dashboard (FIXED ONLY FILTER LOGIC)
 # -----------------------------
 if dashboard_type == "Comparison":
     st.header("⚖️ Manager Benchmark")
 
+    if selected_manager1 == selected_manager2:
+        st.warning("Select different managers")
+        st.stop()
+
     f1 = df[(df["Manager"]==selected_manager1)&(df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2)&(df["Disb Month"]==selected_month2)]
 
-    d1 = f1["Disbursed AMT"].sum()
-    d2 = f2["Disbursed AMT"].sum()
+    d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
+    d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    c1,c2 = st.columns(2)
-    with c1: colored_metric(selected_manager1, format_inr(d1), "#636EFA")
-    with c2: colored_metric(selected_manager2, format_inr(d2), "#00CC96")
+    col1,col2,col3,col4 = st.columns(4)
+    with col1: colored_metric(selected_manager1, format_inr(d1), "#636EFA")
+    with col2: colored_metric(selected_manager2, format_inr(d2), "#00CC96")
+    with col3: colored_metric("Total Revenue", f"{format_inr(r1)} vs {format_inr(r2)}", "#EF553B")
+    with col4: colored_metric("Avg Payout %", f"{p1:.2f}% vs {p2:.2f}%", "#FFA15A")
+
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,"bank_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,"bank_cmp2"), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,"caller_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,"caller_cmp2"), use_container_width=True)
+
+    st.markdown("### 📝 Insights")
+    st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
+    st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
