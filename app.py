@@ -235,14 +235,6 @@ if dashboard_type == "All Managers":
             st.plotly_chart(fig_bank, use_container_width=True)
 
 
-# -----------------------------
-# Sidebar + Logout
-# -----------------------------
-st.sidebar.title("")
-
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.rerun()
 
 # -----------------------------
 # Single Manager Dashboard
@@ -396,3 +388,14 @@ elif dashboard_type == "Campaign Performance":
                 title="Bank-wise Disbursed Amount"
             )
             st.plotly_chart(fig_bank, use_container_width=True)
+
+
+# -----------------------------
+# Sidebar + Logout
+# -----------------------------
+st.sidebar.title("")
+
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.login = False
+    st.rerun()
+
