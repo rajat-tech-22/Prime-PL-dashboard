@@ -14,8 +14,8 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 users = {
     "admin": "admin123",
-    "manager1": "1234",
-    "manager2": "1234"
+    "PrimePL": "@1234",
+    "RajatKumar": "#1234"
 }
 
 if "login" not in st.session_state:
