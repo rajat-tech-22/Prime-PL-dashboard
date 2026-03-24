@@ -180,8 +180,9 @@ if dashboard_type == "All Managers":
         agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count"),
-            AVG_Payout=("AVG_Payout","mean")
+            
         ).reset_index()
+        camp_summary["Avg_Payout"] = (camp_summary["Total_Revenue"]/camp_summary["Total_Disbursed"]*100).round(2)
 
         # Card 1: Total Disbursed Amount (All managers)
         total_disbursed = agg_df["Total_Disbursed"].sum()
