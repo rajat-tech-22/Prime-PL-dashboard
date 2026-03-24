@@ -10,6 +10,36 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
+# Sidebar CSS - Fixed Dark Theme
+# -----------------------------
+st.markdown("""
+    <style>
+    [data-testid="stSidebar"] {
+        background-color: #0e1117;
+        color: #4287f5;
+    }
+    [data-testid="stSidebar"] .st-expander {
+        background-color: #1a1c23;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        color:#4287f5;
+    }
+    [data-testid="stSidebar"] .stRadio > div,
+    [data-testid="stSidebar"] .stSelectbox > div,
+    [data-testid="stSidebar"] .stMultiselect > div {
+        color: white;
+        background-color: #1a1c23;
+        border-radius: 4px;
+    }
+    [data-testid="stSidebar"] .stRadio > div [role="radio"][aria-checked="true"] label,
+    [data-testid="stSidebar"] .stSelectbox option:checked,
+    [data-testid="stSidebar"] .stMultiselect option:checked {
+        background-color: #636EFA !important;
+        color: white !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+# -----------------------------
 # Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
