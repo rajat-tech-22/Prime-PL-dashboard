@@ -16,13 +16,13 @@ st.markdown("""
     <style>
     [data-testid="stSidebar"] {
         background-color: #0e1117;
-        color: black;
+        color: #4287f5;
     }
     [data-testid="stSidebar"] .st-expander {
         background-color: #1a1c23;
         border-radius: 8px;
         margin-bottom: 10px;
-        color: black;
+        color:#4287f5;
     }
     [data-testid="stSidebar"] .stRadio > div,
     [data-testid="stSidebar"] .stSelectbox > div,
