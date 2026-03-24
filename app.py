@@ -10,29 +10,37 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# Sidebar CSS for Black Theme
+# Sidebar Dark Theme CSS
 # -----------------------------
 st.markdown("""
     <style>
+    /* Sidebar background */
     [data-testid="stSidebar"] {
-        background-color: #0e1117;
+        background-color: #111111;
         color: white;
     }
-    [data-testid="stSidebar"] .css-1d391kg {
+    /* Sidebar title and headers */
+    [data-testid="stSidebar"] .css-1d391kg, 
+    [data-testid="stSidebar"] .stExpanderHeader {
         color: white;
-        font-size: 20px;
         font-weight: bold;
+        font-size: 18px;
     }
+    /* Sidebar expanders */
     [data-testid="stSidebar"] .st-expander {
-        background-color: #1a1c23;
+        background-color: #1a1a1a;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
-    [data-testid="stSidebar"] .stRadio > div, 
-    [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
+    /* Input texts inside sidebar */
+    [data-testid="stSidebar"] .stTextInput input,
+    [data-testid="stSidebar"] .stSelectbox select,
+    [data-testid="stSidebar"] .stMultiselect select,
+    [data-testid="stSidebar"] .stRadio input + label {
+        color: white !important;
+        background-color: #111111 !important;
     }
+    /* Scrollbar */
     [data-testid="stSidebar"] ::-webkit-scrollbar {
         width: 8px;
     }
@@ -123,19 +131,20 @@ def colored_metric(label, value, color="#000000"):
         """, unsafe_allow_html=True)
 
 # -----------------------------
-# Sidebar Filters
+# Sidebar Filters - Interactive Layout
 # -----------------------------
 st.sidebar.title("📊 Dashboard Filters")
 with st.sidebar.expander("Select Dashboard Type", expanded=True):
     dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison"])
 
+# Precompute unique options
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # -----------------------------
-# Filters for All Managers
+# All Managers Sidebar
 # -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
@@ -154,8 +163,43 @@ if dashboard_type == "All Managers":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    # All Managers Dashboard
+# -----------------------------
+# Single Manager Sidebar
+# -----------------------------
+elif dashboard_type == "Single Manager":
+    with st.sidebar.expander("Manager & Month Filters", expanded=True):
+        selected_manager = st.selectbox("Select Manager", managers)
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
+
+    filtered_df = df[df["Manager"]==selected_manager]
+    if selected_month:
+        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
+
+    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
+
+# -----------------------------
+# Comparison Sidebar
+# -----------------------------
+elif dashboard_type == "Comparison":
+    with st.sidebar.expander("Manager & Month Selection", expanded=True):
+        selected_manager1 = st.selectbox("First Manager", managers)
+        selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
+        selected_manager2 = st.selectbox("Second Manager", managers)
+        selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
+
+    filtered_df1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
+    filtered_df2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
+
+# -----------------------------
+# All Managers Dashboard
+# -----------------------------
+if dashboard_type == "All Managers":
     st.header("📊 Enterprise Overview")
+
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
@@ -193,23 +237,9 @@ if dashboard_type == "All Managers":
             st.plotly_chart(fig_bank, use_container_width=True)
 
 # -----------------------------
-# Filters & Dashboard for Single Manager
+# Single Manager Dashboard
 # -----------------------------
-elif dashboard_type == "Single Manager":
-    with st.sidebar.expander("Manager & Month Filters", expanded=True):
-        selected_manager = st.selectbox("Select Manager", managers)
-        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
-
-    filtered_df = df[df["Manager"]==selected_manager]
-    if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
-
-    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
-    with st.sidebar.expander("Campaign Filter", expanded=True):
-        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
-
+if dashboard_type == "Single Manager":
     st.header(f"📈 Insights - {selected_manager}")
     f = filtered_df
     if f.empty:
@@ -241,22 +271,16 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Filters & Dashboard for Comparison
+# Comparison Dashboard
 # -----------------------------
-elif dashboard_type == "Comparison":
-    with st.sidebar.expander("Manager & Month Selection", expanded=True):
-        selected_manager1 = st.selectbox("First Manager", managers)
-        selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
-        selected_manager2 = st.selectbox("Second Manager", managers)
-        selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
-
-    f1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
-    f2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
-
+if dashboard_type == "Comparison":
     st.header("⚖️ Manager Benchmark")
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
+
+    f1 = filtered_df1
+    f2 = filtered_df2
 
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
