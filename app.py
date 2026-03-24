@@ -15,7 +15,7 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 st.markdown("""
     <style>
     [data-testid="stSidebar"] {
-        background-color: #0e1117;
+        background-color: #42f5da;
         color: #4287f5;
     }
     [data-testid="stSidebar"] .st-expander {
