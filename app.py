@@ -236,9 +236,40 @@ if dashboard_type == "All Managers":
 
 
 # -----------------------------
-# Single Manager Dashboard (ULTIMATE)
+# Single Manager Dashboard (ULTIMATE + PREMIUM UI)
 # -----------------------------
 elif dashboard_type == "Single Manager":
+
+    # 🎨 Premium Hover Effect
+    st.markdown("""
+    <style>
+    div[data-testid="column"] > div:hover {
+        transform: scale(1.03);
+        transition: 0.2s;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 🎨 Gradient KPI Card
+    def colored_metric(label, value, gradient):
+        st.markdown(f"""
+            <div style="
+                background: {gradient};
+                padding: 18px;
+                border-radius: 12px;
+                color: white;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                text-align: left;
+                margin-bottom:10px;
+            ">
+                <div style="font-size:14px; opacity:0.9;">{label}</div>
+                <div style="font-size:26px; font-weight:bold;">{value}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # -----------------------------
+    # Filters
+    # -----------------------------
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
         selected_manager = st.selectbox("Select Manager", managers)
         selected_month = st.selectbox("Select Month", months, index=latest_month_index)
@@ -266,48 +297,68 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-    # 🎯 TARGET (you can change this)
-    # TARGET = 20000000  
-
-    # achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
+    TARGET = 5000000
+    achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
 
     col1,col2,col3,col4,col5 = st.columns(5)
-    with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
-    with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
-    with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
-    with col4: colored_metric("Transactions", txn_count, "#FFA15A")
-    # with col5: colored_metric("Target %", f"{achievement_pct:.1f}%", "#19D3F3")
 
-    # # -----------------------------
-    # # 🎯 Target vs Achievement Chart
-    # # -----------------------------
-    # fig_target = go.Figure(go.Bar(
-    #     x=["Target","Achieved"],
-    #     y=[TARGET/100000, total_disb/100000],
-    #     text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
-    #     textposition="outside",
-    #     marker_color=["#FF6692","#00CC96"]
-    # ))
-    # fig_target.update_layout(title="Target vs Achievement", template="plotly_white")
-    # st.plotly_chart(fig_target, use_container_width=True)
+    with col1:
+        colored_metric("Total Disbursed", format_inr(total_disb), "linear-gradient(135deg, #667eea, #764ba2)")
+    with col2:
+        colored_metric("Revenue", format_inr(total_rev), "linear-gradient(135deg, #11998e, #38ef7d)")
+    with col3:
+        colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "linear-gradient(135deg, #fc4a1a, #f7b733)")
+    with col4:
+        colored_metric("Transactions", txn_count, "linear-gradient(135deg, #f953c6, #b91d73)")
+    with col5:
+        colored_metric("Target %", f"{achievement_pct:.1f}%", "linear-gradient(135deg, #00c6ff, #0072ff)")
+
+    # -----------------------------
+    # 🚨 Alerts
+    # -----------------------------
+    if achievement_pct < 80:
+        st.error("🚨 Target below 80%! Immediate action required")
+    elif achievement_pct < 100:
+        st.warning("⚠️ Target not achieved yet")
+    else:
+        st.success("✅ Target achieved")
+
+    # -----------------------------
+    # 📊 Scorecard
+    # -----------------------------
+    if achievement_pct >= 100:
+        grade = "A+ 🟢"
+    elif achievement_pct >= 90:
+        grade = "A 🟢"
+    elif achievement_pct >= 75:
+        grade = "B 🟡"
+    else:
+        grade = "C 🔴"
+
+    st.success(f"📊 Manager Grade: {grade}")
+
+    # -----------------------------
+    # 🎯 Target Chart
+    # -----------------------------
+    fig_target = go.Figure(go.Bar(
+        x=["Target","Achieved"],
+        y=[TARGET/100000, total_disb/100000],
+        text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
+        textposition="outside"
+    ))
+    st.plotly_chart(fig_target, use_container_width=True)
 
     # -----------------------------
     # 📅 Daily Performance
     # -----------------------------
     if "Disb Date" in f.columns:
         daily = f.groupby("Disb Date")["Disbursed AMT"].sum()
-
         fig_daily = go.Figure()
-        fig_daily.add_trace(go.Scatter(
-            x=daily.index,
-            y=daily.values/100000,
-            mode='lines+markers'
-        ))
-        fig_daily.update_layout(title="Daily Performance", template="plotly_white")
+        fig_daily.add_trace(go.Scatter(x=daily.index, y=daily.values/100000, mode='lines+markers'))
         st.plotly_chart(fig_daily, use_container_width=True)
 
     # -----------------------------
-    # ☎️ Caller Efficiency Score
+    # ☎️ Caller Efficiency
     # -----------------------------
     caller_perf = f.groupby("Caller").agg(
         Disbursed=("Disbursed AMT","sum"),
@@ -317,50 +368,72 @@ elif dashboard_type == "Single Manager":
 
     caller_perf["Efficiency %"] = (caller_perf["Revenue"] / caller_perf["Disbursed"] * 100).round(2)
 
-    st.markdown("### ☎️ Caller Efficiency Score")
+    st.markdown("### ☎️ Caller Efficiency")
     st.dataframe(caller_perf.sort_values("Efficiency %", ascending=False), use_container_width=True)
 
-    # # -----------------------------
-    # # 🔮 Prediction (Next Month)
-    # # -----------------------------
-    # monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
+    # -----------------------------
+    # 🔮 Prediction
+    # -----------------------------
+    monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
 
-    # if len(monthly) >= 2:
-    #     growth_rate = monthly.pct_change().mean()
-    #     last_value = monthly.iloc[-1]
+    prediction = None
+    if len(monthly) >= 2:
+        growth_rate = monthly.pct_change().mean()
+        prediction = monthly.iloc[-1] * (1 + growth_rate)
 
-    #     prediction = last_value * (1 + growth_rate)
-
-    #     st.markdown("### 🔮 Next Month Prediction")
-    #     st.success(f"Predicted Disbursed: {format_inr(prediction)}")
+        st.success(f"🔮 Predicted Next Month: {format_inr(prediction)}")
 
     # -----------------------------
-    # 📊 Charts
+    # 🤖 AI Recommendations
+    # -----------------------------
+    st.markdown("### 🤖 AI Recommendations")
+
+    recommendations = []
+
+    if achievement_pct < 80:
+        recommendations.append("Increase focus on high-performing campaigns")
+
+    if avg_payout < 5:
+        recommendations.append("Improve payout quality")
+
+    if top_campaign:
+        recommendations.append(f"Scale campaign '{top_campaign}'")
+
+    if not recommendations:
+        recommendations.append("Performance is strong")
+
+    for r in recommendations:
+        st.write(f"👉 {r}")
+
+    # -----------------------------
+    # 📲 WhatsApp Report
+    # -----------------------------
+    report = f"""
+📊 Manager Report - {selected_manager}
+
+💰 Disbursed: {format_inr(total_disb)}
+🎯 Target: {achievement_pct:.1f}%
+
+🏆 Campaign: {top_campaign}
+☎️ Caller: {top_caller}
+
+🔮 Prediction: {format_inr(prediction) if prediction else "N/A"}
+
+Grade: {grade}
+"""
+    st.text_area("📲 Copy WhatsApp Report", report, height=200)
+
+    # -----------------------------
+    # Charts
     # -----------------------------
     st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,"bank1"), use_container_width=True)
     st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,"caller1"), use_container_width=True)
 
     # -----------------------------
-    # 🤖 AI Insights
-    # -----------------------------
-    insight = f"""
-📊 {selected_manager} Summary:
-
-- Disbursed: {format_inr(total_disb)}
-🏆 Strong Campaign: {top_campaign}  
-🎯 Top Bank: {top_bank}  
-☎️ Best Caller: {top_caller}  
-
-
-"""
-
-    st.info(insight)
-
-    # -----------------------------
     # Data
     # -----------------------------
     st.dataframe(f, use_container_width=True)
-    st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
+    st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv")
 # -----------------------------
 # Comparison Dashboard (FINAL FIXED)
 # -----------------------------
