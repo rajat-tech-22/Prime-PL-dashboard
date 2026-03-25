@@ -41,7 +41,7 @@ st.markdown("""
     <style>
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #3a6af0;
+        background-color: #ed265e;
         color: Black;
     }
     [data-testid="stSidebar"] .st-expander {
