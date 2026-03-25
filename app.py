@@ -266,16 +266,16 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-    # # 🎯 TARGET (you can change this)
+    # 🎯 TARGET (you can change this)
     # TARGET = 20000000  
 
     # achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
 
-    # col1,col2,col3,col4,col5 = st.columns(5)
-    # with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
-    # with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
-    # with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
-    # with col4: colored_metric("Transactions", txn_count, "#FFA15A")
+    col1,col2,col3,col4,col5 = st.columns(5)
+    with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+    with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
+    with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+    with col4: colored_metric("Transactions", txn_count, "#FFA15A")
     # with col5: colored_metric("Target %", f"{achievement_pct:.1f}%", "#19D3F3")
 
     # # -----------------------------
