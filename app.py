@@ -297,10 +297,9 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-    TARGET = 5000000
-    achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
+   
 
-    col1,col2,col3,col4,col5 = st.columns(5)
+    col1,col2,col3,col4 = st.columns()
 
     with col1:
         colored_metric("Total Disbursed", format_inr(total_disb), "linear-gradient(135deg, #667eea, #764ba2)")
@@ -309,44 +308,12 @@ elif dashboard_type == "Single Manager":
     with col3:
         colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "linear-gradient(135deg, #fc4a1a, #f7b733)")
     with col4:
-        colored_metric("Transactions", txn_count, "linear-gradient(135deg, #f953c6, #b91d73)")
-    with col5:
-        colored_metric("Target %", f"{achievement_pct:.1f}%", "linear-gradient(135deg, #00c6ff, #0072ff)")
+         colored_metric("Transactions", txn_count, "linear-gradient(135deg, #f953c6, #b91d73)")
 
-    # -----------------------------
-    # 🚨 Alerts
-    # -----------------------------
-    if achievement_pct < 80:
-        st.error("🚨 Target below 80%! Immediate action required")
-    elif achievement_pct < 100:
-        st.warning("⚠️ Target not achieved yet")
-    else:
-        st.success("✅ Target achieved")
 
-    # -----------------------------
-    # 📊 Scorecard
-    # -----------------------------
-    if achievement_pct >= 100:
-        grade = "A+ 🟢"
-    elif achievement_pct >= 90:
-        grade = "A 🟢"
-    elif achievement_pct >= 75:
-        grade = "B 🟡"
-    else:
-        grade = "C 🔴"
-
-    st.success(f"📊 Manager Grade: {grade}")
-
-    # -----------------------------
-    # 🎯 Target Chart
-    # -----------------------------
-    fig_target = go.Figure(go.Bar(
-        x=["Target","Achieved"],
-        y=[TARGET/100000, total_disb/100000],
-        text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
-        textposition="outside"
-    ))
-    st.plotly_chart(fig_target, use_container_width=True)
+   
+ 
+    
 
     # -----------------------------
     # 📅 Daily Performance
@@ -390,9 +357,6 @@ elif dashboard_type == "Single Manager":
 
     recommendations = []
 
-    if achievement_pct < 80:
-        recommendations.append("Increase focus on high-performing campaigns")
-
     if avg_payout < 5:
         recommendations.append("Improve payout quality")
 
@@ -412,12 +376,10 @@ elif dashboard_type == "Single Manager":
 📊 Manager Report - {selected_manager}
 
 💰 Disbursed: {format_inr(total_disb)}
-🎯 Target: {achievement_pct:.1f}%
-
 🏆 Campaign: {top_campaign}
 ☎️ Caller: {top_caller}
 
-🔮 Prediction: {format_inr(prediction) if prediction else "N/A"}
+
 
 Grade: {grade}
 """
