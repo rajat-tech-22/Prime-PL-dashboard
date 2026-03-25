@@ -304,7 +304,7 @@ elif dashboard_type == "Comparison":
     # -----------------------------
     all_campaigns = sorted(df["Campaign"].dropna().unique())
 
-    with st.sidebar.expander("Campaign Filter", expanded=True):
+    with st.sidebar.expander("Campaign", expanded=True):
         selected_campaigns = st.multiselect(
             "Select Campaigns",
             all_campaigns,
