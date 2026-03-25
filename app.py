@@ -34,29 +34,25 @@ if not st.session_state.login:
 
     st.stop()
 
-
-
 # -----------------------------
-# Sidebar CSS
+# Sidebar & Global UI CSS
 # -----------------------------
 st.markdown("""
     <style>
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #2596be;
         color: Black;
     }
     [data-testid="stSidebar"] .st-expander {
-        background-color: #42f5da;
+        background-color: #f0f2f6;
         border-radius: 8px;
         margin-bottom: 10px;
-        color:#4287f5;
     }
-    [data-testid="stSidebar"] .stRadio > div,
-    [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
-        background-color: #42f5da;
-        border-radius: 5px;
+    
+    /* Main Background */
+    .main {
+        background-color: #f8f9fa;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -132,11 +128,20 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     )
     return fig
 
-def colored_metric(label, value, color="#000000"):
+# --- UPDATED MODERN CARD UI ---
+def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
-        <div style="background-color:{color}; padding:20px; border-radius:10px; text-align:center; color:white; margin-bottom:10px;">
-            <h4 style="margin:0">{label}</h4>
-            <h2 style="margin:0">{value}</h2>
+        <div style="
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            margin-bottom: 15px;
+        ">
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
         </div>
         """, unsafe_allow_html=True)
 
