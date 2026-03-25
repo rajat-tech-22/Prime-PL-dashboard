@@ -7,10 +7,10 @@ from streamlit_autorefresh import st_autorefresh
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")
+st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# 🔐 LOGIN
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -35,79 +35,26 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# 🎨 UPDATED SIDEBAR UI (ONLY CHANGE)
+# Sidebar & Global UI CSS
 # -----------------------------
 st.markdown("""
-<style>
-
-/* Sidebar Background */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1e3c72, #2a5298);
-    padding: 15px;
-}
-
-/* Titles */
-[data-testid="stSidebar"] h1, 
-[data-testid="stSidebar"] h2, 
-[data-testid="stSidebar"] h3 {
-    color: #ffffff !important;
-    font-weight: 700;
-}
-
-/* Labels */
-[data-testid="stSidebar"] label {
-    color: #e0e6f0 !important;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-/* Expanders */
-[data-testid="stSidebar"] .st-expander {
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    margin-bottom: 12px;
-}
-
-/* Expander text */
-[data-testid="stSidebar"] .st-expander summary {
-    color: #ffffff !important;
-    font-weight: 600;
-}
-
-/* Inputs */
-[data-testid="stSidebar"] .stSelectbox div,
-[data-testid="stSidebar"] .stMultiSelect div {
-    background-color: #ffffff !important;
-    border-radius: 8px !important;
-}
-
-/* Radio */
-[data-testid="stSidebar"] .stRadio label {
-    color: #ffffff !important;
-}
-
-/* Buttons */
-[data-testid="stSidebar"] button {
-    background-color: #00c6ff;
-    color: black;
-    border-radius: 8px;
-    font-weight: 600;
-    border: none;
-}
-
-[data-testid="stSidebar"] button:hover {
-    background-color: #00a6d6;
-    color: white;
-}
-
-/* Main */
-.main {
-    background-color: #f8f9fa;
-}
-
-</style>
+    <style>
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #2596be;
+        color: Black;
+    }
+    [data-testid="stSidebar"] .st-expander {
+        background-color: #f0f2f6;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    /* Main Background */
+    .main {
+        background-color: #f8f9fa;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
@@ -181,10 +128,11 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     )
     return fig
 
+# --- UPDATED MODERN CARD UI ---
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
-            background-color: #eacbf2;
+            background-color: white;
             padding: 20px;
             border-radius: 12px;
             border-left: 6px solid {color};
@@ -192,8 +140,8 @@ def colored_metric(label, value, color="#2596be"):
             text-align: left;
             margin-bottom: 15px;
         ">
-            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700;">{label}</p>
-            <h2 style="color: #212529; margin: 5px 0 0 0;">{value}</h2>
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -201,17 +149,13 @@ def colored_metric(label, value, color="#2596be"):
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("📊 Filters")
-dashboard_type = st.sidebar.radio(
-    "Dashboard",
-    ["All Managers", "Single Manager", "Comparison", "Campaign Performance"]
-)
+with st.sidebar.expander("Select Dashboard Type", expanded=True):
+    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
 
+verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
-
-# -----------------------------
-# (REST OF YOUR ORIGINAL CODE REMAINS SAME)
-# -----------------------------
+latest_month_index = len(months)-1
 
 # -----------------------------
 # All Managers Dashboard - 3 Summary Cards
