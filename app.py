@@ -266,30 +266,30 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-    # 🎯 TARGET (you can change this)
-    TARGET = 5000000  
+    # # 🎯 TARGET (you can change this)
+    # TARGET = 20000000  
 
-    achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
+    # achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
 
-    col1,col2,col3,col4,col5 = st.columns(5)
-    with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
-    with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
-    with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
-    with col4: colored_metric("Transactions", txn_count, "#FFA15A")
-    with col5: colored_metric("Target %", f"{achievement_pct:.1f}%", "#19D3F3")
+    # col1,col2,col3,col4,col5 = st.columns(5)
+    # with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+    # with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
+    # with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+    # with col4: colored_metric("Transactions", txn_count, "#FFA15A")
+    # with col5: colored_metric("Target %", f"{achievement_pct:.1f}%", "#19D3F3")
 
-    # -----------------------------
-    # 🎯 Target vs Achievement Chart
-    # -----------------------------
-    fig_target = go.Figure(go.Bar(
-        x=["Target","Achieved"],
-        y=[TARGET/100000, total_disb/100000],
-        text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
-        textposition="outside",
-        marker_color=["#FF6692","#00CC96"]
-    ))
-    fig_target.update_layout(title="Target vs Achievement", template="plotly_white")
-    st.plotly_chart(fig_target, use_container_width=True)
+    # # -----------------------------
+    # # 🎯 Target vs Achievement Chart
+    # # -----------------------------
+    # fig_target = go.Figure(go.Bar(
+    #     x=["Target","Achieved"],
+    #     y=[TARGET/100000, total_disb/100000],
+    #     text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
+    #     textposition="outside",
+    #     marker_color=["#FF6692","#00CC96"]
+    # ))
+    # fig_target.update_layout(title="Target vs Achievement", template="plotly_white")
+    # st.plotly_chart(fig_target, use_container_width=True)
 
     # -----------------------------
     # 📅 Daily Performance
@@ -320,19 +320,19 @@ elif dashboard_type == "Single Manager":
     st.markdown("### ☎️ Caller Efficiency Score")
     st.dataframe(caller_perf.sort_values("Efficiency %", ascending=False), use_container_width=True)
 
-    # -----------------------------
-    # 🔮 Prediction (Next Month)
-    # -----------------------------
-    monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
+    # # -----------------------------
+    # # 🔮 Prediction (Next Month)
+    # # -----------------------------
+    # monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
 
-    if len(monthly) >= 2:
-        growth_rate = monthly.pct_change().mean()
-        last_value = monthly.iloc[-1]
+    # if len(monthly) >= 2:
+    #     growth_rate = monthly.pct_change().mean()
+    #     last_value = monthly.iloc[-1]
 
-        prediction = last_value * (1 + growth_rate)
+    #     prediction = last_value * (1 + growth_rate)
 
-        st.markdown("### 🔮 Next Month Prediction")
-        st.success(f"Predicted Disbursed: {format_inr(prediction)}")
+    #     st.markdown("### 🔮 Next Month Prediction")
+    #     st.success(f"Predicted Disbursed: {format_inr(prediction)}")
 
     # -----------------------------
     # 📊 Charts
@@ -347,13 +347,11 @@ elif dashboard_type == "Single Manager":
 📊 {selected_manager} Summary:
 
 - Disbursed: {format_inr(total_disb)}
-- Target Achievement: {achievement_pct:.1f}%
-
 🏆 Strong Campaign: {top_campaign}  
 🎯 Top Bank: {top_bank}  
 ☎️ Best Caller: {top_caller}  
 
-🔮 Expected Next Month: {format_inr(prediction) if len(monthly)>=2 else "N/A"}
+
 """
 
     st.info(insight)
