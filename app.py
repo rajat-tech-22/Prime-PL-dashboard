@@ -447,58 +447,214 @@ elif dashboard_type == "Comparison":
     st.dataframe(f2, use_container_width=True, height=300)
     st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
     
-# -----------------------------    
-# Campaign Performance Dashboard
+# -----------------------------
+# Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
 elif dashboard_type == "Campaign Performance":
     with st.sidebar.expander("Month & Campaign Filter", expanded=True):
         camp_months = sorted(df["Disb Month"].dropna().unique())
-        selected_camp_month = st.selectbox("Select Month", camp_months, index=len(camp_months)-1)
-        camp_list = sorted(df["Campaign"].dropna().unique())
-        selected_camps = st.multiselect("Select Campaigns", camp_list, default=camp_list)
 
-    camp_df = df.copy()
-    if selected_camp_month:
-        camp_df = camp_df[camp_df["Disb Month"]==selected_camp_month]
+        selected_camp_month = st.selectbox(
+            "Select Month",
+            camp_months,
+            index=len(camp_months)-1
+        )
+
+        temp_df = df[df["Disb Month"] == selected_camp_month]
+        camp_list = sorted(temp_df["Campaign"].dropna().unique())
+
+        col1, col2 = st.columns(2)
+        with col1:
+            select_all = st.button("Select All")
+        with col2:
+            clear_all = st.button("Clear All")
+
+        if "camp_selection" not in st.session_state:
+            st.session_state.camp_selection = camp_list
+
+        if select_all:
+            st.session_state.camp_selection = camp_list
+        if clear_all:
+            st.session_state.camp_selection = []
+
+        selected_camps = st.multiselect(
+            "Select Campaigns",
+            camp_list,
+            default=st.session_state.camp_selection
+        )
+
+    # Apply filters
+    camp_df = df[df["Disb Month"] == selected_camp_month]
     if selected_camps:
         camp_df = camp_df[camp_df["Campaign"].isin(selected_camps)]
 
     st.header("📊 Campaign Performance Dashboard")
+
     if camp_df.empty:
         st.warning("No data available for selected filters")
+        st.stop()
+
+    # -----------------------------
+    # 🏆 Top Campaign
+    # -----------------------------
+    camp_perf = camp_df.groupby("Campaign")["Disbursed AMT"].sum()
+    top_campaign = camp_perf.idxmax()
+    top_value = camp_perf.max()
+
+    st.success(f"🏆 Top Campaign: {top_campaign} ({format_inr(top_value)})")
+
+    # -----------------------------
+    # 📄 Manager Table
+    # -----------------------------
+    camp_summary = camp_df.groupby("Manager").agg(
+        Total_Disbursed=("Disbursed AMT","sum"),
+        Total_Revenue=("Total_Revenue","sum"),
+        Transactions=("Manager","count")
+    ).reset_index()
+
+    camp_summary["Avg_Payout"] = (
+        camp_summary["Total_Revenue"] / camp_summary["Total_Disbursed"] * 100
+    ).round(2)
+
+    camp_summary["Total_Disbursed"] = camp_summary["Total_Disbursed"].apply(format_inr)
+    camp_summary["Total_Revenue"] = camp_summary["Total_Revenue"].apply(format_inr)
+
+    st.subheader("📄 Manager Performance Table")
+    st.dataframe(camp_summary, use_container_width=True, height=350)
+
+    st.download_button(
+        "Download CSV",
+        camp_summary.to_csv(index=False),
+        "campaign_performance.csv",
+        "text/csv"
+    )
+
+    # -----------------------------
+    # 📊 Campaign-wise Chart
+    # -----------------------------
+    colors = get_colors(camp_perf.index, top_campaign)
+
+    fig_camp = go.Figure(go.Bar(
+        x=camp_perf.index,
+        y=camp_perf.values/100000,
+        text=[f"{v/100000:.2f}L" for v in camp_perf.values],
+        textposition="outside",
+        marker_color=colors
+    ))
+
+    fig_camp.update_layout(
+        title="Campaign-wise Performance",
+        template="plotly_white",
+        height=450
+    )
+
+    fig_camp.update_traces(cliponaxis=False)
+    st.plotly_chart(fig_camp, use_container_width=True)
+
+    # -----------------------------
+    # 🏆 Best Manager per Campaign
+    # -----------------------------
+    st.markdown("### 🏆 Best Manager per Campaign")
+
+    best_mgr = camp_df.groupby(["Campaign","Manager"])["Disbursed AMT"].sum().reset_index()
+    best_mgr = best_mgr.loc[
+        best_mgr.groupby("Campaign")["Disbursed AMT"].idxmax()
+    ]
+
+    best_mgr["Disbursed AMT"] = best_mgr["Disbursed AMT"].apply(format_inr)
+
+    st.dataframe(best_mgr, use_container_width=True, height=300)
+
+    # -----------------------------
+    # 🚨 Underperforming Campaigns
+    # -----------------------------
+    st.markdown("### 🚨 Underperforming Campaigns")
+
+    avg_perf = camp_perf.mean()
+    underperforming = camp_perf[camp_perf < avg_perf]
+
+    if underperforming.empty:
+        st.success("✅ No underperforming campaigns")
     else:
-        camp_summary = camp_df.groupby("Manager").agg(
-            Total_Disbursed=("Disbursed AMT","sum"),
-            Total_Revenue=("Total_Revenue","sum"),
-            Transactions=("Manager","count")
-        ).reset_index()
-        camp_summary["Avg_Payout"] = (camp_summary["Total_Revenue"]/camp_summary["Total_Disbursed"]*100).round(2)
-        camp_summary["Total_Disbursed"] = camp_summary["Total_Disbursed"].apply(format_inr)
-        camp_summary["Total_Revenue"] = camp_summary["Total_Revenue"].apply(format_inr)
+        under_df = underperforming.reset_index()
+        under_df.columns = ["Campaign","Disbursed AMT"]
+        under_df["Disbursed AMT"] = under_df["Disbursed AMT"].apply(format_inr)
 
-        st.subheader("📄 Manager Performance Table")
-        st.dataframe(camp_summary, use_container_width=True, height=400)
-        st.download_button("Download CSV", camp_summary.to_csv(index=False), "campaign_performance.csv", "text/csv")
+        st.warning(f"{len(under_df)} campaigns below average")
+        st.dataframe(under_df, use_container_width=True)
 
-        bank_summary = camp_df.groupby("Bank")["Disbursed AMT"].sum()
-        if not bank_summary.empty:
-            top_bank = bank_summary.idxmax()
-            bank_colors = get_colors(bank_summary.index, top_bank)
-            fig_bank = go.Figure(go.Bar(
-                x=bank_summary.index,
-                y=bank_summary.values/100000,
-                text=[f"{v/100000:.2f}L" for v in bank_summary.values],
-                textposition="auto",
-                marker_color=bank_colors,
-                name="Banks"
-            ))
-            fig_bank.update_layout(
-                yaxis_title="Amount (L)",
-                template="plotly_white",
-                height=400,
-                title="Bank-wise Disbursed Amount"
-            )
-            st.plotly_chart(fig_bank, use_container_width=True)
+    # -----------------------------
+    # 📊 Bank-wise Chart
+    # -----------------------------
+    bank_summary = camp_df.groupby("Bank")["Disbursed AMT"].sum()
+
+    if not bank_summary.empty:
+        top_bank = bank_summary.idxmax()
+        bank_colors = get_colors(bank_summary.index, top_bank)
+
+        fig_bank = go.Figure(go.Bar(
+            x=bank_summary.index,
+            y=bank_summary.values/100000,
+            text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+            textposition="outside",
+            marker_color=bank_colors
+        ))
+
+        fig_bank.update_layout(
+            yaxis_title="Amount (L)",
+            template="plotly_white",
+            height=400,
+            title="Bank-wise Disbursed Amount"
+        )
+
+        fig_bank.update_traces(cliponaxis=False)
+        st.plotly_chart(fig_bank, use_container_width=True)
+
+    # -----------------------------
+    # 📈 Growth Analysis
+    # -----------------------------
+    current_month_index = camp_months.index(selected_camp_month)
+
+    if current_month_index > 0:
+        prev_month = camp_months[current_month_index - 1]
+
+        prev_df = df[df["Disb Month"] == prev_month]
+
+        curr_total = camp_df["Disbursed AMT"].sum()
+        prev_total = prev_df["Disbursed AMT"].sum()
+
+        growth = ((curr_total - prev_total) / prev_total * 100) if prev_total != 0 else 0
+
+        st.markdown("### 📈 Growth Analysis")
+        st.write(f"{selected_camp_month} vs {prev_month}: {growth:.2f}% change")
+
+    # -----------------------------
+    # 🤖 AI Insights
+    # -----------------------------
+    st.markdown("### 🤖 AI Insights")
+
+    total_disb = camp_df["Disbursed AMT"].sum()
+    total_rev = camp_df["Total_Revenue"].sum()
+    avg_payout = (total_rev / total_disb * 100) if total_disb else 0
+
+    low_campaign = camp_perf.idxmin()
+    low_value = camp_perf.min()
+
+    top_manager = camp_df.groupby("Manager")["Disbursed AMT"].sum().idxmax()
+
+    insight_text = f"""
+📊 Total Disbursed: {format_inr(total_disb)}  
+💰 Total Revenue: {format_inr(total_rev)}  
+📈 Avg Payout: {avg_payout:.2f}%  
+
+🏆 Top Campaign: {top_campaign} ({format_inr(top_value)})  
+📉 Lowest Campaign: {low_campaign} ({format_inr(low_value)})  
+
+👑 Best Manager Overall: {top_manager}  
+⚠️ {len(underperforming)} campaigns need attention  
+"""
+
+    st.info(insight_text)
 
 
 # -----------------------------
