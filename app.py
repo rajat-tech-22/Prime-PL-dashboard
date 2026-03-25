@@ -41,7 +41,7 @@ st.markdown("""
     <style>
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #ed265e;
+        background-color: #2596be;
         color: Black;
     }
     [data-testid="stSidebar"] .st-expander {
@@ -132,7 +132,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
-            background-color: #dea1ed;
+            background-color: white;
             padding: 20px;
             border-radius: 12px;
             border-left: 6px solid {color};
