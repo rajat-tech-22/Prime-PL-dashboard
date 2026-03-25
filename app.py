@@ -41,11 +41,11 @@ st.markdown("""
     <style>
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #2596be;
+        background-color: #FFFC5E;
         color: White;
     }
     [data-testid="stSidebar"] .st-expander {
-        background-color: #f0f2f6;
+        background-color: #61FF5E;
         border-radius: 8px;
         margin-bottom: 10px;
     }
