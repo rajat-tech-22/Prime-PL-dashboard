@@ -132,13 +132,49 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     )
     return fig
 
-def colored_metric(label, value, color="#000000"):
+def colored_metric(label, value, color="#636EFA"):
     st.markdown(f"""
-        <div style="background-color:{color}; padding:20px; border-radius:10px; text-align:center; color:white; margin-bottom:10px;">
-            <h4 style="margin:0">{label}</h4>
-            <h2 style="margin:0">{value}</h2>
+    <div style="
+        background: linear-gradient(135deg, {color}, #0f172a);
+        padding: 22px;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        position: relative;
+        overflow: hidden;
+    ">
+
+        <div style="
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        ">
+            {label}
         </div>
-        """, unsafe_allow_html=True)
+
+        <div style="
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        ">
+            {value}
+        </div>
+
+        <div style="
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        "></div>
+
+    </div>
+    """, unsafe_allow_html=True)
 
 # -----------------------------
 # Sidebar Filters
