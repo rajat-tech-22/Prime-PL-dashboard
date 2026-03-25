@@ -297,9 +297,9 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-   
+    
 
-    col1,col2,col3,col4 = st.columns()
+    col1,col2,col3,col4 = st.columns(4)
 
     with col1:
         colored_metric("Total Disbursed", format_inr(total_disb), "linear-gradient(135deg, #667eea, #764ba2)")
@@ -308,12 +308,13 @@ elif dashboard_type == "Single Manager":
     with col3:
         colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "linear-gradient(135deg, #fc4a1a, #f7b733)")
     with col4:
-         colored_metric("Transactions", txn_count, "linear-gradient(135deg, #f953c6, #b91d73)")
-
+        colored_metric("Transactions", txn_count, "linear-gradient(135deg, #f953c6, #b91d73)")
+    
 
    
- 
+
     
+  
 
     # -----------------------------
     # 📅 Daily Performance
@@ -338,17 +339,7 @@ elif dashboard_type == "Single Manager":
     st.markdown("### ☎️ Caller Efficiency")
     st.dataframe(caller_perf.sort_values("Efficiency %", ascending=False), use_container_width=True)
 
-    # -----------------------------
-    # 🔮 Prediction
-    # -----------------------------
-    monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
-
-    prediction = None
-    if len(monthly) >= 2:
-        growth_rate = monthly.pct_change().mean()
-        prediction = monthly.iloc[-1] * (1 + growth_rate)
-
-        st.success(f"🔮 Predicted Next Month: {format_inr(prediction)}")
+   
 
     # -----------------------------
     # 🤖 AI Recommendations
@@ -356,6 +347,9 @@ elif dashboard_type == "Single Manager":
     st.markdown("### 🤖 AI Recommendations")
 
     recommendations = []
+
+    if achievement_pct < 80:
+        recommendations.append("Increase focus on high-performing campaigns")
 
     if avg_payout < 5:
         recommendations.append("Improve payout quality")
@@ -376,6 +370,8 @@ elif dashboard_type == "Single Manager":
 📊 Manager Report - {selected_manager}
 
 💰 Disbursed: {format_inr(total_disb)}
+
+
 🏆 Campaign: {top_campaign}
 ☎️ Caller: {top_caller}
 
