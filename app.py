@@ -615,23 +615,8 @@ elif dashboard_type == "Campaign Performance":
         fig_bank.update_traces(cliponaxis=False)
         st.plotly_chart(fig_bank, use_container_width=True)
 
-    # -----------------------------
-    # 📈 Growth Analysis
-    # -----------------------------
-    current_month_index = camp_months.index(selected_camp_month)
-
-    if current_month_index > 0:
-        prev_month = camp_months[current_month_index - 1]
-
-        prev_df = df[df["Disb Month"] == prev_month]
-
-        curr_total = camp_df["Disbursed AMT"].sum()
-        prev_total = prev_df["Disbursed AMT"].sum()
-
-        growth = ((curr_total - prev_total) / prev_total * 100) if prev_total != 0 else 0
-
-        st.markdown("### 📈 Growth Analysis")
-        st.write(f"{selected_camp_month} vs {prev_month}: {growth:.2f}% change")
+    
+    
 
     # -----------------------------
     # 🤖 AI Insights
