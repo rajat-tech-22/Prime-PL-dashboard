@@ -42,7 +42,7 @@ st.markdown("""
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #2596be;
-        color: Black;
+        color: White;
     }
     [data-testid="stSidebar"] .st-expander {
         background-color: #f0f2f6;
