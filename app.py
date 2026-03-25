@@ -235,16 +235,14 @@ if dashboard_type == "All Managers":
             st.plotly_chart(fig_bank, use_container_width=True)
 
 
-
 # -----------------------------
-# Single Manager Dashboard (ADVANCED)
+# Single Manager Dashboard (ULTIMATE)
 # -----------------------------
 elif dashboard_type == "Single Manager":
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
         selected_manager = st.selectbox("Select Manager", managers)
         selected_month = st.selectbox("Select Month", months, index=latest_month_index)
 
-    # Filter
     filtered_df = df[df["Manager"]==selected_manager]
     if selected_month:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
@@ -268,56 +266,73 @@ elif dashboard_type == "Single Manager":
     # -----------------------------
     total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
+    # 🎯 TARGET (you can change this)
+    TARGET = 5000000  
+
+    achievement_pct = (total_disb / TARGET * 100) if TARGET else 0
+
     col1,col2,col3,col4,col5 = st.columns(5)
     with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
     with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
     with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
     with col4: colored_metric("Transactions", txn_count, "#FFA15A")
-
-    efficiency = (total_rev / total_disb * 100) if total_disb else 0
-    with col5: colored_metric("Efficiency %", f"{efficiency:.2f}%", "#19D3F3")
+    with col5: colored_metric("Target %", f"{achievement_pct:.1f}%", "#19D3F3")
 
     # -----------------------------
-    # 📈 Monthly Trend
+    # 🎯 Target vs Achievement Chart
+    # -----------------------------
+    fig_target = go.Figure(go.Bar(
+        x=["Target","Achieved"],
+        y=[TARGET/100000, total_disb/100000],
+        text=[f"{TARGET/100000:.1f}L", f"{total_disb/100000:.1f}L"],
+        textposition="outside",
+        marker_color=["#FF6692","#00CC96"]
+    ))
+    fig_target.update_layout(title="Target vs Achievement", template="plotly_white")
+    st.plotly_chart(fig_target, use_container_width=True)
+
+    # -----------------------------
+    # 📅 Daily Performance
+    # -----------------------------
+    if "Disb Date" in f.columns:
+        daily = f.groupby("Disb Date")["Disbursed AMT"].sum()
+
+        fig_daily = go.Figure()
+        fig_daily.add_trace(go.Scatter(
+            x=daily.index,
+            y=daily.values/100000,
+            mode='lines+markers'
+        ))
+        fig_daily.update_layout(title="Daily Performance", template="plotly_white")
+        st.plotly_chart(fig_daily, use_container_width=True)
+
+    # -----------------------------
+    # ☎️ Caller Efficiency Score
+    # -----------------------------
+    caller_perf = f.groupby("Caller").agg(
+        Disbursed=("Disbursed AMT","sum"),
+        Revenue=("Total_Revenue","sum"),
+        Txn=("Caller","count")
+    ).reset_index()
+
+    caller_perf["Efficiency %"] = (caller_perf["Revenue"] / caller_perf["Disbursed"] * 100).round(2)
+
+    st.markdown("### ☎️ Caller Efficiency Score")
+    st.dataframe(caller_perf.sort_values("Efficiency %", ascending=False), use_container_width=True)
+
+    # -----------------------------
+    # 🔮 Prediction (Next Month)
     # -----------------------------
     monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
 
-    fig_trend = go.Figure()
-    fig_trend.add_trace(go.Scatter(
-        x=monthly.index,
-        y=monthly.values/100000,
-        mode='lines+markers'
-    ))
+    if len(monthly) >= 2:
+        growth_rate = monthly.pct_change().mean()
+        last_value = monthly.iloc[-1]
 
-    fig_trend.update_layout(
-        title="Monthly Disbursed Trend",
-        template="plotly_white"
-    )
+        prediction = last_value * (1 + growth_rate)
 
-    st.plotly_chart(fig_trend, use_container_width=True)
-
-    # -----------------------------
-    # 🏆 Campaign Strength
-    # -----------------------------
-    camp_perf = f.groupby("Campaign")["Disbursed AMT"].sum()
-
-    top_camp = camp_perf.idxmax()
-    low_camp = camp_perf.idxmin()
-
-    st.success(f"🏆 Top Campaign: {top_camp}")
-    st.error(f"📉 Weak Campaign: {low_camp}")
-
-    # -----------------------------
-    # 🚨 Underperforming Callers
-    # -----------------------------
-    caller_perf = f.groupby("Caller")["Disbursed AMT"].sum()
-    avg_caller = caller_perf.mean()
-
-    low_callers = caller_perf[caller_perf < avg_caller]
-
-    if not low_callers.empty:
-        st.warning("🚨 Underperforming Callers")
-        st.dataframe(low_callers.reset_index(), use_container_width=True)
+        st.markdown("### 🔮 Next Month Prediction")
+        st.success(f"Predicted Disbursed: {format_inr(prediction)}")
 
     # -----------------------------
     # 📊 Charts
@@ -325,48 +340,28 @@ elif dashboard_type == "Single Manager":
     st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,"bank1"), use_container_width=True)
     st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,"caller1"), use_container_width=True)
 
-    fig_pie = go.Figure(go.Pie(
-        labels=camp_perf.index,
-        values=camp_perf.values,
-        hole=0.5,
-        textinfo='label+percent'
-    ))
-    fig_pie.update_layout(title="Campaign Contribution")
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-    # -----------------------------
-    # 🥇 Ranking
-    # -----------------------------
-    rank_df = df.groupby("Manager")["Disbursed AMT"].sum().sort_values(ascending=False)
-    rank = rank_df.index.get_loc(selected_manager) + 1
-
-    st.success(f"🥇 Rank: #{rank} among all managers")
-
     # -----------------------------
     # 🤖 AI Insights
     # -----------------------------
     insight = f"""
-📊 {selected_manager} Performance Summary:
+📊 {selected_manager} Summary:
 
-- Total Disbursed: {format_inr(total_disb)}
-- Revenue: {format_inr(total_rev)}
-- Avg Payout: {avg_payout:.2f}%
+- Disbursed: {format_inr(total_disb)}
+- Target Achievement: {achievement_pct:.1f}%
 
-🏆 Strong in: {top_camp}  
-📉 Needs Improvement: {low_camp}  
+🏆 Strong Campaign: {top_campaign}  
 🎯 Top Bank: {top_bank}  
+☎️ Best Caller: {top_caller}  
 
-⚠️ {len(low_callers)} callers need attention
+🔮 Expected Next Month: {format_inr(prediction) if len(monthly)>=2 else "N/A"}
 """
 
     st.info(insight)
 
     # -----------------------------
-    # 📄 Data
+    # Data
     # -----------------------------
-    st.markdown("### 📄 Data")
-    st.dataframe(f, use_container_width=True, height=400)
-
+    st.dataframe(f, use_container_width=True)
     st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 # -----------------------------
 # Comparison Dashboard (FINAL FIXED)
