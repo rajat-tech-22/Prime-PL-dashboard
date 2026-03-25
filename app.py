@@ -46,7 +46,7 @@ st.markdown("""
     }
     [data-testid="stSidebar"] .st-expander {
         background-color: #f0f2f6;
-        border-radius: 8px;
+        border-radius: 10px;
         margin-bottom: 10px;
     }
     
