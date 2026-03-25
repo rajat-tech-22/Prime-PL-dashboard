@@ -285,7 +285,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (ADVANCED)
+# Comparison Dashboard (FINAL FIXED)
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
@@ -317,6 +317,7 @@ elif dashboard_type == "Comparison":
 
     st.header("⚖️ Manager Benchmark")
 
+    # Validation
     if selected_manager1 == selected_manager2:
         st.warning("Select different managers")
         st.stop()
@@ -330,12 +331,16 @@ elif dashboard_type == "Comparison":
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
     # -----------------------------
-    # 🏆 Winner Logic
+    # 🏆 Winner
     # -----------------------------
-    winner = selected_manager1 if d1 > d2 else selected_manager2
-    win_amt = max(d1, d2)
+    if d1 > d2:
+        winner = selected_manager1
+        win_amt = d1
+    else:
+        winner = selected_manager2
+        win_amt = d2
 
-    st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)} disbursed")
+    st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
 
     # -----------------------------
     # Metric Cards
@@ -357,7 +362,7 @@ elif dashboard_type == "Comparison":
         colored_metric("Transactions", txn2, "#FFA15A")
 
     # -----------------------------
-    # 📊 Comparison Bar Chart
+    # 📊 Comparison Chart (WITH DATA LABELS)
     # -----------------------------
     comp_df = pd.DataFrame({
         "Metric": ["Disbursed", "Revenue", "Transactions"],
@@ -366,13 +371,43 @@ elif dashboard_type == "Comparison":
     })
 
     fig_comp = go.Figure()
-    fig_comp.add_trace(go.Bar(name=selected_manager1, x=comp_df["Metric"], y=comp_df[selected_manager1]))
-    fig_comp.add_trace(go.Bar(name=selected_manager2, x=comp_df["Metric"], y=comp_df[selected_manager2]))
+
+    fig_comp.add_trace(go.Bar(
+        name=selected_manager1,
+        x=comp_df["Metric"],
+        y=comp_df[selected_manager1],
+        text=[
+            f"{v:.2f}L" if i < 2 else f"{int(v)}"
+            for i, v in enumerate(comp_df[selected_manager1])
+        ],
+        textposition='outside',
+        marker_color="#636EFA"
+    ))
+
+    fig_comp.add_trace(go.Bar(
+        name=selected_manager2,
+        x=comp_df["Metric"],
+        y=comp_df[selected_manager2],
+        text=[
+            f"{v:.2f}L" if i < 2 else f"{int(v)}"
+            for i, v in enumerate(comp_df[selected_manager2])
+        ],
+        textposition='outside',
+        marker_color="#EF553B"
+    ))
 
     fig_comp.update_layout(
         barmode='group',
         title="Manager Comparison Overview",
-        template="plotly_white"
+        template="plotly_white",
+        height=450,
+        uniformtext_minsize=10,
+        uniformtext_mode='hide'
+    )
+
+    fig_comp.update_traces(
+        textfont_size=12,
+        cliponaxis=False
     )
 
     st.plotly_chart(fig_comp, use_container_width=True)
@@ -380,11 +415,11 @@ elif dashboard_type == "Comparison":
     # -----------------------------
     # 📊 Bank + Caller Charts
     # -----------------------------
-    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,"bank_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,"bank_cmp2"), use_container_width=True)
 
-    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), use_container_width=True)
+    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,"caller_cmp1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,"caller_cmp2"), use_container_width=True)
 
     # -----------------------------
     # 📈 Growth Difference
