@@ -294,6 +294,12 @@ elif dashboard_type == "Comparison":
         selected_manager2 = st.selectbox("Second Manager", managers)
         selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
 
+    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
+
     f1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
 
