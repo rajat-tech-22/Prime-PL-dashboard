@@ -285,7 +285,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard
+# Comparison Dashboard (ADVANCED)
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
@@ -300,20 +300,20 @@ elif dashboard_type == "Comparison":
     f2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
 
     # -----------------------------
-    # 🔥 NEW: Campaign Multi Filter
+    # 🔥 Separate Campaign Filters
     # -----------------------------
-    all_campaigns = sorted(df["Campaign"].dropna().unique())
+    with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
+        camp1_list = sorted(f1["Campaign"].dropna().unique())
+        selected_camp1 = st.multiselect("Campaigns - Manager 1", camp1_list, default=camp1_list)
 
-    with st.sidebar.expander("Campaign", expanded=True):
-        selected_campaigns = st.multiselect(
-            "Select Campaigns",
-            all_campaigns,
-            default=all_campaigns
-        )
+    with st.sidebar.expander(f"{selected_manager2} Campaign Filter", expanded=True):
+        camp2_list = sorted(f2["Campaign"].dropna().unique())
+        selected_camp2 = st.multiselect("Campaigns - Manager 2", camp2_list, default=camp2_list)
 
-    if selected_campaigns:
-        f1 = f1[f1["Campaign"].isin(selected_campaigns)]
-        f2 = f2[f2["Campaign"].isin(selected_campaigns)]
+    if selected_camp1:
+        f1 = f1[f1["Campaign"].isin(selected_camp1)]
+    if selected_camp2:
+        f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
     st.header("⚖️ Manager Benchmark")
 
@@ -329,7 +329,17 @@ elif dashboard_type == "Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # Cards
+    # -----------------------------
+    # 🏆 Winner Logic
+    # -----------------------------
+    winner = selected_manager1 if d1 > d2 else selected_manager2
+    win_amt = max(d1, d2)
+
+    st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)} disbursed")
+
+    # -----------------------------
+    # Metric Cards
+    # -----------------------------
     col1,col2 = st.columns(2)
 
     with col1:
@@ -346,19 +356,54 @@ elif dashboard_type == "Comparison":
         colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
         colored_metric("Transactions", txn2, "#FFA15A")
 
-    # Charts
+    # -----------------------------
+    # 📊 Comparison Bar Chart
+    # -----------------------------
+    comp_df = pd.DataFrame({
+        "Metric": ["Disbursed", "Revenue", "Transactions"],
+        selected_manager1: [d1/100000, r1/100000, txn1],
+        selected_manager2: [d2/100000, r2/100000, txn2]
+    })
+
+    fig_comp = go.Figure()
+    fig_comp.add_trace(go.Bar(name=selected_manager1, x=comp_df["Metric"], y=comp_df[selected_manager1]))
+    fig_comp.add_trace(go.Bar(name=selected_manager2, x=comp_df["Metric"], y=comp_df[selected_manager2]))
+
+    fig_comp.update_layout(
+        barmode='group',
+        title="Manager Comparison Overview",
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig_comp, use_container_width=True)
+
+    # -----------------------------
+    # 📊 Bank + Caller Charts
+    # -----------------------------
     st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,key_val="bank_cmp1"), use_container_width=True)
     st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,key_val="bank_cmp2"), use_container_width=True)
 
     st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,key_val="caller_cmp1"), use_container_width=True)
     st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,key_val="caller_cmp2"), use_container_width=True)
 
+    # -----------------------------
+    # 📈 Growth Difference
+    # -----------------------------
+    growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
+
+    st.markdown("### 📈 Performance Difference")
+    st.write(f"{selected_manager1} vs {selected_manager2}: {growth:.2f}% difference in disbursed amount")
+
+    # -----------------------------
     # Insights
+    # -----------------------------
     st.markdown("### 📝 Insights")
     st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
     st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
 
-    # Data tables
+    # -----------------------------
+    # Data Tables
+    # -----------------------------
     st.markdown("### 📄 Data - Manager 1")
     st.dataframe(f1, use_container_width=True, height=300)
     st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
@@ -366,8 +411,8 @@ elif dashboard_type == "Comparison":
     st.markdown("### 📄 Data - Manager 2")
     st.dataframe(f2, use_container_width=True, height=300)
     st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
-
-# -----------------------------
+    
+# -----------------------------    
 # Campaign Performance Dashboard
 # -----------------------------
 elif dashboard_type == "Campaign Performance":
