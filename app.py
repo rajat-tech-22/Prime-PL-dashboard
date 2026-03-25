@@ -132,7 +132,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
-            background-color: #eb5e34;
+            background-color: #eacbf2;
             padding: 20px;
             border-radius: 12px;
             border-left: 6px solid {color};
