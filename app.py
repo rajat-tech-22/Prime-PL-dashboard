@@ -1,16 +1,11 @@
-import streamlit as st
-import pandas as pd
-import plotly.graph_objs as go
-from streamlit_autorefresh import st_autorefresh
-
 # -----------------------------
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
+st_autorefresh(interval=60*1000, key="refresh")
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# 🔐 LOGIN
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -20,7 +15,6 @@ if "login" not in st.session_state:
 
 if not st.session_state.login:
     st.title("🔐 Login")
-
     u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
 
@@ -31,34 +25,17 @@ if not st.session_state.login:
             st.rerun()
         else:
             st.error("Invalid Credentials ❌")
-
     st.stop()
-
-
 
 # -----------------------------
 # Sidebar CSS
 # -----------------------------
 st.markdown("""
-    <style>
-    [data-testid="stSidebar"] {
-        background-color: #2596be;
-        color: Black;
-    }
-    [data-testid="stSidebar"] .st-expander {
-        background-color: #42f5da;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        color:#4287f5;
-    }
-    [data-testid="stSidebar"] .stRadio > div,
-    [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stMultiselect > div {
-        color: white;
-        background-color: #42f5da;
-        border-radius: 5px;
-    }
-    </style>
+<style>
+[data-testid="stSidebar"] {
+    background-color: #2596be;
+}
+</style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
@@ -91,47 +68,7 @@ def format_inr(number):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
 
-base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-
-def get_colors(index_list, top_value):
-    colors = []
-    for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
-    return colors
-
-def calc_metrics(f):
-    total_disb = f["Disbursed AMT"].sum()
-    total_rev = f["Total_Revenue"].sum()
-    avg_payout = (total_rev/total_disb)*100 if total_disb else 0
-    txn_count = len(f)
-    avg_disb = total_disb/txn_count if txn_count else 0
-    top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
-
-def plot_bar(f, col, top_value, manager_name, key_val):
-    summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = get_colors(summary.index, top_value)
-    fig = go.Figure(go.Bar(
-        x=summary.index,
-        y=summary.values/100000,
-        text=[f"{v/100000:.2f}L" for v in summary.values],
-        textposition="auto",
-        marker_color=colors,
-        name=manager_name
-    ))
-    fig.update_layout(
-        yaxis_title="Amount (L)",
-        template="plotly_white",
-        height=400,
-        title=f"{manager_name} - {col} Summary"
-    )
-    return fig
-
+# 🔥 UPDATED CARD UI
 def colored_metric(label, value, color="#636EFA"):
     st.markdown(f"""
     <div style="
@@ -144,35 +81,20 @@ def colored_metric(label, value, color="#636EFA"):
         position: relative;
         overflow: hidden;
     ">
-
         <div style="
             font-size: 13px;
             opacity: 0.8;
             margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         ">
             {label}
         </div>
-
         <div style="
             font-size: 28px;
             font-weight: 700;
-            letter-spacing: 0.5px;
         ">
             {value}
         </div>
-
-        <div style="
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 80px;
-            height: 80px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-        "></div>
-
     </div>
     """, unsafe_allow_html=True)
 
