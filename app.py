@@ -237,13 +237,14 @@ if dashboard_type == "All Managers":
 
 
 # -----------------------------
-# Single Manager Dashboard
+# Single Manager Dashboard (ADVANCED)
 # -----------------------------
 elif dashboard_type == "Single Manager":
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
         selected_manager = st.selectbox("Select Manager", managers)
         selected_month = st.selectbox("Select Month", months, index=latest_month_index)
 
+    # Filter
     filtered_df = df[df["Manager"]==selected_manager]
     if selected_month:
         filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
@@ -251,39 +252,122 @@ elif dashboard_type == "Single Manager":
     campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
     with st.sidebar.expander("Campaign Filter", expanded=True):
         selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
     st.header(f"📈 Insights - {selected_manager}")
     f = filtered_df
+
     if f.empty:
         st.warning("No data available")
-    else:
-        total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-        col1,col2,col3,col4 = st.columns(4)
-        with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
-        with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
-        with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
-        with col4: colored_metric("Transactions", txn_count, "#FFA15A")
+        st.stop()
 
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
-        summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-        fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
-        fig.update_layout(title="Campaign Distribution")
-        st.plotly_chart(fig, use_container_width=True)
+    # -----------------------------
+    # Metrics
+    # -----------------------------
+    total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
 
-        st.markdown("### 📝 Insights")
-        st.write(f"Top Bank: {top_bank}")
-        st.write(f"Top Campaign: {top_campaign}")
-        st.write(f"Top Caller: {top_caller}")
-        st.write(f"Transactions: {txn_count}")
-        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
+    col1,col2,col3,col4,col5 = st.columns(5)
+    with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+    with col2: colored_metric("Revenue", format_inr(total_rev), "#00CC96")
+    with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+    with col4: colored_metric("Transactions", txn_count, "#FFA15A")
 
-        st.markdown("### 📄 Data")
-        st.dataframe(f, use_container_width=True, height=400)
-        st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
+    efficiency = (total_rev / total_disb * 100) if total_disb else 0
+    with col5: colored_metric("Efficiency %", f"{efficiency:.2f}%", "#19D3F3")
 
+    # -----------------------------
+    # 📈 Monthly Trend
+    # -----------------------------
+    monthly = df[df["Manager"]==selected_manager].groupby("Disb Month")["Disbursed AMT"].sum()
+
+    fig_trend = go.Figure()
+    fig_trend.add_trace(go.Scatter(
+        x=monthly.index,
+        y=monthly.values/100000,
+        mode='lines+markers'
+    ))
+
+    fig_trend.update_layout(
+        title="Monthly Disbursed Trend",
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+    # -----------------------------
+    # 🏆 Campaign Strength
+    # -----------------------------
+    camp_perf = f.groupby("Campaign")["Disbursed AMT"].sum()
+
+    top_camp = camp_perf.idxmax()
+    low_camp = camp_perf.idxmin()
+
+    st.success(f"🏆 Top Campaign: {top_camp}")
+    st.error(f"📉 Weak Campaign: {low_camp}")
+
+    # -----------------------------
+    # 🚨 Underperforming Callers
+    # -----------------------------
+    caller_perf = f.groupby("Caller")["Disbursed AMT"].sum()
+    avg_caller = caller_perf.mean()
+
+    low_callers = caller_perf[caller_perf < avg_caller]
+
+    if not low_callers.empty:
+        st.warning("🚨 Underperforming Callers")
+        st.dataframe(low_callers.reset_index(), use_container_width=True)
+
+    # -----------------------------
+    # 📊 Charts
+    # -----------------------------
+    st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,"bank1"), use_container_width=True)
+    st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,"caller1"), use_container_width=True)
+
+    fig_pie = go.Figure(go.Pie(
+        labels=camp_perf.index,
+        values=camp_perf.values,
+        hole=0.5,
+        textinfo='label+percent'
+    ))
+    fig_pie.update_layout(title="Campaign Contribution")
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+    # -----------------------------
+    # 🥇 Ranking
+    # -----------------------------
+    rank_df = df.groupby("Manager")["Disbursed AMT"].sum().sort_values(ascending=False)
+    rank = rank_df.index.get_loc(selected_manager) + 1
+
+    st.success(f"🥇 Rank: #{rank} among all managers")
+
+    # -----------------------------
+    # 🤖 AI Insights
+    # -----------------------------
+    insight = f"""
+📊 {selected_manager} Performance Summary:
+
+- Total Disbursed: {format_inr(total_disb)}
+- Revenue: {format_inr(total_rev)}
+- Avg Payout: {avg_payout:.2f}%
+
+🏆 Strong in: {top_camp}  
+📉 Needs Improvement: {low_camp}  
+🎯 Top Bank: {top_bank}  
+
+⚠️ {len(low_callers)} callers need attention
+"""
+
+    st.info(insight)
+
+    # -----------------------------
+    # 📄 Data
+    # -----------------------------
+    st.markdown("### 📄 Data")
+    st.dataframe(f, use_container_width=True, height=400)
+
+    st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 # -----------------------------
 # Comparison Dashboard (FINAL FIXED)
 # -----------------------------
