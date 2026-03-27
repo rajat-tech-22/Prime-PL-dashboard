@@ -62,8 +62,7 @@ st.markdown("""
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSlQfOoFW-3hKr--C51PRMnKbbDsB3EtupADVZcwOwdb8_fcTqflib6_hDTy-9zDUxCNo1TiMzX0xzv/pub?gid=131520608&single=true&output=csv"
-    df = pd.read_csv(url)
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRfDuP8FJ8yxoZxPPiKYrxWyP1Brlq7hmyxrkp81_oURiPrCJHqup7Ru8wFoE-pWMEZjZIuH_VBM5_i/pub?output=csv
     df.replace("null", None, inplace=True)
     return df
 
