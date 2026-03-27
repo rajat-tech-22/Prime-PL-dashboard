@@ -290,13 +290,9 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT + Bank/Campaign/Caller Graphs)
+# Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT)
 # -----------------------------
 elif dashboard_type == "Comparison":
-
-    # -----------------------------
-    # Manager & Month Selection
-    # -----------------------------
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
         selected_manager1 = st.selectbox("First Manager", managers)
         selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
@@ -340,9 +336,7 @@ elif dashboard_type == "Comparison":
         st.warning("No data available for selected filters")
         st.stop()
 
-    # -----------------------------
     # Metrics
-    # -----------------------------
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
@@ -365,18 +359,21 @@ elif dashboard_type == "Comparison":
         else:
             winner = selected_manager2
             win_amt = d2
+
         st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
 
     # -----------------------------
     # Metric Cards
     # -----------------------------
     col1,col2 = st.columns(2)
+
     with col1:
         st.subheader(label1)
         colored_metric("Total Disbursed", format_inr(d1), "#636EFA")
         colored_metric("Total Revenue", format_inr(r1), "#00CC96")
         colored_metric("Avg Payout %", f"{p1:.2f}%", "#EF553B")
         colored_metric("Transactions", txn1, "#FFA15A")
+
     with col2:
         st.subheader(label2)
         colored_metric("Total Disbursed", format_inr(d2), "#636EFA")
@@ -392,7 +389,9 @@ elif dashboard_type == "Comparison":
         label1: [d1/100000, r1/100000, txn1],
         label2: [d2/100000, r2/100000, txn2]
     })
+
     fig_comp = go.Figure()
+
     fig_comp.add_trace(go.Bar(
         name=label1,
         x=comp_df["Metric"],
@@ -401,6 +400,7 @@ elif dashboard_type == "Comparison":
         textposition='outside',
         marker_color="#636EFA"
     ))
+
     fig_comp.add_trace(go.Bar(
         name=label2,
         x=comp_df["Metric"],
@@ -409,18 +409,21 @@ elif dashboard_type == "Comparison":
         textposition='outside',
         marker_color="#EF553B"
     ))
+
     fig_comp.update_layout(
         barmode='group',
         title="Comparison Overview",
         template="plotly_white",
         height=450
     )
+
     st.plotly_chart(fig_comp, use_container_width=True)
 
     # -----------------------------
     # 📈 Growth Difference
     # -----------------------------
     growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
+
     st.markdown("### 📈 Performance Difference")
     if same_manager:
         st.write(f"{selected_month1} vs {selected_month2}: {growth:.2f}% change")
@@ -431,6 +434,7 @@ elif dashboard_type == "Comparison":
     # 🧠 Insights
     # -----------------------------
     st.markdown("### 📝 Insights")
+
     if same_manager:
         if d1 > d2:
             st.success(f"Growth observed in {selected_month1}")
@@ -438,102 +442,20 @@ elif dashboard_type == "Comparison":
             st.error(f"Drop observed in {selected_month1}")
         else:
             st.info("No change between months")
+
     st.write(f"{label1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
     st.write(f"{label2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
 
     # -----------------------------
-    # 🏦 Bank Comparison Graph
+    # 📄 Data Tables
     # -----------------------------
-    st.markdown("### 🏦 Bank Comparison")
-    bank1 = f1.groupby("Bank")["Disbursed AMT"].sum().reset_index()
-    bank2 = f2.groupby("Bank")["Disbursed AMT"].sum().reset_index()
-    bank_merge = pd.merge(bank1, bank2, on="Bank", how="outer",
-                          suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
-    if not bank_merge.empty:
-        bank_merge = bank_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
-        fig_bank = go.Figure()
-        fig_bank.add_bar(
-            x=bank_merge["Bank"],
-            y=bank_merge[f"Disbursed AMT_{label1}"]/100000,
-            name=label1,
-            text=[f"{v/100000:.2f}L" for v in bank_merge[f"Disbursed AMT_{label1}"]],
-            textposition="outside"
-        )
-        fig_bank.add_bar(
-            x=bank_merge["Bank"],
-            y=bank_merge[f"Disbursed AMT_{label2}"]/100000,
-            name=label2,
-            text=[f"{v/100000:.2f}L" for v in bank_merge[f"Disbursed AMT_{label2}"]],
-            textposition="outside"
-        )
-        fig_bank.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
-        st.plotly_chart(fig_bank, use_container_width=True)
+    st.markdown("### 📄 Data - First Selection")
+    st.dataframe(f1, use_container_width=True, height=300)
+    st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
 
-    # -----------------------------
-    # 📢 Campaign Comparison Graph
-    # -----------------------------
-    st.markdown("### 📢 Campaign Comparison")
-    camp1 = f1.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
-    camp2 = f2.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
-    camp_merge = pd.merge(camp1, camp2, on="Campaign", how="outer",
-                          suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
-    if not camp_merge.empty:
-        camp_merge = camp_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
-        fig_camp = go.Figure()
-        fig_camp.add_bar(
-            x=camp_merge["Campaign"],
-            y=camp_merge[f"Disbursed AMT_{label1}"]/100000,
-            name=label1,
-            text=[f"{v/100000:.2f}L" for v in camp_merge[f"Disbursed AMT_{label1}"]],
-            textposition="outside"
-        )
-        fig_camp.add_bar(
-            x=camp_merge["Campaign"],
-            y=camp_merge[f"Disbursed AMT_{label2}"]/100000,
-            name=label2,
-            text=[f"{v/100000:.2f}L" for v in camp_merge[f"Disbursed AMT_{label2}"]],
-            textposition="outside"
-        )
-        fig_camp.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
-        st.plotly_chart(fig_camp, use_container_width=True)
-
-    # -----------------------------
-    # 👨‍💼 Caller Comparison Graph
-    # -----------------------------
-    st.markdown("### 👨‍💼 Caller Comparison")
-    caller1 = f1.groupby("Caller")["Disbursed AMT"].sum().reset_index()
-    caller2 = f2.groupby("Caller")["Disbursed AMT"].sum().reset_index()
-    caller_merge = pd.merge(caller1, caller2, on="Caller", how="outer",
-                            suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
-    if not caller_merge.empty:
-        caller_merge = caller_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
-        fig_caller = go.Figure()
-        fig_caller.add_bar(
-            x=caller_merge["Caller"],
-            y=caller_merge[f"Disbursed AMT_{label1}"]/100000,
-            name=label1,
-            text=[f"{v/100000:.2f}L" for v in caller_merge[f"Disbursed AMT_{label1}"]],
-            textposition="outside"
-        )
-        fig_caller.add_bar(
-            x=caller_merge["Caller"],
-            y=caller_merge[f"Disbursed AMT_{label2}"]/100000,
-            name=label2,
-            text=[f"{v/100000:.2f}L" for v in caller_merge[f"Disbursed AMT_{label2}"]],
-            textposition="outside"
-        )
-        fig_caller.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
-        st.plotly_chart(fig_caller, use_container_width=True)
-
-    # -----------------------------
-    # 📄 Final Data Table (optional)
-    # -----------------------------
-    st.markdown("### 📄 Final Data Table (Side by Side)")
-    f1_copy = f1.add_suffix(f" ({label1})").reset_index(drop=True)
-    f2_copy = f2.add_suffix(f" ({label2})").reset_index(drop=True)
-    final_df = pd.concat([f1_copy, f2_copy], axis=1)
-    st.dataframe(final_df, use_container_width=True, height=400)
-    st.download_button("Download CSV of Final Comparison", final_df.to_csv(index=False), "final_comparison.csv", "text/csv")
+    st.markdown("### 📄 Data - Second Selection")
+    st.dataframe(f2, use_container_width=True, height=300)
+    st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
