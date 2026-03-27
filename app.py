@@ -290,7 +290,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (FINAL FIXED)
+# Comparison Dashboard (FINAL WITH LABELS)
 # -----------------------------
 elif dashboard_type == "Comparison":
 
@@ -345,7 +345,6 @@ elif dashboard_type == "Comparison":
 
     # Cards
     col1,col2 = st.columns(2)
-
     with col1:
         colored_metric("Total Disbursed", format_inr(d1))
         colored_metric("Revenue", format_inr(r1))
@@ -366,10 +365,26 @@ elif dashboard_type == "Comparison":
     })
 
     fig_comp = go.Figure()
-    fig_comp.add_bar(name=label1, x=comp_df["Metric"], y=comp_df[label1])
-    fig_comp.add_bar(name=label2, x=comp_df["Metric"], y=comp_df[label2])
+
+    fig_comp.add_bar(
+        name=label1,
+        x=comp_df["Metric"],
+        y=comp_df[label1],
+        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i,v in enumerate(comp_df[label1])],
+        textposition="outside"
+    )
+
+    fig_comp.add_bar(
+        name=label2,
+        x=comp_df["Metric"],
+        y=comp_df[label2],
+        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i,v in enumerate(comp_df[label2])],
+        textposition="outside"
+    )
 
     fig_comp.update_layout(barmode='group', template="plotly_white")
+    fig_comp.update_traces(cliponaxis=False)
+
     st.plotly_chart(fig_comp, use_container_width=True)
 
     # =========================================================
@@ -387,10 +402,26 @@ elif dashboard_type == "Comparison":
         bank_merge = bank_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
 
         fig_bank = go.Figure()
-        fig_bank.add_bar(x=bank_merge["Bank"], y=bank_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
-        fig_bank.add_bar(x=bank_merge["Bank"], y=bank_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
+
+        fig_bank.add_bar(
+            x=bank_merge["Bank"],
+            y=bank_merge[f"Disbursed AMT_{label1}"]/100000,
+            name=label1,
+            text=[f"{v/100000:.2f}L" for v in bank_merge[f"Disbursed AMT_{label1}"]],
+            textposition="outside"
+        )
+
+        fig_bank.add_bar(
+            x=bank_merge["Bank"],
+            y=bank_merge[f"Disbursed AMT_{label2}"]/100000,
+            name=label2,
+            text=[f"{v/100000:.2f}L" for v in bank_merge[f"Disbursed AMT_{label2}"]],
+            textposition="outside"
+        )
 
         fig_bank.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        fig_bank.update_traces(cliponaxis=False)
+
         st.plotly_chart(fig_bank, use_container_width=True)
 
     # =========================================================
@@ -408,10 +439,26 @@ elif dashboard_type == "Comparison":
         camp_merge = camp_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
 
         fig_camp = go.Figure()
-        fig_camp.add_bar(x=camp_merge["Campaign"], y=camp_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
-        fig_camp.add_bar(x=camp_merge["Campaign"], y=camp_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
+
+        fig_camp.add_bar(
+            x=camp_merge["Campaign"],
+            y=camp_merge[f"Disbursed AMT_{label1}"]/100000,
+            name=label1,
+            text=[f"{v/100000:.2f}L" for v in camp_merge[f"Disbursed AMT_{label1}"]],
+            textposition="outside"
+        )
+
+        fig_camp.add_bar(
+            x=camp_merge["Campaign"],
+            y=camp_merge[f"Disbursed AMT_{label2}"]/100000,
+            name=label2,
+            text=[f"{v/100000:.2f}L" for v in camp_merge[f"Disbursed AMT_{label2}"]],
+            textposition="outside"
+        )
 
         fig_camp.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        fig_camp.update_traces(cliponaxis=False)
+
         st.plotly_chart(fig_camp, use_container_width=True)
 
     # =========================================================
@@ -429,10 +476,26 @@ elif dashboard_type == "Comparison":
         caller_merge = caller_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
 
         fig_caller = go.Figure()
-        fig_caller.add_bar(x=caller_merge["Caller"], y=caller_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
-        fig_caller.add_bar(x=caller_merge["Caller"], y=caller_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
+
+        fig_caller.add_bar(
+            x=caller_merge["Caller"],
+            y=caller_merge[f"Disbursed AMT_{label1}"]/100000,
+            name=label1,
+            text=[f"{v/100000:.2f}L" for v in caller_merge[f"Disbursed AMT_{label1}"]],
+            textposition="outside"
+        )
+
+        fig_caller.add_bar(
+            x=caller_merge["Caller"],
+            y=caller_merge[f"Disbursed AMT_{label2}"]/100000,
+            name=label2,
+            text=[f"{v/100000:.2f}L" for v in caller_merge[f"Disbursed AMT_{label2}"]],
+            textposition="outside"
+        )
 
         fig_caller.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        fig_caller.update_traces(cliponaxis=False)
+
         st.plotly_chart(fig_caller, use_container_width=True)
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
