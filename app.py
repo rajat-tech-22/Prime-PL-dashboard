@@ -58,19 +58,22 @@ df = load_data()
 # Helper Functions
 # -----------------------------
 def format_inr(number):
-    if number is None or number == 0:
+    try:
+        if number is None or pd.isna(number) or number == 0:
+            return "₹0"
+        s = str(int(number))
+        last3 = s[-3:]
+        rest = s[:-3]
+        parts = []
+        while len(rest) > 2:
+            parts.append(rest[-2:])
+            rest = rest[:-2]
+        if rest:
+            parts.append(rest)
+        parts.reverse()
+        return "₹" + ",".join(parts) + "," + last3
+    except:
         return "₹0"
-    s = str(int(number))
-    last3 = s[-3:]
-    rest = s[:-3]
-    parts = []
-    while len(rest) > 2:
-        parts.append(rest[-2:])
-        rest = rest[:-2]
-    if rest:
-        parts.append(rest)
-    parts.reverse()
-    return "₹" + ",".join(parts) + "," + last3
 
 base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
@@ -196,7 +199,6 @@ if dashboard_type == "All Managers":
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
-        # --- Aggregate ---
         agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count"),
@@ -216,7 +218,6 @@ if dashboard_type == "All Managers":
         with col3: colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
         with col4: colored_target_card("Total Target", total_target, "#8A2BE2")
 
-        # --- Table ---
         agg_df_display = agg_df.copy()
         agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
         agg_df_display["Target"] = agg_df_display["Target"].apply(format_inr)
@@ -224,7 +225,6 @@ if dashboard_type == "All Managers":
         st.dataframe(agg_df_display, use_container_width=True, height=500)
         st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
-        # --- Bank-wise chart ---
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
             top_bank = bank_summary.idxmax()
@@ -285,7 +285,6 @@ elif dashboard_type == "Single Manager":
         st.write(f"Transactions: {txn_count}")
         st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
-        # --- Table with Target ---
         f_display = f.copy()
         f_display["Disbursed AMT"] = f_display["Disbursed AMT"].apply(format_inr)
         f_display["Total_Revenue"] = f_display["Total_Revenue"].apply(format_inr)
