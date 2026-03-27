@@ -196,9 +196,11 @@ if dashboard_type == "All Managers":
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
+        # --- Aggregate ---
         agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count"),
+            Target=("Target","first")  # Target column show in table
         ).reset_index()
 
         total_disbursed = agg_df["Total_Disbursed"].sum()
@@ -214,12 +216,15 @@ if dashboard_type == "All Managers":
         with col3: colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
         with col4: colored_target_card("Total Target", total_target, "#8A2BE2")
 
+        # --- Table ---
         agg_df_display = agg_df.copy()
         agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        agg_df_display["Target"] = agg_df_display["Target"].apply(format_inr)
         st.subheader("📄 Detailed Table")
         st.dataframe(agg_df_display, use_container_width=True, height=500)
         st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
+        # --- Bank-wise chart ---
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
             top_bank = bank_summary.idxmax()
@@ -280,6 +285,11 @@ elif dashboard_type == "Single Manager":
         st.write(f"Transactions: {txn_count}")
         st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
 
+        # --- Table with Target ---
+        f_display = f.copy()
+        f_display["Disbursed AMT"] = f_display["Disbursed AMT"].apply(format_inr)
+        f_display["Total_Revenue"] = f_display["Total_Revenue"].apply(format_inr)
+        f_display["Target"] = f_display["Target"].apply(format_inr)
         st.markdown("### 📄 Data")
-        st.dataframe(f, use_container_width=True, height=400)
-        st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
+        st.dataframe(f_display, use_container_width=True, height=400)
+        st.download_button("Download CSV", f_display.to_csv(index=False), "single_manager.csv", "text/csv")
