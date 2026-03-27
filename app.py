@@ -290,7 +290,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (FINAL FIXED)
+# Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT)
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
@@ -299,6 +299,9 @@ elif dashboard_type == "Comparison":
 
         selected_manager2 = st.selectbox("Second Manager", managers)
         selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
+
+    # Detect same manager comparison
+    same_manager = selected_manager1 == selected_manager2
 
     # Base filters
     f1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
@@ -320,13 +323,15 @@ elif dashboard_type == "Comparison":
     if selected_camp2:
         f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
-    st.header("⚖️ Manager Benchmark")
+    # -----------------------------
+    # Header
+    # -----------------------------
+    if same_manager:
+        st.header(f"📅 Month Comparison - {selected_manager1}")
+    else:
+        st.header("⚖️ Manager Benchmark")
 
     # Validation
-    if selected_manager1 == selected_manager2:
-        st.warning("Select different managers")
-        st.stop()
-
     if f1.empty or f2.empty:
         st.warning("No data available for selected filters")
         st.stop()
@@ -335,17 +340,27 @@ elif dashboard_type == "Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # -----------------------------
-    # 🏆 Winner
-    # -----------------------------
-    if d1 > d2:
-        winner = selected_manager1
-        win_amt = d1
-    else:
-        winner = selected_manager2
-        win_amt = d2
+    # Dynamic labels
+    label1 = f"{selected_manager1} ({selected_month1})"
+    label2 = f"{selected_manager2} ({selected_month2})"
 
-    st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
+    # -----------------------------
+    # 🏆 Winner / Better Month
+    # -----------------------------
+    if same_manager:
+        if d1 > d2:
+            st.success(f"📈 Better Month: {selected_month1} ({format_inr(d1)})")
+        else:
+            st.success(f"📈 Better Month: {selected_month2} ({format_inr(d2)})")
+    else:
+        if d1 > d2:
+            winner = selected_manager1
+            win_amt = d1
+        else:
+            winner = selected_manager2
+            win_amt = d2
+
+        st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
 
     # -----------------------------
     # Metric Cards
@@ -353,78 +368,56 @@ elif dashboard_type == "Comparison":
     col1,col2 = st.columns(2)
 
     with col1:
-        st.subheader(selected_manager1)
+        st.subheader(label1)
         colored_metric("Total Disbursed", format_inr(d1), "#636EFA")
         colored_metric("Total Revenue", format_inr(r1), "#00CC96")
         colored_metric("Avg Payout %", f"{p1:.2f}%", "#EF553B")
         colored_metric("Transactions", txn1, "#FFA15A")
 
     with col2:
-        st.subheader(selected_manager2)
+        st.subheader(label2)
         colored_metric("Total Disbursed", format_inr(d2), "#636EFA")
         colored_metric("Total Revenue", format_inr(r2), "#00CC96")
         colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
         colored_metric("Transactions", txn2, "#FFA15A")
 
     # -----------------------------
-    # 📊 Comparison Chart (WITH DATA LABELS)
+    # 📊 Comparison Chart
     # -----------------------------
     comp_df = pd.DataFrame({
         "Metric": ["Disbursed", "Revenue", "Transactions"],
-        selected_manager1: [d1/100000, r1/100000, txn1],
-        selected_manager2: [d2/100000, r2/100000, txn2]
+        label1: [d1/100000, r1/100000, txn1],
+        label2: [d2/100000, r2/100000, txn2]
     })
 
     fig_comp = go.Figure()
 
     fig_comp.add_trace(go.Bar(
-        name=selected_manager1,
+        name=label1,
         x=comp_df["Metric"],
-        y=comp_df[selected_manager1],
-        text=[
-            f"{v:.2f}L" if i < 2 else f"{int(v)}"
-            for i, v in enumerate(comp_df[selected_manager1])
-        ],
+        y=comp_df[label1],
+        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label1])],
         textposition='outside',
         marker_color="#636EFA"
     ))
 
     fig_comp.add_trace(go.Bar(
-        name=selected_manager2,
+        name=label2,
         x=comp_df["Metric"],
-        y=comp_df[selected_manager2],
-        text=[
-            f"{v:.2f}L" if i < 2 else f"{int(v)}"
-            for i, v in enumerate(comp_df[selected_manager2])
-        ],
+        y=comp_df[label2],
+        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label2])],
         textposition='outside',
         marker_color="#EF553B"
     ))
 
     fig_comp.update_layout(
         barmode='group',
-        title="Manager Comparison Overview",
+        title="Comparison Overview",
         template="plotly_white",
-        height=450,
-        uniformtext_minsize=10,
-        uniformtext_mode='hide'
-    )
-
-    fig_comp.update_traces(
-        textfont_size=12,
-        cliponaxis=False
+        height=450
     )
 
     st.plotly_chart(fig_comp, use_container_width=True)
-
-    # -----------------------------
-    # 📊 Bank + Caller Charts
-    # -----------------------------
-    st.plotly_chart(plot_bar(f1,"Bank",top_bank1,selected_manager1,"bank_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Bank",top_bank2,selected_manager2,"bank_cmp2"), use_container_width=True)
-
-    st.plotly_chart(plot_bar(f1,"Caller",top_caller1,selected_manager1,"caller_cmp1"), use_container_width=True)
-    st.plotly_chart(plot_bar(f2,"Caller",top_caller2,selected_manager2,"caller_cmp2"), use_container_width=True)
 
     # -----------------------------
     # 📈 Growth Difference
@@ -432,26 +425,37 @@ elif dashboard_type == "Comparison":
     growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
 
     st.markdown("### 📈 Performance Difference")
-    st.write(f"{selected_manager1} vs {selected_manager2}: {growth:.2f}% difference in disbursed amount")
+    if same_manager:
+        st.write(f"{selected_month1} vs {selected_month2}: {growth:.2f}% change")
+    else:
+        st.write(f"{selected_manager1} vs {selected_manager2}: {growth:.2f}% difference")
 
     # -----------------------------
-    # Insights
+    # 🧠 Insights
     # -----------------------------
     st.markdown("### 📝 Insights")
-    st.write(f"{selected_manager1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
-    st.write(f"{selected_manager2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
+
+    if same_manager:
+        if d1 > d2:
+            st.success(f"Growth observed in {selected_month1}")
+        elif d1 < d2:
+            st.error(f"Drop observed in {selected_month1}")
+        else:
+            st.info("No change between months")
+
+    st.write(f"{label1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
+    st.write(f"{label2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
 
     # -----------------------------
-    # Data Tables
+    # 📄 Data Tables
     # -----------------------------
-    st.markdown("### 📄 Data - Manager 1")
+    st.markdown("### 📄 Data - First Selection")
     st.dataframe(f1, use_container_width=True, height=300)
     st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
 
-    st.markdown("### 📄 Data - Manager 2")
+    st.markdown("### 📄 Data - Second Selection")
     st.dataframe(f2, use_container_width=True, height=300)
     st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
-
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
