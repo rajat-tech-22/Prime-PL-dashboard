@@ -290,9 +290,10 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT)
+# Comparison Dashboard (FINAL FIXED)
 # -----------------------------
 elif dashboard_type == "Comparison":
+
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
         selected_manager1 = st.selectbox("First Manager", managers)
         selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
@@ -300,16 +301,12 @@ elif dashboard_type == "Comparison":
         selected_manager2 = st.selectbox("Second Manager", managers)
         selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
 
-    # Detect same manager comparison
     same_manager = selected_manager1 == selected_manager2
 
-    # Base filters
     f1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
     f2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
 
-    # -----------------------------
-    # 🔥 Separate Campaign Filters
-    # -----------------------------
+    # Campaign Filters
     with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
         camp1_list = sorted(f1["Campaign"].dropna().unique())
         selected_camp1 = st.multiselect("Campaigns - Manager 1", camp1_list, default=camp1_list)
@@ -323,15 +320,12 @@ elif dashboard_type == "Comparison":
     if selected_camp2:
         f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
-    # -----------------------------
     # Header
-    # -----------------------------
     if same_manager:
         st.header(f"📅 Month Comparison - {selected_manager1}")
     else:
         st.header("⚖️ Manager Benchmark")
 
-    # Validation
     if f1.empty or f2.empty:
         st.warning("No data available for selected filters")
         st.stop()
@@ -340,49 +334,30 @@ elif dashboard_type == "Comparison":
     d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
     d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
 
-    # Dynamic labels
     label1 = f"{selected_manager1} ({selected_month1})"
     label2 = f"{selected_manager2} ({selected_month2})"
 
-    # -----------------------------
-    # 🏆 Winner / Better Month
-    # -----------------------------
-    if same_manager:
-        if d1 > d2:
-            st.success(f"📈 Better Month: {selected_month1} ({format_inr(d1)})")
-        else:
-            st.success(f"📈 Better Month: {selected_month2} ({format_inr(d2)})")
+    # Winner
+    if d1 > d2:
+        st.success(f"🏆 Winner: {label1}")
     else:
-        if d1 > d2:
-            winner = selected_manager1
-            win_amt = d1
-        else:
-            winner = selected_manager2
-            win_amt = d2
+        st.success(f"🏆 Winner: {label2}")
 
-        st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
-
-    # -----------------------------
-    # Metric Cards
-    # -----------------------------
+    # Cards
     col1,col2 = st.columns(2)
 
     with col1:
-        st.subheader(label1)
-        colored_metric("Total Disbursed", format_inr(d1), "#636EFA")
-        colored_metric("Total Revenue", format_inr(r1), "#00CC96")
-        colored_metric("Avg Payout %", f"{p1:.2f}%", "#EF553B")
-        colored_metric("Transactions", txn1, "#FFA15A")
+        colored_metric("Total Disbursed", format_inr(d1))
+        colored_metric("Revenue", format_inr(r1))
+        colored_metric("Transactions", txn1)
 
     with col2:
-        st.subheader(label2)
-        colored_metric("Total Disbursed", format_inr(d2), "#636EFA")
-        colored_metric("Total Revenue", format_inr(r2), "#00CC96")
-        colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
-        colored_metric("Transactions", txn2, "#FFA15A")
+        colored_metric("Total Disbursed", format_inr(d2))
+        colored_metric("Revenue", format_inr(r2))
+        colored_metric("Transactions", txn2)
 
     # -----------------------------
-    # 📊 Comparison Chart
+    # 📊 Main Comparison Chart
     # -----------------------------
     comp_df = pd.DataFrame({
         "Metric": ["Disbursed", "Revenue", "Transactions"],
@@ -391,71 +366,74 @@ elif dashboard_type == "Comparison":
     })
 
     fig_comp = go.Figure()
+    fig_comp.add_bar(name=label1, x=comp_df["Metric"], y=comp_df[label1])
+    fig_comp.add_bar(name=label2, x=comp_df["Metric"], y=comp_df[label2])
 
-    fig_comp.add_trace(go.Bar(
-        name=label1,
-        x=comp_df["Metric"],
-        y=comp_df[label1],
-        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label1])],
-        textposition='outside',
-        marker_color="#636EFA"
-    ))
-
-    fig_comp.add_trace(go.Bar(
-        name=label2,
-        x=comp_df["Metric"],
-        y=comp_df[label2],
-        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label2])],
-        textposition='outside',
-        marker_color="#EF553B"
-    ))
-
-    fig_comp.update_layout(
-        barmode='group',
-        title="Comparison Overview",
-        template="plotly_white",
-        height=450
-    )
-
+    fig_comp.update_layout(barmode='group', template="plotly_white")
     st.plotly_chart(fig_comp, use_container_width=True)
 
-    # -----------------------------
-    # 📈 Growth Difference
-    # -----------------------------
-    growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
+    # =========================================================
+    # 🏦 Bank Comparison
+    # =========================================================
+    st.markdown("### 🏦 Bank Comparison")
 
-    st.markdown("### 📈 Performance Difference")
-    if same_manager:
-        st.write(f"{selected_month1} vs {selected_month2}: {growth:.2f}% change")
-    else:
-        st.write(f"{selected_manager1} vs {selected_manager2}: {growth:.2f}% difference")
+    bank1 = f1.groupby("Bank")["Disbursed AMT"].sum().reset_index()
+    bank2 = f2.groupby("Bank")["Disbursed AMT"].sum().reset_index()
 
-    # -----------------------------
-    # 🧠 Insights
-    # -----------------------------
-    st.markdown("### 📝 Insights")
+    bank_merge = pd.merge(bank1, bank2, on="Bank", how="outer",
+                          suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
 
-    if same_manager:
-        if d1 > d2:
-            st.success(f"Growth observed in {selected_month1}")
-        elif d1 < d2:
-            st.error(f"Drop observed in {selected_month1}")
-        else:
-            st.info("No change between months")
+    if not bank_merge.empty:
+        bank_merge = bank_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
 
-    st.write(f"{label1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
-    st.write(f"{label2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
+        fig_bank = go.Figure()
+        fig_bank.add_bar(x=bank_merge["Bank"], y=bank_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
+        fig_bank.add_bar(x=bank_merge["Bank"], y=bank_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
 
-    # -----------------------------
-    # 📄 Data Tables
-    # -----------------------------
-    st.markdown("### 📄 Data - First Selection")
-    st.dataframe(f1, use_container_width=True, height=300)
-    st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
+        fig_bank.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        st.plotly_chart(fig_bank, use_container_width=True)
 
-    st.markdown("### 📄 Data - Second Selection")
-    st.dataframe(f2, use_container_width=True, height=300)
-    st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
+    # =========================================================
+    # 📢 Campaign Comparison
+    # =========================================================
+    st.markdown("### 📢 Campaign Comparison")
+
+    camp1 = f1.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
+    camp2 = f2.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
+
+    camp_merge = pd.merge(camp1, camp2, on="Campaign", how="outer",
+                          suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
+
+    if not camp_merge.empty:
+        camp_merge = camp_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
+
+        fig_camp = go.Figure()
+        fig_camp.add_bar(x=camp_merge["Campaign"], y=camp_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
+        fig_camp.add_bar(x=camp_merge["Campaign"], y=camp_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
+
+        fig_camp.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        st.plotly_chart(fig_camp, use_container_width=True)
+
+    # =========================================================
+    # 👨‍💼 Caller Comparison
+    # =========================================================
+    st.markdown("### 👨‍💼 Caller Comparison")
+
+    caller1 = f1.groupby("Caller")["Disbursed AMT"].sum().reset_index()
+    caller2 = f2.groupby("Caller")["Disbursed AMT"].sum().reset_index()
+
+    caller_merge = pd.merge(caller1, caller2, on="Caller", how="outer",
+                            suffixes=(f"_{label1}", f"_{label2}")).fillna(0)
+
+    if not caller_merge.empty:
+        caller_merge = caller_merge.sort_values(by=f"Disbursed AMT_{label1}", ascending=False).head(10)
+
+        fig_caller = go.Figure()
+        fig_caller.add_bar(x=caller_merge["Caller"], y=caller_merge[f"Disbursed AMT_{label1}"]/100000, name=label1)
+        fig_caller.add_bar(x=caller_merge["Caller"], y=caller_merge[f"Disbursed AMT_{label2}"]/100000, name=label2)
+
+        fig_caller.update_layout(barmode='group', template="plotly_white", xaxis_tickangle=-30)
+        st.plotly_chart(fig_caller, use_container_width=True)
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
