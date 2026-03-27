@@ -95,19 +95,21 @@ def calc_metrics(f):
     top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    return total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller
 
-    # Distinct Target sum by Month + Manager
+# -----------------------------
+# Target Calculation
+# -----------------------------
+def calc_total_target(f):
     if "Target" in f.columns and "Disb Month" in f.columns and "Manager" in f.columns:
-        grouped = f.groupby(["Disb Month","Manager"])["Target"].unique()
-        unique_targets = set()
-        for arr in grouped:
-            unique_targets.update(arr)
-        total_target = sum(unique_targets)
-    else:
-        total_target = 0
+        grouped = f.groupby(["Disb Month","Manager"])["Target"].first()
+        total_target = grouped.sum()
+        return total_target
+    return 0
 
-    return total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller, total_target
-
+# -----------------------------
+# Bar Chart
+# -----------------------------
 def plot_bar(f, col, top_value, manager_name, key_val):
     summary = f.groupby(col)["Disbursed AMT"].sum()
     colors = get_colors(summary.index, top_value)
@@ -128,7 +130,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     return fig
 
 # -----------------------------
-# Card Functions
+# Metric Cards
 # -----------------------------
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
@@ -199,17 +201,12 @@ if dashboard_type == "All Managers":
             Transactions=("Manager","count"),
         ).reset_index()
 
-        grouped_target = filtered_df.groupby(["Disb Month","Manager"])["Target"].unique()
-        unique_targets = set()
-        for arr in grouped_target:
-            unique_targets.update(arr)
-        total_target = sum(unique_targets)
-
         total_disbursed = agg_df["Total_Disbursed"].sum()
         total_txn = agg_df["Transactions"].sum()
         top_manager_row = agg_df.loc[agg_df["Total_Disbursed"].idxmax()]
         top_manager_name = top_manager_row["Manager"]
         top_manager_amt = top_manager_row["Total_Disbursed"]
+        total_target = calc_total_target(filtered_df)
 
         col1, col2, col3, col4 = st.columns(4)
         with col1: colored_metric("Total Disbursed Amount", format_inr(total_disbursed), "#636EFA")
@@ -259,7 +256,8 @@ elif dashboard_type == "Single Manager":
     if f.empty:
         st.warning("No data available")
     else:
-        total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller, total_target = calc_metrics(f)
+        total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller = calc_metrics(f)
+        total_target = calc_total_target(f)
 
         col1,col2,col3,col4,col5 = st.columns(5)
         with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
