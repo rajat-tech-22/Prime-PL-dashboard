@@ -10,7 +10,7 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# 🔐 SIMPLE LOGIN SYSTEM
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -32,7 +32,7 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# Sidebar & Global UI CSS
+# Sidebar & Global CSS
 # -----------------------------
 st.markdown("""
     <style>
@@ -96,9 +96,7 @@ def calc_metrics(f):
     top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
 
-    # -----------------------------
-    # Distinct Target Sum by Month & Manager
-    # -----------------------------
+    # Distinct Target sum by Month + Manager
     if "Target" in f.columns and "Disb Month" in f.columns and "Manager" in f.columns:
         grouped = f.groupby(["Disb Month","Manager"])["Target"].unique()
         unique_targets = set()
@@ -129,6 +127,9 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     )
     return fig
 
+# -----------------------------
+# Card Functions
+# -----------------------------
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
@@ -145,12 +146,43 @@ def colored_metric(label, value, color="#2596be"):
         </div>
         """, unsafe_allow_html=True)
 
+def colored_metric_with_progress(label, value, target=None, color="#2596be"):
+    progress_html = ""
+    if target is not None and target > 0:
+        percent = min(100, (value/target)*100)
+        if percent >= 100:
+            bar_color = "#28a745"  # Green
+        elif percent >= 80:
+            bar_color = "#ffc107"  # Yellow
+        else:
+            bar_color = "#dc3545"  # Red
+        progress_html = f"""
+            <div style="background-color: #e9ecef; border-radius: 8px; height: 12px; margin-top: 8px;">
+                <div style="width: {percent}%; background-color: {bar_color}; height: 100%; border-radius: 8px;"></div>
+            </div>
+            <p style="font-size:12px; color:#495057; margin:0;">{percent:.1f}% of Target</p>
+        """
+    st.markdown(f"""
+        <div style="
+            background-color: #EDC7E7;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            margin-bottom: 15px;
+        ">
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{format_inr(value)}</h2>
+            {progress_html}
+        </div>
+        """, unsafe_allow_html=True)
+
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("📊 Filters")
 dashboard_type = st.sidebar.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
-
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
@@ -182,14 +214,12 @@ if dashboard_type == "All Managers":
             Total_Disbursed=("Disbursed AMT","sum"),
             Transactions=("Manager","count"),
         ).reset_index()
-        # Distinct Target Sum
         grouped_target = filtered_df.groupby(["Disb Month","Manager"])["Target"].unique()
         unique_targets = set()
         for arr in grouped_target:
             unique_targets.update(arr)
         total_target = sum(unique_targets)
 
-        # Summary Cards
         total_disbursed = agg_df["Total_Disbursed"].sum()
         total_txn = agg_df["Transactions"].sum()
         top_manager_row = agg_df.loc[agg_df["Total_Disbursed"].idxmax()]
@@ -200,9 +230,8 @@ if dashboard_type == "All Managers":
         with col1: colored_metric("Total Disbursed Amount", format_inr(total_disbursed), "#636EFA")
         with col2: colored_metric("Total Transactions", total_txn, "#EF553B")
         with col3: colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
-        with col4: colored_metric("Total Target", format_inr(total_target), "#8A2BE2")
+        with col4: colored_metric_with_progress("Total Target vs Achievement", total_disbursed, total_target, "#8A2BE2")
 
-        # Table & Charts
         agg_df_display = agg_df.copy()
         agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
         st.subheader("📄 Detailed Table")
@@ -252,7 +281,7 @@ elif dashboard_type == "Single Manager":
         with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
         with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
         with col4: colored_metric("Transactions", txn_count, "#FFA15A")
-        with col5: colored_metric("Total Target", format_inr(total_target), "#8A2BE2")
+        with col5: colored_metric_with_progress("Target vs Achievement", total_disb, total_target, "#8A2BE2")
 
         st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
         st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
