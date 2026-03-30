@@ -157,9 +157,9 @@ months = sorted(df["Disb Month"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
-# =============================
-# ALL MANAGERS DASHBOARD
-# =============================
+# -----------------------------
+# All Managers Dashboard - 3 Summary Cards
+# -----------------------------
 if dashboard_type == "All Managers":
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
         selected_month = st.selectbox("Select Month", months, index=latest_month_index)
@@ -177,66 +177,73 @@ if dashboard_type == "All Managers":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    st.header("📈 Overview - All Managers")
+    st.header("📊 Overview - Summary Cards")
     if filtered_df.empty:
         st.warning("No data available for selected filters")
     else:
-        total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller = calc_metrics(filtered_df)
-        cols = st.columns(4)
-        card_data = [
-            ("Total Disbursed", format_inr(total_disb), "#636EFA"),
-            ("Total Revenue", format_inr(total_rev), "#00CC96"),
-            ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
-            ("Transactions", txn_count, "#EF553B")
-        ]
-        for col, data in zip(cols, card_data):
-            label, value, color = data
-            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+        # Aggregate per manager
+        agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
+            Total_Disbursed=("Disbursed AMT","sum"),
+            Transactions=("Manager","count"),
+        ).reset_index()
+        
 
-        # Insight summary
-        st.markdown(f"""
-        <div style="
-            background-color: #F0F2F6;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-        ">
-            <div><b>Top Bank:</b> {top_bank}</div>
-            <div><b>Top Campaign:</b> {top_campaign}</div>
-            <div><b>Top Caller:</b> {top_caller}</div>
-            <div><b>Avg Disbursed:</b> {format_inr(avg_disb)}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        # Card 1: Total Disbursed Amount (All managers)
+        total_disbursed = agg_df["Total_Disbursed"].sum()
+        # Card 2: Total Transaction Count (All managers)
+        total_txn = agg_df["Transactions"].sum()
+        # Card 3: Top Manager by Disbursed Amount
+        top_manager_row = agg_df.loc[agg_df["Total_Disbursed"].idxmax()]
+        top_manager_name = top_manager_row["Manager"]
+        top_manager_amt = top_manager_row["Total_Disbursed"]
 
-        # Charts
-        st.plotly_chart(plot_bar(filtered_df,"Bank",top_bank,"All Managers","bank_all"), use_container_width=True)
-        st.plotly_chart(plot_bar(filtered_df,"Caller",top_caller,"All Managers","caller_all"), use_container_width=True)
+        # Display 3 cards in one row
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            colored_metric("Total Disbursed Amount", format_inr(total_disbursed), "#636EFA")
+        with col2:
+            colored_metric("Total Transactions", total_txn, "#EF553B")
+        with col3:
+            colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#00CC96")
+     
+        # -----------------------------
+        # Full table
+        # -----------------------------
+        agg_df_display = agg_df.copy()
+        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        st.subheader("📄 Detailed Table")
+        st.dataframe(agg_df_display, use_container_width=True, height=500)
+        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
-        # Campaign-wise disbursed
-        summary = filtered_df.groupby("Campaign")["Disbursed AMT"].sum()
-        fig = go.Figure(go.Bar(
-            x=summary.index,
-            y=summary.values/100000,
-            text=[f"<b>{v/100000:.2f}L</b>" for v in summary.values],
-            textposition="auto",
-            marker_color=base_colors,
-        ))
-        fig.update_layout(title="Campaign-wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", xaxis_tickangle=-30)
-        st.plotly_chart(fig, use_container_width=True)
+        # -----------------------------
+        # Bank-wise bar chart
+        # -----------------------------
+        bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
+        if not bank_summary.empty:
+            top_bank = bank_summary.idxmax()
+            bank_colors = get_colors(bank_summary.index, top_bank)
+            fig_bank = go.Figure(go.Bar(
+                x=bank_summary.index,
+                y=bank_summary.values/100000,
+                text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+                textposition="auto",
+                marker_color=bank_colors,
+                name="Banks"
+            ))
+            fig_bank.update_layout(
+                yaxis_title="Amount (L)",
+                template="plotly_white",
+                height=400,
+                title="Bank-wise Disbursed Amount",
+                xaxis_tickangle=-30
+            )
+            st.plotly_chart(fig_bank, use_container_width=True)
 
-        # Data table at bottom
-        st.markdown("### 📄 Data")
-        df_display = filtered_df.dropna(how='all').copy()
-        styled_df = df_display.style.set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}])
-        st.dataframe(styled_df, use_container_width=True, height=300)
-        st.download_button("Download CSV", df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
-# =============================
-# SINGLE MANAGER DASHBOARD
-# =============================
+
+# -----------------------------
+# Single Manager Dashboard
+# -----------------------------
 elif dashboard_type == "Single Manager":
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
         selected_manager = st.selectbox("Select Manager", managers)
@@ -252,63 +259,36 @@ elif dashboard_type == "Single Manager":
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    st.header(f"📈 Overview - {selected_manager}")
+    st.header(f"📈 Insights - {selected_manager}")
     f = filtered_df
     if f.empty:
         st.warning("No data available")
     else:
         total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller = calc_metrics(f)
-        cols = st.columns(4)
-        card_data = [
-            ("Total Disbursed", format_inr(total_disb), "#636EFA"),
-            ("Total Revenue", format_inr(total_rev), "#00CC96"),
-            ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
-            ("Transactions", txn_count, "#EF553B")
-        ]
-        for col, data in zip(cols, card_data):
-            label, value, color = data
-            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+        col1,col2,col3,col4 = st.columns(4)
+        with col1: colored_metric("Total Disbursed", format_inr(total_disb), "#636EFA")
+        with col2: colored_metric("Total Revenue", format_inr(total_rev), "#00CC96")
+        with col3: colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#EF553B")
+        with col4: colored_metric("Transactions", txn_count, "#FFA15A")
 
-        # Insight summary
-        st.markdown(f"""
-        <div style="
-            background-color: #F0F2F6;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-        ">
-            <div><b>Top Bank:</b> {top_bank}</div>
-            <div><b>Top Campaign:</b> {top_campaign}</div>
-            <div><b>Top Caller:</b> {top_caller}</div>
-            <div><b>Avg Disbursed:</b> {format_inr(avg_disb)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Charts
-        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,"bank1"), use_container_width=True)
-        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,"caller1"), use_container_width=True)
-
-        # Campaign-wise disbursed
+        st.plotly_chart(plot_bar(f,"Bank",top_bank,selected_manager,key_val="bank1"), use_container_width=True)
+        st.plotly_chart(plot_bar(f,"Caller",top_caller,selected_manager,key_val="caller1"), use_container_width=True)
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-        fig = go.Figure(go.Bar(
-            x=summary.index,
-            y=summary.values/100000,
-            text=[f"<b>{v/100000:.2f}L</b>" for v in summary.values],
-            textposition="auto",
-            marker_color=base_colors,
-        ))
-        fig.update_layout(title="Campaign-wise Disbursed Amount", yaxis_title="Amount (L)", template="plotly_white", xaxis_tickangle=-30)
+        fig = go.Figure(go.Pie(labels=summary.index, values=summary.values/100000, hole=0.4))
+        fig.update_layout(title="Campaign Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
-        # Data table at bottom
+        st.markdown("### 📝 Insights")
+        st.write(f"Top Bank: {top_bank}")
+        st.write(f"Top Campaign: {top_campaign}")
+        st.write(f"Top Caller: {top_caller}")
+        st.write(f"Transactions: {txn_count}")
+        st.write(f"Avg Disbursed: {format_inr(avg_disb)}")
+
         st.markdown("### 📄 Data")
-        df_display = f.dropna(how='all').copy()
-        styled_df = df_display.style.set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}])
-        st.dataframe(styled_df, use_container_width=True, height=300)
-        st.download_button("Download CSV", df_display.to_csv(index=False), f"{selected_manager}.csv", "text/csv")
+        st.dataframe(f, use_container_width=True, height=400)
+        st.download_button("Download CSV", f.to_csv(index=False), "single_manager.csv", "text/csv")
+
 # -----------------------------
 # Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT)
 # -----------------------------
