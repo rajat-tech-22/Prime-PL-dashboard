@@ -280,6 +280,7 @@ if dashboard_type == "All Managers":
                 xaxis_tickangle=-30
             )
             st.plotly_chart(fig_bank, use_container_width=True)
+
 # -----------------------------
 # Single Manager Dashboard
 # -----------------------------
