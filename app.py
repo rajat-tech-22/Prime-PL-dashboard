@@ -242,9 +242,9 @@ if dashboard_type == "All Managers":
             'text-align': 'center',
             'vertical-align': 'middle'
         }).format({
-            'Total_Disbursed': '**{}**',
-            'Total_Revenue': '**{}**',
-            'Transactions': '**{}**'
+            'Total_Disbursed': '  {}  ',
+            'Total_Revenue': '  {}  ',
+            'Transactions': '  {}  '
         }).set_table_styles([{
             'selector': 'th',
             'props': [('text-align', 'center')]
