@@ -10,7 +10,7 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -20,8 +20,10 @@ if "login" not in st.session_state:
 
 if not st.session_state.login:
     st.title("🔐 Login")
+
     u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
+
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
@@ -29,17 +31,30 @@ if not st.session_state.login:
             st.rerun()
         else:
             st.error("Invalid Credentials ❌")
+
     st.stop()
 
 # -----------------------------
-# Sidebar & Global CSS
+# Sidebar & Global UI CSS
 # -----------------------------
 st.markdown("""
-<style>
-[data-testid="stSidebar"] {background-color: #0D918F; color: Black;}
-[data-testid="stSidebar"] .st-expander {background-color: #61FF5E; border-radius: 8px; margin-bottom: 10px;}
-.main {background-color: #f8f9fa;}
-</style>
+    <style>
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #0D918F;
+        color: Black;
+    }
+    [data-testid="stSidebar"] .st-expander {
+        background-color: #61FF5E;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    /* Main Background */
+    .main {
+        background-color: #f8f9fa;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
@@ -57,8 +72,6 @@ df = load_data()
 # -----------------------------
 # Helper Functions
 # -----------------------------
-base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-
 def format_inr(number):
     if number is None or number == 0:
         return "₹0"
@@ -74,59 +87,74 @@ def format_inr(number):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3
 
+base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
+
+def get_colors(index_list, top_value):
+    colors = []
+    for i, val in enumerate(index_list):
+        if val == top_value:
+            colors.append("#FFD700")
+        else:
+            colors.append(base_colors[i % len(base_colors)])
+    return colors
+
 def calc_metrics(f):
     total_disb = f["Disbursed AMT"].sum()
     total_rev = f["Total_Revenue"].sum()
-    avg_payout = (total_rev / total_disb) * 100 if total_disb else 0
+    avg_payout = (total_rev/total_disb)*100 if total_disb else 0
     txn_count = len(f)
-    avg_disb = total_disb / txn_count if txn_count else 0
+    avg_disb = total_disb/txn_count if txn_count else 0
     top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    return total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller
+    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
 
 def plot_bar(f, col, top_value, manager_name, key_val):
     summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = [("#FFD700" if val==top_value else base_colors[i % len(base_colors)]) for i,val in enumerate(summary.index)]
+    colors = get_colors(summary.index, top_value)
     fig = go.Figure(go.Bar(
         x=summary.index,
         y=summary.values/100000,
-        text=[f"<b>{v/100000:.2f}L</b>" for v in summary.values],
+        text=[f"{v/100000:.2f}L" for v in summary.values],
         textposition="auto",
         marker_color=colors,
         name=manager_name
     ))
-    fig.update_layout(yaxis_title="Amount (L)", template="plotly_white", height=400, title=f"{manager_name} - {col} Summary")
+    fig.update_layout(
+        yaxis_title="Amount (L)",
+        template="plotly_white",
+        height=400,
+        title=f"{manager_name} - {col} Summary"
+    )
     return fig
 
-def colored_metric_auto_fit(label, value, color="#2596be"):
-    return f"""
-    <div style="
-        background-color: #EDC7E7;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 6px solid {color};
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-        text-align: center;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 120px;
-    ">
-        <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-        <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800; word-wrap: break-word;">{value}</h2>
-    </div>
-    """
+# --- UPDATED MODERN CARD UI ---
+def colored_metric(label, value, color="#2596be"):
+    st.markdown(f"""
+        <div style="
+            background-color: #EDC7E7;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            margin-bottom: 15px;
+        ">
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("📊 Filters")
-dashboard_type = st.sidebar.radio("Dashboard", ["All Managers", "Single Manager","Comparison"])
-managers = sorted(df["Manager"].dropna().unique())
-months = sorted(df["Disb Month"].dropna().unique())
+with st.sidebar.expander("Select Dashboard Type", expanded=True):
+    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
+
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
+months = sorted(df["Disb Month"].dropna().unique())
+managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months)-1
 
 # =============================
