@@ -35,27 +35,48 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# Sidebar & Global UI CSS
+# Auto-fit Card Function
 # -----------------------------
-st.markdown("""
-    <style>
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #0D918F;
-        color: Black;
-    }
-    [data-testid="stSidebar"] .st-expander {
-        background-color: #61FF5E;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-    
-    /* Main Background */
-    .main {
-        background-color: #f8f9fa;
-    }
-    </style>
-""", unsafe_allow_html=True)
+def colored_metric_auto_fit(label, value, color="#2596be"):
+    return f"""
+    <div style="
+        background-color: #EDC7E7;
+        padding: 10px;
+        border-radius: 12px;
+        border-left: 6px solid {color};
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 15px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    ">
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <span style="
+                font-size: 14px; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                color: #6c757d;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{label}</span>
+            <span style="
+                font-weight: 800; 
+                color: #212529;
+                font-size: 2rem; 
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{value}</span>
+        </div>
+    </div>
+    """
+
 
 # -----------------------------
 # Load Data
