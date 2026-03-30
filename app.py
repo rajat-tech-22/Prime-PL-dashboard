@@ -365,7 +365,7 @@ elif dashboard_type == "Single Manager":
         # Insight Summary
         st.markdown(f"""
         <div style="
-            background-color: #F0F2F6;
+            background-color: Black;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
