@@ -196,7 +196,7 @@ if dashboard_type == "All Managers":
 
         st.markdown(f"""
         <div style="
-            background-color: #F0F2F6;
+            background-color: black;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -221,9 +221,9 @@ if dashboard_type == "All Managers":
             'text-align': 'center',
             'vertical-align': 'middle'
         }).format({
-            'Total_Disbursed': '**{}**',
-            'Total_Revenue': '**{}**',
-            'Transactions': '**{}**'
+            'Total_Disbursed': ' {}  ',
+            'Total_Revenue': ' {}  ',
+            'Transactions': '  {}  '
         }).set_table_styles([{
             'selector': 'th',
             'props': [('text-align', 'center')]
