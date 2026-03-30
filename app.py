@@ -84,6 +84,41 @@ def get_colors(index_list, top_value):
     return colors
 
 # -----------------------------
+# Auto-scaling card function
+# -----------------------------
+def colored_metric_auto(label, value, color="#2596be"):
+    return f"""
+        <div style="
+            background-color: #EDC7E7;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: center;
+            margin-bottom: 15px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        ">
+            <p style="
+                color: #6c757d; 
+                font-size: clamp(10px, 1.5vw, 14px); 
+                margin: 0; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                letter-spacing: 0.8px;
+            ">{label}</p>
+            <h2 style="
+                color: #212529; 
+                margin: 5px 0 0 0; 
+                font-size: clamp(18px, 2.5vw, 28px); 
+                font-weight: 800;
+            ">{value}</h2>
+        </div>
+    """
+
+# -----------------------------
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("📊 Filters")
@@ -137,7 +172,7 @@ if dashboard_type == "All Managers":
         top_manager_name = top_manager_row["Manager"]
         top_manager_amt = top_manager_row["Total_Disbursed"]
 
-        # Display 5 equal columns
+        # Display 5 equal columns with auto-scaling text
         cols = st.columns([1,1,1,1,1])
         card_data = [
             ("Total Disbursed", format_inr(total_disbursed), "#636EFA"),
@@ -149,24 +184,7 @@ if dashboard_type == "All Managers":
 
         for col, data in zip(cols, card_data):
             label, value, color = data
-            col.markdown(f"""
-                <div style="
-                    background-color: #EDC7E7;
-                    padding: 20px;
-                    border-radius: 12px;
-                    border-left: 6px solid {color};
-                    box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-                    text-align: left;
-                    margin-bottom: 15px;
-                    height: 120px;   /* fixed height for all cards */
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                ">
-                    <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-                    <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
-                </div>
-            """, unsafe_allow_html=True)
+            col.markdown(colored_metric_auto(label, value, color), unsafe_allow_html=True)
 
         # -----------------------------
         # Detailed Table
