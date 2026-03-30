@@ -186,8 +186,24 @@ if dashboard_type == "All Managers":
             ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
             ("Total Transactions", total_txn, "#EF553B")
         ]
-
         for col, data in zip(cols, card_data):
+            label, value, color = data
+            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+
+        # -----------------------------
+        # Insights Cards
+        # -----------------------------
+        top_bank = filtered_df.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
+        top_campaign = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
+        top_caller = filtered_df.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
+
+        insight_cols = st.columns(3)
+        insights = [
+            ("Top Bank", top_bank, "#636EFA"),
+            ("Top Campaign", top_campaign, "#00CC96"),
+            ("Top Caller", top_caller, "#FFA15A")
+        ]
+        for col, data in zip(insight_cols, insights):
             label, value, color = data
             col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
 
@@ -202,9 +218,9 @@ if dashboard_type == "All Managers":
             'text-align': 'center',
             'vertical-align': 'middle'
         }).format({
-            'Total_Disbursed': '{}  ',
-            'Total_Revenue': '{}  ',
-            'Transactions': '{}  '
+            'Total_Disbursed': '**{}**',
+            'Total_Revenue': '**{}**',
+            'Transactions': '**{}**'
         }).set_table_styles([{
             'selector': 'th',
             'props': [('text-align', 'center')]
@@ -215,16 +231,16 @@ if dashboard_type == "All Managers":
         st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
         # -----------------------------
-        # Campaign-wise Disbursed Chart
+        # Campaign-wise Disbursed Chart (bold data labels)
         # -----------------------------
         campaign_summary = filtered_df.groupby("Campaign")["Disbursed AMT"].sum()
         if not campaign_summary.empty:
-            top_campaign = campaign_summary.idxmax()
-            campaign_colors = get_colors(campaign_summary.index, top_campaign)
+            top_campaign_val = campaign_summary.idxmax()
+            campaign_colors = get_colors(campaign_summary.index, top_campaign_val)
             fig_campaign = go.Figure(go.Bar(
                 x=campaign_summary.index,
                 y=campaign_summary.values/100000,
-                text=[f"{v/100000:.2f}L" for v in campaign_summary.values],
+                text=[f"<b>{v/100000:.2f}L</b>" for v in campaign_summary.values],  # bold labels
                 textposition="auto",
                 marker_color=campaign_colors,
                 name="Campaigns"
@@ -239,16 +255,16 @@ if dashboard_type == "All Managers":
             st.plotly_chart(fig_campaign, use_container_width=True)
 
         # -----------------------------
-        # Bank-wise Disbursed Chart
+        # Bank-wise Disbursed Chart (bold data labels)
         # -----------------------------
         bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
         if not bank_summary.empty:
-            top_bank = bank_summary.idxmax()
-            bank_colors = get_colors(bank_summary.index, top_bank)
+            top_bank_val = bank_summary.idxmax()
+            bank_colors = get_colors(bank_summary.index, top_bank_val)
             fig_bank = go.Figure(go.Bar(
                 x=bank_summary.index,
                 y=bank_summary.values/100000,
-                text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+                text=[f"<b>{v/100000:.2f}L</b>" for v in bank_summary.values],  # bold labels
                 textposition="auto",
                 marker_color=bank_colors,
                 name="Banks"
