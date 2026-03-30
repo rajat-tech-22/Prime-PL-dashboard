@@ -169,7 +169,7 @@ if dashboard_type == "All Managers":
             Transactions=("Manager","count"),
         ).reset_index()
 
-        # Remove blank rows (all NaN)
+        # Remove blank rows
         agg_df.dropna(how='all', inplace=True)
 
         # Metrics
@@ -192,13 +192,26 @@ if dashboard_type == "All Managers":
             col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
 
         # -----------------------------
-        # Table below cards
+        # Table below cards (centered & bold numeric)
         # -----------------------------
         agg_df_display = agg_df.copy()
         agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
         agg_df_display["Total_Revenue"] = agg_df_display["Total_Revenue"].apply(format_inr)
+
+        styled_df = agg_df_display.style.set_properties(**{
+            'text-align': 'center',
+            'vertical-align': 'middle'
+        }).format({
+            'Total_Disbursed': '**{}**',
+            'Total_Revenue': '**{}**',
+            'Transactions': '**{}**'
+        }).set_table_styles([{
+            'selector': 'th',
+            'props': [('text-align', 'center')]
+        }])
+
         st.subheader("📄 Detailed Table")
-        st.dataframe(agg_df_display, use_container_width=True, height=300)
+        st.dataframe(styled_df, use_container_width=True, height=300)
         st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
         # -----------------------------
