@@ -1,17 +1,16 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
-import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 
 # -----------------------------
-# CONFIG
+# Page Config
 # -----------------------------
-st.set_page_config(page_title="Prime SaaS Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")
+st.set_page_config(page_title="Manager Dashboard", layout="wide")
+st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# SIMPLE LOGIN (can upgrade later)
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -21,201 +20,187 @@ if "login" not in st.session_state:
 
 if not st.session_state.login:
     st.title("🔐 Login")
-    u = st.text_input("Username")
+
+    u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
 
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
+            st.success("Login Successful ✅")
             st.rerun()
         else:
-            st.error("Invalid Credentials")
-
+            st.error("Invalid Credentials ❌")
     st.stop()
 
 # -----------------------------
-# STYLING (SaaS UI)
+# Sidebar & Global UI CSS
 # -----------------------------
 st.markdown("""
-<style>
-.main {background-color:#f8fafc;}
-.block-container {padding-top:1rem;}
-</style>
+    <style>
+    [data-testid="stSidebar"] { background-color: #0D918F; color: Black; }
+    [data-testid="stSidebar"] .st-expander { background-color: #61FF5E; border-radius: 8px; margin-bottom: 10px; }
+    .main { background-color: #f8f9fa; }
+    </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# LOAD DATA
+# Load Data
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
-    try:
-        url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
-        df = pd.read_csv(url)
-        df.replace("null", None, inplace=True)
-        df["Disbursed AMT"] = pd.to_numeric(df["Disbursed AMT"], errors="coerce")
-        df["Total_Revenue"] = pd.to_numeric(df["Total_Revenue"], errors="coerce")
-        return df
-    except:
-        st.error("Data loading failed")
-        return pd.DataFrame()
+    url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
+    df = pd.read_csv(url)
+    df.replace("null", None, inplace=True)
+    return df
 
 df = load_data()
 
-if df.empty:
-    st.stop()
-
 # -----------------------------
-# HELPERS
+# Helper Functions
 # -----------------------------
-def format_inr(x):
-    if not x:
+def format_inr(number):
+    if number is None or number == 0:
         return "₹0"
-    return f"₹{x:,.0f}"
+    s = str(int(number))
+    last3 = s[-3:]
+    rest = s[:-3]
+    parts = []
+    while len(rest) > 2:
+        parts.append(rest[-2:])
+        rest = rest[:-2]
+    if rest:
+        parts.append(rest)
+    parts.reverse()
+    return "₹" + ",".join(parts) + "," + last3
 
-def kpi(col, title, value, color):
-    col.markdown(f"""
-    <div style="background:white;padding:20px;border-radius:12px;
-    border-left:6px solid {color};box-shadow:0 2px 8px rgba(0,0,0,0.08)">
-    <p style="color:gray;font-size:12px">{title}</p>
-    <h2>{value}</h2>
-    </div>
-    """, unsafe_allow_html=True)
+base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
 
-# -----------------------------
-# NAVIGATION (SaaS STYLE)
-# -----------------------------
-tab = st.radio(
-    "Navigation",
-    ["📊 Overview", "📊 Comparison", "🎯 Campaigns"],
-    horizontal=True
-)
+def get_colors(index_list, top_value):
+    colors = []
+    for i, val in enumerate(index_list):
+        if val == top_value:
+            colors.append("#FFD700")
+        else:
+            colors.append(base_colors[i % len(base_colors)])
+    return colors
 
-# -----------------------------
-# 📊 OVERVIEW
-# -----------------------------
-if tab == "📊 Overview":
-
-    st.title("📊 Business Overview")
-
-    col1, col2 = st.columns(2)
-    month = col1.selectbox("Month", sorted(df["Disb Month"].dropna().unique()))
-    vertical = col2.selectbox("Vertical", ["All"] + list(df["Vertical"].dropna().unique()))
-
-    f = df.copy()
-
-    if vertical != "All":
-        f = f[f["Vertical"] == vertical]
-
-    f = f[f["Disb Month"] == month]
-
-    if f.empty:
-        st.warning("No data")
-        st.stop()
-
-    total = f["Disbursed AMT"].sum()
-    txn = len(f)
-    top_manager = f.groupby("Manager")["Disbursed AMT"].sum().idxmax()
-
-    c1, c2, c3 = st.columns(3)
-    kpi(c1, "Total Disbursed", format_inr(total), "#4F46E5")
-    kpi(c2, "Transactions", txn, "#DC2626")
-    kpi(c3, "Top Manager", top_manager, "#059669")
-
-    st.divider()
-
-    # Trend
-    st.subheader("📈 Monthly Trend")
-    trend = df.groupby("Disb Month")["Disbursed AMT"].sum()
-    st.line_chart(trend)
-
-    # Bank Chart
-    st.subheader("🏦 Bank-wise Performance")
-    bank = f.groupby("Bank")["Disbursed AMT"].sum().sort_values(ascending=False)
-
-    fig = go.Figure(go.Bar(
-        x=bank.index,
-        y=bank.values,
-        text=[f"{v/100000:.2f}L" for v in bank.values],
-        textposition="auto"
-    ))
-    st.plotly_chart(fig, use_container_width=True)
+def colored_metric(label, value, color="#2596be"):
+    st.markdown(f"""
+        <div style="
+            background-color: #EDC7E7;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            margin-bottom: 15px;
+        ">
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
 # -----------------------------
-# 📊 COMPARISON
+# Sidebar Filters
 # -----------------------------
-elif tab == "📊 Comparison":
+st.sidebar.title("📊 Filters")
+with st.sidebar.expander("Select Dashboard Type", expanded=True):
+    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
 
-    st.title("📊 Manager Comparison")
-
-    managers = st.multiselect("Select Managers", df["Manager"].dropna().unique())
-    month = st.selectbox("Month", sorted(df["Disb Month"].unique()), key="cmp_month")
-
-    if not managers:
-        st.info("Select managers")
-        st.stop()
-
-    f = df[(df["Manager"].isin(managers)) & (df["Disb Month"] == month)]
-
-    if f.empty:
-        st.warning("No data")
-        st.stop()
-
-    summary = f.groupby("Manager").agg({
-        "Disbursed AMT": "sum",
-        "Total_Revenue": "sum"
-    }).reset_index()
-
-    cols = st.columns(len(summary))
-
-    for i, row in summary.iterrows():
-        kpi(cols[i], row["Manager"], format_inr(row["Disbursed AMT"]), "#636EFA")
-
-    fig = go.Figure()
-
-    fig.add_bar(x=summary["Manager"], y=summary["Disbursed AMT"], name="Disbursed")
-    fig.add_bar(x=summary["Manager"], y=summary["Total_Revenue"], name="Revenue")
-
-    fig.update_layout(barmode="group")
-    st.plotly_chart(fig, use_container_width=True)
+verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
+months = sorted(df["Disb Month"].dropna().unique())
+managers = sorted(df["Manager"].dropna().unique())
+latest_month_index = len(months)-1
 
 # -----------------------------
-# 🎯 CAMPAIGNS
+# All Managers Dashboard
 # -----------------------------
-elif tab == "🎯 Campaigns":
+if dashboard_type == "All Managers":
+    with st.sidebar.expander("Month & Vertical Filters", expanded=True):
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
+        selected_vertical = st.selectbox("Business Vertical", verticals)
 
-    st.title("🎯 Campaign Performance")
+    filtered_df = df.copy()
+    if selected_vertical != "All":
+        filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
+    if selected_month:
+        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
 
-    month = st.selectbox("Month", sorted(df["Disb Month"].unique()), key="camp_month")
+    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    f = df[df["Disb Month"] == month]
+    st.header("📊 Overview - Summary Cards")
+    if filtered_df.empty:
+        st.warning("No data available for selected filters")
+    else:
+        # Aggregate per manager
+        agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
+            Total_Disbursed=("Disbursed AMT","sum"),
+            Total_Revenue=("Total_Revenue","sum"),
+            Transactions=("Manager","count"),
+        ).reset_index()
 
-    if f.empty:
-        st.warning("No data")
-        st.stop()
+        # Metrics
+        total_disbursed = agg_df["Total_Disbursed"].sum()
+        total_revenue = agg_df["Total_Revenue"].sum()
+        total_txn = agg_df["Transactions"].sum()
+        avg_payout = (total_revenue / total_disbursed * 100) if total_disbursed else 0
 
-    camp = f.groupby("Campaign").agg({
-        "Disbursed AMT": "sum",
-        "Total_Revenue": "sum"
-    }).reset_index()
+        # Top Manager
+        top_manager_row = agg_df.loc[agg_df["Total_Disbursed"].idxmax()]
+        top_manager_name = top_manager_row["Manager"]
+        top_manager_amt = top_manager_row["Total_Disbursed"]
 
-    camp["ROI %"] = (camp["Total_Revenue"] / camp["Disbursed AMT"]) * 100
+        # Display 5 cards
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            colored_metric("Total Disbursed", format_inr(total_disbursed), "#636EFA")
+        with col2:
+            colored_metric("Total Revenue", format_inr(total_revenue), "#00CC96")
+        with col3:
+            colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A")
+        with col4:
+            colored_metric("Total Transactions", total_txn, "#EF553B")
+        with col5:
+            colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#AB63FA")
 
-    top = camp.sort_values("Disbursed AMT", ascending=False).iloc[0]
+        # -----------------------------
+        # Detailed Table
+        # -----------------------------
+        agg_df_display = agg_df.copy()
+        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        agg_df_display["Total_Revenue"] = agg_df_display["Total_Revenue"].apply(format_inr)
+        st.subheader("📄 Detailed Table")
+        st.dataframe(agg_df_display, use_container_width=True, height=500)
+        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
-    st.success(f"🏆 Top Campaign: {top['Campaign']}")
-
-    fig = px.bar(
-        camp.sort_values("Disbursed AMT", ascending=False),
-        x="Campaign",
-        y="Disbursed AMT",
-        color="ROI %",
-        title="Campaign Performance"
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.dataframe(camp)
-
+        # -----------------------------
+        # Bank-wise bar chart
+        # -----------------------------
+        bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
+        if not bank_summary.empty:
+            top_bank = bank_summary.idxmax()
+            bank_colors = get_colors(bank_summary.index, top_bank)
+            fig_bank = go.Figure(go.Bar(
+                x=bank_summary.index,
+                y=bank_summary.values/100000,
+                text=[f"{v/100000:.2f}L" for v in bank_summary.values],
+                textposition="auto",
+                marker_color=bank_colors,
+                name="Banks"
+            ))
+            fig_bank.update_layout(
+                yaxis_title="Amount (L)",
+                template="plotly_white",
+                height=400,
+                title="Bank-wise Disbursed Amount",
+                xaxis_tickangle=-30
+            )
+            st.plotly_chart(fig_bank, use_container_width=True)
 
 # -----------------------------
 # Single Manager Dashboard
