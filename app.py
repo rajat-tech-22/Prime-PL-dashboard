@@ -409,7 +409,7 @@ elif dashboard_type == "Single Manager":
         st.download_button("Download CSV", df_display.to_csv(index=False), f"{selected_manager}.csv", "text/csv")
 
 # -----------------------------
-# Comparison Dashboard (UPDATED - SAME MANAGER SUPPORT)
+# Comparison Dashboard with Additional Graphs
 # -----------------------------
 elif dashboard_type == "Comparison":
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
@@ -419,20 +419,16 @@ elif dashboard_type == "Comparison":
         selected_manager2 = st.selectbox("Second Manager", managers)
         selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
 
-    # Detect same manager comparison
     same_manager = selected_manager1 == selected_manager2
 
     # Base filters
-    f1 = df[(df["Manager"]==selected_manager1) & (df["Disb Month"]==selected_month1)]
-    f2 = df[(df["Manager"]==selected_manager2) & (df["Disb Month"]==selected_month2)]
+    f1 = df[(df["Manager"] == selected_manager1) & (df["Disb Month"] == selected_month1)]
+    f2 = df[(df["Manager"] == selected_manager2) & (df["Disb Month"] == selected_month2)]
 
-    # -----------------------------
-    # 🔥 Separate Campaign Filters
-    # -----------------------------
+    # Campaign filters
     with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
         camp1_list = sorted(f1["Campaign"].dropna().unique())
         selected_camp1 = st.multiselect("Campaigns - Manager 1", camp1_list, default=camp1_list)
-
     with st.sidebar.expander(f"{selected_manager2} Campaign Filter", expanded=True):
         camp2_list = sorted(f2["Campaign"].dropna().unique())
         selected_camp2 = st.multiselect("Campaigns - Manager 2", camp2_list, default=camp2_list)
@@ -442,139 +438,100 @@ elif dashboard_type == "Comparison":
     if selected_camp2:
         f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
-    # -----------------------------
     # Header
-    # -----------------------------
-    if same_manager:
-        st.header(f"📅 Month Comparison - {selected_manager1}")
-    else:
-        st.header("⚖️ Manager Benchmark")
-
-    # Validation
+    st.header("⚖️ Manager / Month Comparison" if not same_manager else f"📅 Month Comparison - {selected_manager1}")
     if f1.empty or f2.empty:
         st.warning("No data available for selected filters")
         st.stop()
 
     # Metrics
-    d1,r1,p1,txn1,avg1,top_bank1,top_camp1,top_caller1 = calc_metrics(f1)
-    d2,r2,p2,txn2,avg2,top_bank2,top_camp2,top_caller2 = calc_metrics(f2)
-
-    # Dynamic labels
+    d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
+    d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
     label1 = f"{selected_manager1} ({selected_month1})"
     label2 = f"{selected_manager2} ({selected_month2})"
 
-    # -----------------------------
-    # 🏆 Winner / Better Month
-    # -----------------------------
+    # Winner / Better Month
     if same_manager:
-        if d1 > d2:
-            st.success(f"📈 Better Month: {selected_month1} ({format_inr(d1)})")
-        else:
-            st.success(f"📈 Better Month: {selected_month2} ({format_inr(d2)})")
+        better_month = selected_month1 if d1 > d2 else selected_month2
+        st.success(f"📈 Better Month: {better_month} ({format_inr(max(d1, d2))})")
     else:
-        if d1 > d2:
-            winner = selected_manager1
-            win_amt = d1
-        else:
-            winner = selected_manager2
-            win_amt = d2
+        winner = selected_manager1 if d1 > d2 else selected_manager2
+        st.success(f"🏆 Winner: {winner} with {format_inr(max(d1, d2))}")
 
-        st.success(f"🏆 Winner: {winner} with {format_inr(win_amt)}")
-
-    # -----------------------------
     # Metric Cards
-    # -----------------------------
-    col1,col2 = st.columns(2)
+    col1, col2 = st.columns(2)
+    card_metrics = [("Total Disbursed", "#636EFA"), ("Total Revenue", "#00CC96"),
+                    ("Avg Payout %", "#EF553B"), ("Transactions", "#FFA15A")]
+    values1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", txn1]
+    values2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", txn2]
 
     with col1:
         st.subheader(label1)
-        colored_metric("Total Disbursed", format_inr(d1), "#636EFA")
-        colored_metric("Total Revenue", format_inr(r1), "#00CC96")
-        colored_metric("Avg Payout %", f"{p1:.2f}%", "#EF553B")
-        colored_metric("Transactions", txn1, "#FFA15A")
-
+        for (lbl, color), val in zip(card_metrics, values1):
+            st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
     with col2:
         st.subheader(label2)
-        colored_metric("Total Disbursed", format_inr(d2), "#636EFA")
-        colored_metric("Total Revenue", format_inr(r2), "#00CC96")
-        colored_metric("Avg Payout %", f"{p2:.2f}%", "#EF553B")
-        colored_metric("Transactions", txn2, "#FFA15A")
+        for (lbl, color), val in zip(card_metrics, values2):
+            st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
 
-    # -----------------------------
-    # 📊 Comparison Chart
-    # -----------------------------
+    # Comparison Chart
     comp_df = pd.DataFrame({
         "Metric": ["Disbursed", "Revenue", "Transactions"],
-        label1: [d1/100000, r1/100000, txn1],
-        label2: [d2/100000, r2/100000, txn2]
+        label1: [d1 / 100000, r1 / 100000, txn1],
+        label2: [d2 / 100000, r2 / 100000, txn2]
     })
-
     fig_comp = go.Figure()
-
-    fig_comp.add_trace(go.Bar(
-        name=label1,
-        x=comp_df["Metric"],
-        y=comp_df[label1],
-        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label1])],
-        textposition='outside',
-        marker_color="#636EFA"
-    ))
-
-    fig_comp.add_trace(go.Bar(
-        name=label2,
-        x=comp_df["Metric"],
-        y=comp_df[label2],
-        text=[f"{v:.2f}L" if i < 2 else f"{int(v)}" for i, v in enumerate(comp_df[label2])],
-        textposition='outside',
-        marker_color="#EF553B"
-    ))
-
-    fig_comp.update_layout(
-        barmode='group',
-        title="Comparison Overview",
-        template="plotly_white",
-        height=450
-    )
-
+    fig_comp.add_trace(go.Bar(name=label1, x=comp_df["Metric"], y=comp_df[label1],
+                              text=[f"<b>{v:.2f}L</b>" if i<2 else f"<b>{int(v)}</b>" for i,v in enumerate(comp_df[label1])],
+                              textposition='outside', marker_color="#636EFA"))
+    fig_comp.add_trace(go.Bar(name=label2, x=comp_df["Metric"], y=comp_df[label2],
+                              text=[f"<b>{v:.2f}L</b>" if i<2 else f"<b>{int(v)}</b>" for i,v in enumerate(comp_df[label2])],
+                              textposition='outside', marker_color="#EF553B"))
+    fig_comp.update_layout(barmode='group', title="Comparison Overview", template="plotly_white", height=450)
     st.plotly_chart(fig_comp, use_container_width=True)
 
-    # -----------------------------
-    # 📈 Growth Difference
-    # -----------------------------
-    growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
-
+    # Performance Difference
+    growth = ((d1 - d2)/d2*100) if d2 !=0 else 0
     st.markdown("### 📈 Performance Difference")
-    if same_manager:
-        st.write(f"{selected_month1} vs {selected_month2}: {growth:.2f}% change")
-    else:
-        st.write(f"{selected_manager1} vs {selected_manager2}: {growth:.2f}% difference")
+    st.write(f"{label1} vs {label2}: {growth:.2f}% difference")
 
-    # -----------------------------
-    # 🧠 Insights
-    # -----------------------------
+    # Insights Summary
     st.markdown("### 📝 Insights")
+    st.markdown(f"""
+    <div style="background-color: #F0F2F6; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+                display: flex; justify-content: space-around; text-align: center;">
+        <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
+        <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    if same_manager:
-        if d1 > d2:
-            st.success(f"Growth observed in {selected_month1}")
-        elif d1 < d2:
-            st.error(f"Drop observed in {selected_month1}")
-        else:
-            st.info("No change between months")
+    # Bank-wise, Caller-wise, Campaign-wise Graphs
+    for title, col_name, top_val1, top_val2 in [("Bank", "Bank", top_bank1, top_bank2),
+                                                ("Caller", "Caller", top_caller1, top_caller2),
+                                                ("Campaign", "Campaign", top_camp1, top_camp2)]:
+        st.markdown(f"### 📊 {title}-wise Comparison")
+        fig = go.Figure()
+        summary1 = f1.groupby(col_name)["Disbursed AMT"].sum()
+        summary2 = f2.groupby(col_name)["Disbursed AMT"].sum()
+        fig.add_trace(go.Bar(x=summary1.index, y=summary1.values/100000, 
+                             text=[f"<b>{v/100000:.2f}L</b>" for v in summary1.values], 
+                             textposition='auto', name=label1, marker_color="#636EFA"))
+        fig.add_trace(go.Bar(x=summary2.index, y=summary2.values/100000, 
+                             text=[f"<b>{v/100000:.2f}L</b>" for v in summary2.values], 
+                             textposition='auto', name=label2, marker_color="#EF553B"))
+        fig.update_layout(template="plotly_white", barmode='group', xaxis_tickangle=-30, height=400)
+        st.plotly_chart(fig, use_container_width=True)
 
-    st.write(f"{label1}: Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}, Transactions {txn1}")
-    st.write(f"{label2}: Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}, Transactions {txn2}")
-
-    # -----------------------------
-    # 📄 Data Tables
-    # -----------------------------
+    # Data Tables at Bottom
     st.markdown("### 📄 Data - First Selection")
-    st.dataframe(f1, use_container_width=True, height=300)
-    st.download_button("Download CSV", f1.to_csv(index=False), "manager1.csv", "text/csv")
+    df1_display = f1.dropna(how='all').copy()
+    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
+    st.download_button("Download CSV", df1_display.to_csv(index=False), "manager1.csv", "text/csv")
 
     st.markdown("### 📄 Data - Second Selection")
-    st.dataframe(f2, use_container_width=True, height=300)
-    st.download_button("Download CSV", f2.to_csv(index=False), "manager2.csv", "text/csv")
+    df2_display = f2.dropna(how='all').copy()
+    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
+    st.download_button("Download CSV", df2_display.to_csv(index=False), "manager2.csv", "text/csv")
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
