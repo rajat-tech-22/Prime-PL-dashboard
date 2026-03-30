@@ -20,10 +20,8 @@ if "login" not in st.session_state:
 
 if not st.session_state.login:
     st.title("🔐 Login")
-
     u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
-
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
@@ -85,22 +83,6 @@ def get_colors(index_list, top_value):
             colors.append(base_colors[i % len(base_colors)])
     return colors
 
-def colored_metric(label, value, color="#2596be"):
-    st.markdown(f"""
-        <div style="
-            background-color: #EDC7E7;
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 6px solid {color};
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-            text-align: left;
-            margin-bottom: 15px;
-        ">
-            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
@@ -155,18 +137,36 @@ if dashboard_type == "All Managers":
         top_manager_name = top_manager_row["Manager"]
         top_manager_amt = top_manager_row["Total_Disbursed"]
 
-        # Display 5 cards
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            colored_metric("Total Disbursed", format_inr(total_disbursed), "#636EFA")
-        with col2:
-            colored_metric("Total Revenue", format_inr(total_revenue), "#00CC96")
-        with col3:
-            colored_metric("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A")
-        with col4:
-            colored_metric("Total Transactions", total_txn, "#EF553B")
-        with col5:
-            colored_metric(f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#AB63FA")
+        # Display 5 equal columns
+        cols = st.columns([1,1,1,1,1])
+        card_data = [
+            ("Total Disbursed", format_inr(total_disbursed), "#636EFA"),
+            ("Total Revenue", format_inr(total_revenue), "#00CC96"),
+            ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
+            ("Total Transactions", total_txn, "#EF553B"),
+            (f"Top Manager: {top_manager_name}", format_inr(top_manager_amt), "#AB63FA")
+        ]
+
+        for col, data in zip(cols, card_data):
+            label, value, color = data
+            col.markdown(f"""
+                <div style="
+                    background-color: #EDC7E7;
+                    padding: 20px;
+                    border-radius: 12px;
+                    border-left: 6px solid {color};
+                    box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+                    text-align: left;
+                    margin-bottom: 15px;
+                    height: 120px;   /* fixed height for all cards */
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                ">
+                    <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+                    <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
+                </div>
+            """, unsafe_allow_html=True)
 
         # -----------------------------
         # Detailed Table
@@ -201,7 +201,6 @@ if dashboard_type == "All Managers":
                 xaxis_tickangle=-30
             )
             st.plotly_chart(fig_bank, use_container_width=True)
-
 # -----------------------------
 # Single Manager Dashboard
 # -----------------------------
