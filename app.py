@@ -240,7 +240,7 @@ if dashboard_type == "All Managers":
 
         st.markdown(f"""
         <div style="
-            background-color: Black;
+            background-color: #07f2c3;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -365,7 +365,7 @@ elif dashboard_type == "Single Manager":
         # Insight Summary
         st.markdown(f"""
         <div style="
-            background-color: Black;
+            background-color: #07f2c3;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -498,7 +498,7 @@ elif dashboard_type == "Comparison":
     # Insights Summary
     st.markdown("### 📝 Insights")
     st.markdown(f"""
-    <div style="background-color: Black; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+    <div style="background-color: #07f2c3; padding: 15px; border-radius: 10px; margin-bottom: 20px;
                 display: flex; justify-content: space-around; text-align: center;">
         <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
         <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
