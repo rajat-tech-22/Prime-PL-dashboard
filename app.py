@@ -10,7 +10,7 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# 🔐 SIMPLE LOGIN SYSTEM
 # -----------------------------
 USERNAME = "PrimePL"
 PASSWORD = "@1234"
@@ -32,7 +32,7 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# Sidebar & Global UI CSS
+# Sidebar & Global CSS
 # -----------------------------
 st.markdown("""
     <style>
@@ -84,38 +84,46 @@ def get_colors(index_list, top_value):
     return colors
 
 # -----------------------------
-# Auto-scaling card function
+# Auto-fit Card Function
 # -----------------------------
-def colored_metric_auto(label, value, color="#2596be"):
+def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
-        <div style="
-            background-color: #EDC7E7;
-            padding: 15px;
-            border-radius: 12px;
-            border-left: 6px solid {color};
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-            text-align: center;
-            margin-bottom: 15px;
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        ">
-            <p style="
-                color: #6c757d; 
-                font-size: clamp(10px, 1.5vw, 14px); 
-                margin: 0; 
+    <div style="
+        background-color: #EDC7E7;
+        padding: 10px;
+        border-radius: 12px;
+        border-left: 6px solid {color};
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 15px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    ">
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <span style="
+                font-size: 14px; 
                 font-weight: 700; 
                 text-transform: uppercase; 
-                letter-spacing: 0.8px;
-            ">{label}</p>
-            <h2 style="
-                color: #212529; 
-                margin: 5px 0 0 0; 
-                font-size: clamp(18px, 2.5vw, 28px); 
-                font-weight: 800;
-            ">{value}</h2>
+                color: #6c757d;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{label}</span>
+            <span style="
+                font-weight: 800; 
+                color: #212529;
+                font-size: 2rem; 
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{value}</span>
         </div>
+    </div>
     """
 
 # -----------------------------
@@ -172,7 +180,7 @@ if dashboard_type == "All Managers":
         top_manager_name = top_manager_row["Manager"]
         top_manager_amt = top_manager_row["Total_Disbursed"]
 
-        # Display 5 equal columns with auto-scaling text
+        # Display 5 equal columns with auto-fit cards
         cols = st.columns([1,1,1,1,1])
         card_data = [
             ("Total Disbursed", format_inr(total_disbursed), "#636EFA"),
@@ -184,7 +192,7 @@ if dashboard_type == "All Managers":
 
         for col, data in zip(cols, card_data):
             label, value, color = data
-            col.markdown(colored_metric_auto(label, value, color), unsafe_allow_html=True)
+            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
 
         # -----------------------------
         # Detailed Table
