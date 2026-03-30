@@ -123,7 +123,7 @@ def colored_metric_auto_fit(label, value, color="#2596be"):
 # Sidebar Filters
 # -----------------------------
 st.sidebar.title("📊 Filters")
-dashboard_type = st.sidebar.radio("Dashboard", ["All Managers", "Single Manager"])
+dashboard_type = st.sidebar.radio("Dashboard", ["All Managers", "Single Manager","Comparison"])
 managers = sorted(df["Manager"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
