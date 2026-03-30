@@ -83,9 +83,6 @@ def get_colors(index_list, top_value):
             colors.append(base_colors[i % len(base_colors)])
     return colors
 
-# -----------------------------
-# Auto-fit Card Function
-# -----------------------------
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
@@ -178,7 +175,7 @@ if dashboard_type == "All Managers":
         total_txn = agg_df["Transactions"].sum()
         avg_payout = (total_revenue / total_disbursed * 100) if total_disbursed else 0
 
-        # Display 4 cards
+        # Display 4 main metric cards
         cols = st.columns([1,1,1,1])
         card_data = [
             ("Total Disbursed", format_inr(total_disbursed), "#636EFA"),
@@ -191,21 +188,27 @@ if dashboard_type == "All Managers":
             col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
 
         # -----------------------------
-        # Insights Cards
+        # Insight Summary Section
         # -----------------------------
         top_bank = filtered_df.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
         top_campaign = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
         top_caller = filtered_df.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
 
-        insight_cols = st.columns(3)
-        insights = [
-            ("Top Bank", top_bank, "#636EFA"),
-            ("Top Campaign", top_campaign, "#00CC96"),
-            ("Top Caller", top_caller, "#FFA15A")
-        ]
-        for col, data in zip(insight_cols, insights):
-            label, value, color = data
-            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="
+            background-color: #F0F2F6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        ">
+            <div><b>Top Bank:</b> {top_bank}</div>
+            <div><b>Top Campaign:</b> {top_campaign}</div>
+            <div><b>Top Caller:</b> {top_caller}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
         # -----------------------------
         # Table below cards (centered & bold numeric)
@@ -240,7 +243,7 @@ if dashboard_type == "All Managers":
             fig_campaign = go.Figure(go.Bar(
                 x=campaign_summary.index,
                 y=campaign_summary.values/100000,
-                text=[f"<b>{v/100000:.2f}L</b>" for v in campaign_summary.values],  # bold labels
+                text=[f"<b>{v/100000:.2f}L</b>" for v in campaign_summary.values],
                 textposition="auto",
                 marker_color=campaign_colors,
                 name="Campaigns"
@@ -264,7 +267,7 @@ if dashboard_type == "All Managers":
             fig_bank = go.Figure(go.Bar(
                 x=bank_summary.index,
                 y=bank_summary.values/100000,
-                text=[f"<b>{v/100000:.2f}L</b>" for v in bank_summary.values],  # bold labels
+                text=[f"<b>{v/100000:.2f}L</b>" for v in bank_summary.values],
                 textposition="auto",
                 marker_color=bank_colors,
                 name="Banks"
