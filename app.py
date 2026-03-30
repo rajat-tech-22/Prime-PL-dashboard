@@ -40,7 +40,7 @@ if not st.session_state.login:
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background-color: #EDC7E7;
+        background-color: #d058e8;
         padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
