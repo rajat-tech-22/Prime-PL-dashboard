@@ -169,6 +169,9 @@ if dashboard_type == "All Managers":
             Transactions=("Manager","count"),
         ).reset_index()
 
+        # Remove blank rows (all NaN)
+        agg_df.dropna(how='all', inplace=True)
+
         # Metrics
         total_disbursed = agg_df["Total_Disbursed"].sum()
         total_revenue = agg_df["Total_Revenue"].sum()
@@ -187,6 +190,16 @@ if dashboard_type == "All Managers":
         for col, data in zip(cols, card_data):
             label, value, color = data
             col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+
+        # -----------------------------
+        # Table below cards
+        # -----------------------------
+        agg_df_display = agg_df.copy()
+        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
+        agg_df_display["Total_Revenue"] = agg_df_display["Total_Revenue"].apply(format_inr)
+        st.subheader("📄 Detailed Table")
+        st.dataframe(agg_df_display, use_container_width=True, height=300)
+        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 
         # -----------------------------
         # Campaign-wise Disbursed Chart
@@ -235,16 +248,6 @@ if dashboard_type == "All Managers":
                 xaxis_tickangle=-30
             )
             st.plotly_chart(fig_bank, use_container_width=True)
-
-        # -----------------------------
-        # Detailed Table (Bottom)
-        # -----------------------------
-        agg_df_display = agg_df.copy()
-        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
-        agg_df_display["Total_Revenue"] = agg_df_display["Total_Revenue"].apply(format_inr)
-        st.subheader("📄 Detailed Table")
-        st.dataframe(agg_df_display, use_container_width=True, height=500)
-        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
 # -----------------------------
 # Single Manager Dashboard
 # -----------------------------
