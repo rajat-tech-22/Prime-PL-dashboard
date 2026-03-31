@@ -894,13 +894,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         textposition="inside",
         marker={"color": funnel_colors},
         orientation="h",  # horizontal funnel
-        opacity=0.75
+        opacity=0.95
     ))
     
     # Update layout for clear small labels
     fig.update_traces(
         texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>",
-        textfont=dict(size=12, family="Arial", color="Black")
+        textfont=dict(size=15, family="Arial", color="Black",text="Bold")
     )
     
     fig.update_layout(
