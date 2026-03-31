@@ -769,8 +769,9 @@ elif dashboard_type == "Campaign Performance":
 """
 
     st.info(insight_text)
+
 # -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Manager & Disbursed
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
 
@@ -778,25 +779,33 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     df2 = campaign_df.copy()
 
-    # Sidebar filters
-    months = sorted(df2["Month"].dropna().unique())
-    Date = sorted(df2["Date"].dropna().unique())
-    campaigns = sorted(df2["Campaign Name"].dropna().unique())
-    managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
+    # Initialize filters
+    months = ["All"] + sorted(df2["Month"].dropna().unique())
+    selected_month = st.sidebar.selectbox("Select Month", months)
 
-    selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
-    selected_Date = st.sidebar.selectbox("Select Date", ["All"] + Date)
-    selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
-    selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
-
-    # Filter data based on sidebar selection
-    filtered = df2.copy()
+    # Filter month first
+    filtered_month = df2.copy()
     if selected_month != "All":
-        filtered = filtered[filtered["Month"] == selected_month]
-    if selected_Date != "All":
-        filtered = filtered[filtered["Date"] == selected_Date]
+        filtered_month = filtered_month[filtered_month["Month"] == selected_month]
+
+    # Dynamic Dates
+    dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
+    selected_date = st.sidebar.selectbox("Select Date", dates)
+    filtered_date = filtered_month.copy()
+    if selected_date != "All":
+        filtered_date = filtered_date[filtered_date["Date"] == selected_date]
+
+    # Dynamic Campaigns
+    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique())
+    selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
+    filtered_campaign = filtered_date.copy()
     if selected_campaign != "All":
-        filtered = filtered[filtered["Campaign Name"] == selected_campaign]
+        filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
+
+    # Dynamic Managers
+    managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
+    selected_manager = st.sidebar.selectbox("Select Manager", managers)
+    filtered = filtered_campaign.copy()
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
@@ -809,10 +818,12 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
     cost = round(filtered["Cost"].sum(), 2)
-    Total_DISB = round(filtered["Disbursed"].sum(), 2)
+    total_disbursed = round(filtered["Disbursed"].sum(), 2)
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
-    # Colorful KPI cards using HTML
+    # -----------------------------
+    # Colorful KPI cards
+    # -----------------------------
     kpi_html = f"""
     <style>
         .kpi-card {{
@@ -845,7 +856,10 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">Total Reques</div><div class="kpi-value">{leads:,}</div>
+            <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
@@ -860,14 +874,15 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{Total_DISB:,.2f}</div>
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div>
         </div>
     </div>
     """
-
     st.markdown(kpi_html, unsafe_allow_html=True)
 
+    # -----------------------------
     # Funnel chart
+    # -----------------------------
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
         y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
@@ -876,7 +891,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     ))
     st.plotly_chart(fig, use_container_width=True)
 
+    # -----------------------------
     # Conversion metrics
+    # -----------------------------
     st.subheader("📊 Conversion")
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
     delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
@@ -888,9 +905,11 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
     r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
-    r5.metric("Total Disbursed", f"₹{Total_DISB:,.2f}")
+    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
 
+    # -----------------------------
     # Click Trend
+    # -----------------------------
     if "Date" in filtered.columns:
         st.subheader("📈 Click Trend")
         trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
@@ -901,7 +920,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         ))
         st.plotly_chart(fig2, use_container_width=True)
 
+    # -----------------------------
     # Insights
+    # -----------------------------
     st.subheader("🤖 Insights")
     insight_text = ""
     if arg_ctr < 2:
@@ -916,7 +937,6 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if cpl > 100:
         st.warning("High cost per lead")
         insight_text += "High cost per lead. "
-
     if insight_text:
         st.info(insight_text)
 # Sidebar + Logout
