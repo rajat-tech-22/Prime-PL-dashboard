@@ -883,10 +883,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # -----------------------------
     # Funnel chart
     # ----------------------------
-       
-    
     st.subheader("📉 Funnel")
-    
+
     stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
     colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
@@ -905,7 +903,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             textinfo="value+percent previous",
             textposition="inside",
             marker={"color": color},
-            textfont=dict(size=fsize, color="Black", family="Arial"),
+            textfont=dict(size=fsize, color="white", family="Arial"),
             opacity=0.95
         ))
     
@@ -919,7 +917,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         funnelmode="stack"  # clear separate stages
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True) 
+    
+    
                 
     # -----------------------------
     # Conversion metrics
