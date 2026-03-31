@@ -894,7 +894,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         textposition="inside",
         marker={"color": funnel_colors},
         orientation="h",  # horizontal funnel
-        opacity=0.95
+        opacity=0.75
     ))
     
     # Update layout for clear small labels
