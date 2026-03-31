@@ -788,23 +788,16 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         filtered = filtered[filtered["Manager"] == selected_manager]
 
     # Aggregate metrics
-    total_ivr = filtered["IVR Data"].sum()
-    press1 = filtered["Press 1"].sum()
-    leads = filtered["Total Request"].sum()
-    sent = filtered["RCS Sent"].sum()
-    delivered = filtered["RCS Delivered"].sum()
-    read = filtered["RCS Read"].sum()
-    clicks = filtered["RCS Unique Clicks"].sum()
-    cost = filtered["Cost"].sum()
-    Total_DISB=filtered["Disbursed"].sum()
-    arg_ctr = (clicks / delivered * 100) if delivered else 0
-
-    # # Handle Disbursed column safely
-    # if "Disbursed" in filtered.columns:
-    #     filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce').fillna(0)
-    #     total_disbursed = filtered["Disbursed"].sum()
-    # else:
-    #     total_disbursed = 0
+    total_ivr = int(filtered["IVR Data"].sum())
+    press1 = int(filtered["Press 1"].sum())
+    leads = int(filtered["Total Request"].sum())
+    sent = int(filtered["RCS Sent"].sum())
+    delivered = int(filtered["RCS Delivered"].sum())
+    read = int(filtered["RCS Read"].sum())
+    clicks = int(filtered["RCS Unique Clicks"].sum())
+    cost = round(filtered["Cost"].sum(), 2)
+    Total_DISB = round(filtered["Disbursed"].sum(), 2)
+    arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # Colorful KPI cards using HTML
     kpi_html = f"""
@@ -875,16 +868,16 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # Conversion metrics
     st.subheader("📊 Conversion")
-    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
-    delivery_rate = (delivered / sent * 100) if sent else 0
-    read_rate = (read / delivered * 100) if delivered else 0
-    cpl = (cost / leads) if leads else 0
+    press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
+    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
+    read_rate = round((read / delivered * 100) if delivered else 0, 2)
+    cpl = round((cost / leads) if leads else 0, 2)
 
     r1,r2,r3,r4,r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
     r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("Cost/Lead", f"₹{cpl:.2f}")
+    r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
     r5.metric("Total Disbursed", f"₹{Total_DISB:,.2f}")
 
     # Click Trend
