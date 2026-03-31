@@ -39,10 +39,12 @@ if not st.session_state.login:
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
+
+
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background-color: #07aaf5;
+        background-color: linear-gradient(135deg, #fc4a1a, #f7b733);
         padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
