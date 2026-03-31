@@ -892,7 +892,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         x=[total_ivr, press1, leads, delivered, read, clicks],
         textinfo="value+percent previous",
         textposition="inside",
-        marker={"color": Black},
+        marker={"color": funnel_colors},
         orientation="h",  # horizontal funnel
         opacity=0.95
     ))
