@@ -3,11 +3,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 
-# -----------------------------
-# 🔄 Refresh Button
-# -----------------------------
-if st.sidebar.button("🔄 Refresh Dashboard"):
-    st.experimental_rerun()  # This will rerun the script and reload all data
+
 
 # -----------------------------
 # Page Config
@@ -83,7 +79,14 @@ def colored_metric_auto_fit(label, value, color="#2596be"):
     </div>
     """
 
+# Initialize refresh flag
+if "refresh" not in st.session_state:
+    st.session_state.refresh = False
 
+# Refresh button in sidebar
+if st.sidebar.button("🔄 Refresh Dashboard"):
+    st.session_state.refresh = True
+    st.experimental_rerun()
 
 # -----------------------------
 # LOAD MAIN DATA
