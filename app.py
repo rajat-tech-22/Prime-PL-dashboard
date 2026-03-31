@@ -900,7 +900,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Update layout for clear small labels
     fig.update_traces(
         texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>",
-        textfont=dict(size=15, family="Arial", color="Black",text="Bold")
+        textfont=dict(size=15, family="Arial", color="Black")
     )
     
     fig.update_layout(
