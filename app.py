@@ -795,7 +795,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
     Total_Request = int(filtered["Total Request"].sum())
-    sent = int(filtered["RCS Sent"].sum())
+    # sent = int(filtered["RCS Sent"].sum())
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
@@ -861,8 +861,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Funnel chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Total_Request","sent","Delivered","Read","Clicks"],
-        x=[total_ivr, press1,Total_Request,sent,delivered, read, clicks],
+        y=["IVR","Press1","Total_Request","Delivered","Read","Clicks"],
+        x=[total_ivr, press1,Total_Request,delivered, read, clicks],
         textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
@@ -870,13 +870,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Conversion metrics
     st.subheader("📊 Conversion")
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
+    # delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
     read_rate = round((read / delivered * 100) if delivered else 0, 2)
     cpl = round((cost / Total_Request) if leads else 0, 2)
 
     r1,r2,r3,r4,r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
-    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
+    # r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
     r4.metric("Cost/Total_Request", f"₹{cpl:,.2f}")
     r5.metric("Total Disbursed", f"₹{Total_DISB:,.2f}")
