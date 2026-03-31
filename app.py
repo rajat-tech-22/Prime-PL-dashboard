@@ -885,40 +885,33 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # ----------------------------
     st.subheader("📉 Funnel")
 
-    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
-    values = [total_ivr, press1, leads, delivered, read, clicks]
-    colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
+    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]  # Colors for stages
     
-    # Determine font size based on value
-    max_val = max(values) if max(values) > 0 else 1
-    font_sizes = [max(10, min(18, int(12 + (v/max_val)*6))) for v in values]
+    fig = go.Figure(go.Funnel(
+        y=["IVR","Press1","Total Request","Delivered","Read","Clicks"],
+        x=[total_ivr, press1, leads, delivered, read, clicks],
+        textinfo="value+percent previous",
+        textposition="inside",
+        marker={"color": funnel_colors},
+        orientation="h",  # horizontal funnel
+        opacity=0.95
+    ))
     
-    fig = go.Figure()
-    
-    for i, (stage, val, color, fsize) in enumerate(zip(stages, values, colors, font_sizes)):
-        fig.add_trace(go.Funnel(
-            name=stage,
-            y=[stage],
-            x=[val],
-            textinfo="value+percent previous",
-            textposition="inside",
-            marker={"color": color},
-            textfont=dict(size=fsize, color="white", family="Arial"),
-            opacity=0.95
-        ))
-    
-    # Layout adjustments
-    fig.update_layout(
-        orientation="h",
-        height=450,
-        margin=dict(l=50, r=50, t=30, b=30),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        funnelmode="stack"  # clear separate stages
+    # Update layout for clear small labels
+    fig.update_traces(
+        texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>",
+        textfont=dict(size=12, family="Arial", color="white")
     )
     
-    st.plotly_chart(fig, use_container_width=True) 
+    fig.update_layout(
+        margin=dict(l=50, r=50, t=30, b=30),
+        height=400,
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
     
+    st.plotly_chart(fig, use_container_width=True)
+        
     
                 
     # -----------------------------
