@@ -791,7 +791,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
     leads = int(filtered["Total Request"].sum())
-    sent = int(filtered["RCS Sent"].sum())
+    # sent = int(filtered["RCS Sent"].sum())
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
@@ -833,9 +833,6 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">Leads</div><div class="kpi-value">{leads:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
