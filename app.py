@@ -882,8 +882,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # -----------------------------
     # Funnel chart
-    # -----------------------------
-   st.subheader("📉 Funnel")
+    # ----------------------------
+    st.subheader("📉 Funnel")
     
     funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]  # colors per stage
     
@@ -906,7 +906,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     fig.update_traces(texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>")
     
     st.plotly_chart(fig, use_container_width=True)
-
+    
+            
     # -----------------------------
     # Conversion metrics
     # -----------------------------
