@@ -762,8 +762,8 @@ elif dashboard_type == "Campaign Performance":
     st.info(insight_text)
 
 
-# -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW)
+# ------------------------------
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Colorful KPI Cards
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
 
@@ -771,20 +771,16 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     df2 = campaign_df.copy()
 
-    # Filters
+    # Sidebar filters
     months = sorted(df2["Month"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
     managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        selected_month = st.selectbox("Month", ["All"] + months)
-    with col2:
-        selected_campaign = st.selectbox("Campaign", ["All"] + campaigns)
-    with col3:
-        selected_manager = st.selectbox("Manager", ["All"] + managers)
+    selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
+    selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
+    selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
 
-    # Filter data
+    # Filter data based on sidebar selection
     filtered = df2.copy()
     if selected_month != "All":
         filtered = filtered[filtered["Month"] == selected_month]
@@ -803,17 +799,40 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     clicks = filtered["RCS Unique Clicks"].sum()
     cost = filtered["Cost"].sum()
     arg_ctr = (clicks / delivered * 100) if delivered else 0
-    total_disbursed = cost  # agar disbursed alag column hai to use replace kar do
+    total_disbursed = cost  # agar alag column ho to replace kar do
 
-    # KPI Cards
-    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
-    c1.metric("Total IVR", total_ivr)
-    c2.metric("Press 1", press1)
-    c3.metric("RCS Sent", sent)
-    c4.metric("RCS Read", read)
-    c5.metric("Clicks", clicks)
-    c6.metric("Total Cost", f"₹{cost:,.2f}")
-    c7.metric("ARG CTR %", f"{arg_ctr:.2f}%")
+    # Colorful KPI cards using HTML
+    kpi_html = f"""
+    <style>
+        .kpi-card {{
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-family: sans-serif;
+        }}
+        .kpi-title {{
+            font-size: 16px;
+            font-weight: bold;
+        }}
+        .kpi-value {{
+            font-size: 28px;
+            margin-top: 5px;
+        }}
+    </style>
+    <div class="kpi-container" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="kpi-card"><div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);"><div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);"><div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);"><div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);"><div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);"><div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,.2f}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);"><div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div></div>
+    </div>
+    """
+
+    st.markdown(kpi_html, unsafe_allow_html=True)
 
     # Funnel chart
     st.subheader("📉 Funnel")
