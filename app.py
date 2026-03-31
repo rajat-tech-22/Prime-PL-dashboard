@@ -868,6 +868,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
             <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
         </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
+        </div>
     </div>
     """
     st.markdown(kpi_html, unsafe_allow_html=True)
