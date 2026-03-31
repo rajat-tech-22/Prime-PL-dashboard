@@ -795,63 +795,67 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
     clicks = filtered["RCS Unique Clicks"].sum()
     cost = filtered["Cost"].sum()
 
-    press_rate = (press1/total_ivr*100) if total_ivr else 0
-    delivery_rate = (delivered/sent*100) if sent else 0
-    read_rate = (read/delivered*100) if delivered else 0
-    ctr = (clicks/delivered*100) if delivered else 0
-    cpl = (cost/leads) if leads else 0
+    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
+    delivery_rate = (delivered / sent * 100) if sent else 0
+    read_rate = (read / delivered * 100) if delivered else 0
+    ctr = (clicks / delivered * 100) if delivered else 0
+    cpl = (cost / leads) if leads else 0
 
-    c1,c2,c3,c4,c5 = st.columns(5)
+    # KPI Cards
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("IVR", total_ivr)
     c2.metric("Press1", press1)
     c3.metric("Leads", leads)
     c4.metric("Clicks", clicks)
-    c5.metric("Cost", format_inr(cost))
+    c5.metric("Cost", f"₹{cost:,.2f}")
 
+    # Funnel Chart
     st.subheader("📉 Funnel")
-
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
-        x=[total_ivr,press1,leads,sent,delivered,read,clicks],
+        y=["IVR", "Press1", "Leads", "Sent", "Delivered", "Read", "Clicks"],
+        x=[total_ivr, press1, leads, sent, delivered, read, clicks],
         textinfo="value+percent previous"
     ))
-
     st.plotly_chart(fig, use_container_width=True)
 
+    # Conversion Metrics
     st.subheader("📊 Conversion")
-
-    r1,r2,r3,r4,r5 = st.columns(5)
+    r1, r2, r3, r4, r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
     r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
     r4.metric("CTR", f"{ctr:.2f}%")
     r5.metric("Cost/Lead", f"₹{cpl:.2f}")
 
+    # Click Trend
     if "Date" in filtered.columns:
         st.subheader("📈 Click Trend")
-
         trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
-
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
             mode="lines+markers"
         ))
-
         st.plotly_chart(fig2, use_container_width=True)
 
+    # Insights
     st.subheader("🤖 Insights")
-
+    insight_text = ""
     if ctr < 2:
         st.warning("Low CTR")
+        insight_text += "CTR is low. "
     if delivery_rate < 70:
         st.warning("Delivery issue")
+        insight_text += "Delivery issues detected. "
     if read_rate < 50:
         st.warning("Low read rate")
+        insight_text += "Read rate is low. "
     if cpl > 100:
         st.warning("High cost per lead")
-        st.info(insight_text)
-# -----------------------------
+        insight_text += "High cost per lead. "
+
+    if insight_text:
+        st.info(insight_text)# -----------------------------
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
