@@ -771,21 +771,29 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
 
     df2 = campaign_df.copy()
 
+    # Filters
     months = sorted(df2["Month"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
+    managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
-    col1, col2 = st.columns(2)
-
+    col1, col2, col3 = st.columns(3)
     with col1:
-        selected_month = st.selectbox("Month", months)
+        selected_month = st.selectbox("Month", ["All"] + months)
     with col2:
-        selected_campaign = st.selectbox("Campaign", campaigns)
+        selected_campaign = st.selectbox("Campaign", ["All"] + campaigns)
+    with col3:
+        selected_manager = st.selectbox("Manager", ["All"] + managers)
 
-    filtered = df2[
-        (df2["Month"] == selected_month) &
-        (df2["Campaign Name"] == selected_campaign)
-    ]
+    # Filter data
+    filtered = df2.copy()
+    if selected_month != "All":
+        filtered = filtered[filtered["Month"] == selected_month]
+    if selected_campaign != "All":
+        filtered = filtered[filtered["Campaign Name"] == selected_campaign]
+    if selected_manager != "All" and "Manager" in filtered.columns:
+        filtered = filtered[filtered["Manager"] == selected_manager]
 
+    # Aggregate metrics
     total_ivr = filtered["IVR Data"].sum()
     press1 = filtered["Press 1"].sum()
     leads = filtered["Total Request"].sum()
@@ -794,38 +802,40 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
     read = filtered["RCS Read"].sum()
     clicks = filtered["RCS Unique Clicks"].sum()
     cost = filtered["Cost"].sum()
-
-    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
-    delivery_rate = (delivered / sent * 100) if sent else 0
-    read_rate = (read / delivered * 100) if delivered else 0
-    ctr = (clicks / delivered * 100) if delivered else 0
-    cpl = (cost / leads) if leads else 0
+    arg_ctr = (clicks / delivered * 100) if delivered else 0
+    total_disbursed = cost  # agar disbursed alag column hai to use replace kar do
 
     # KPI Cards
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("IVR", total_ivr)
-    c2.metric("Press1", press1)
-    c3.metric("Leads", leads)
-    c4.metric("Clicks", clicks)
-    c5.metric("Cost", f"₹{cost:,.2f}")
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+    c1.metric("Total IVR", total_ivr)
+    c2.metric("Press 1", press1)
+    c3.metric("RCS Sent", sent)
+    c4.metric("RCS Read", read)
+    c5.metric("Clicks", clicks)
+    c6.metric("Total Cost", f"₹{cost:,.2f}")
+    c7.metric("ARG CTR %", f"{arg_ctr:.2f}%")
 
-    # Funnel Chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR", "Press1", "Leads", "Sent", "Delivered", "Read", "Clicks"],
+        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
         x=[total_ivr, press1, leads, sent, delivered, read, clicks],
         textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
 
-    # Conversion Metrics
+    # Conversion metrics
     st.subheader("📊 Conversion")
-    r1, r2, r3, r4, r5 = st.columns(5)
+    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
+    delivery_rate = (delivered / sent * 100) if sent else 0
+    read_rate = (read / delivered * 100) if delivered else 0
+    cpl = (cost / leads) if leads else 0
+
+    r1,r2,r3,r4,r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
     r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("CTR", f"{ctr:.2f}%")
-    r5.metric("Cost/Lead", f"₹{cpl:.2f}")
+    r4.metric("Cost/Lead", f"₹{cpl:.2f}")
+    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
 
     # Click Trend
     if "Date" in filtered.columns:
@@ -841,7 +851,7 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
     # Insights
     st.subheader("🤖 Insights")
     insight_text = ""
-    if ctr < 2:
+    if arg_ctr < 2:
         st.warning("Low CTR")
         insight_text += "CTR is low. "
     if delivery_rate < 70:
@@ -855,7 +865,7 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
         insight_text += "High cost per lead. "
 
     if insight_text:
-        st.info(insight_text)# -----------------------------
+        st.info(insight_text)-
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
