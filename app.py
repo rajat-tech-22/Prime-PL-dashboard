@@ -762,7 +762,7 @@ elif dashboard_type == "Campaign Performance":
     st.info(insight_text)
 
 # -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Manager, Disbursed AMT & Conditional Colors
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Manager & Disbursed AMT
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
 
@@ -788,74 +788,55 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
-    # Aggregate metrics safely
-    def safe_sum(col):
-        return filtered[col].sum() if col in filtered.columns else 0
-
-    total_ivr = safe_sum("IVR Data")
-    press1 = safe_sum("Press 1")
-    leads = safe_sum("Total Request")
-    sent = safe_sum("RCS Sent")
-    delivered = safe_sum("RCS Delivered")
-    read = safe_sum("RCS Read")
-    clicks = safe_sum("RCS Unique Clicks")
-    cost = safe_sum("Cost")
-    total_disbursed = safe_sum("Disbursed AMT")
-
-    # Conversion metrics
+    # Aggregate metrics
+    total_ivr = filtered["IVR Data"].sum()
+    press1 = filtered["Press 1"].sum()
+    leads = filtered["Total Request"].sum()
+    sent = filtered["RCS Sent"].sum()
+    delivered = filtered["RCS Delivered"].sum()
+    read = filtered["RCS Read"].sum()
+    clicks = filtered["RCS Unique Clicks"].sum()
+    cost = filtered["Cost"].sum()
     arg_ctr = (clicks / delivered * 100) if delivered else 0
-    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
-    delivery_rate = (delivered / sent * 100) if sent else 0
-    read_rate = (read / delivered * 100) if delivered else 0
-    cpl = (cost / leads) if leads else 0
 
-    # Function to choose color based on thresholds
-    def metric_color(value, metric):
-        if metric == "CTR":
-            if value < 2: return "#ff4b2b"  # red
-            elif value < 5: return "#ffb347"  # orange
-            else: return "#38ef7d"  # green
-        elif metric == "Delivery":
-            if value < 70: return "#ff4b2b"
-            elif value < 90: return "#ffb347"
-            else: return "#38ef7d"
-        elif metric == "Read":
-            if value < 50: return "#ff4b2b"
-            elif value < 75: return "#ffb347"
-            else: return "#38ef7d"
-        elif metric == "CPL":
-            if value > 100: return "#ff4b2b"
-            elif value > 50: return "#ffb347"
-            else: return "#38ef7d"
-        else:
-            return "#2575fc"  # default blue
+    # Safely sum Disbursed AMT
+    if "Disbursed AMT" in filtered.columns:
+        filtered["Disbursed AMT"] = pd.to_numeric(filtered["Disbursed AMT"], errors='coerce')
+        total_disbursed = filtered["Disbursed AMT"].sum()
+    else:
+        total_disbursed = 0
 
-    # Colorful KPI cards with dynamic colors
+    # Colorful KPI cards in sequence
     kpi_html = f"""
     <style>
         .kpi-card {{
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
             color: white;
             border-radius: 10px;
             padding: 20px;
             text-align: center;
             font-family: sans-serif;
-            flex:1;
         }}
-        .kpi-title {{ font-size:16px; font-weight:bold; }}
-        .kpi-value {{ font-size:28px; margin-top:5px; }}
-        .kpi-container {{ display:flex; gap:10px; flex-wrap:wrap; }}
+        .kpi-title {{
+            font-size: 16px;
+            font-weight: bold;
+        }}
+        .kpi-value {{
+            font-size: 28px;
+            margin-top: 5px;
+        }}
     </style>
-    <div class="kpi-container">
-        <div class="kpi-card" style="background:{metric_color(press_rate,'CTR')};"><div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div></div>
-        <div class="kpi-card" style="background:{metric_color(delivery_rate,'Delivery')};"><div class="kpi-title">Delivery %</div><div class="kpi-value">{delivery_rate:.2f}%</div></div>
-        <div class="kpi-card" style="background:{metric_color(read_rate,'Read')};"><div class="kpi-title">Read %</div><div class="kpi-value">{read_rate:.2f}%</div></div>
-        <div class="kpi-card" style="background:{metric_color(cpl,'CPL')};"><div class="kpi-title">Cost/Lead</div><div class="kpi-value">₹{cpl:.2f}</div></div>
-        <div class="kpi-card" style="background:#6a11cb;"><div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div></div>
-        <div class="kpi-card" style="background:#ff416c;"><div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div></div>
-        <div class="kpi-card" style="background:#11998e;"><div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div></div>
-        <div class="kpi-card" style="background:#fc4a1a;"><div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div></div>
-        <div class="kpi-card" style="background:#8e2de2;"><div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div></div>
-        <div class="kpi-card" style="background:#ffd700;"><div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div></div>
+    <div class="kpi-container" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="kpi-card"><div class="kpi-title">IVR</div><div class="kpi-value">{total_ivr:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);"><div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);"><div class="kpi-title">Leads</div><div class="kpi-value">{leads:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);"><div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);"><div class="kpi-title">RCS Delivered</div><div class="kpi-value">{delivered:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);"><div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff7eb9, #ff758c);"><div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);"><div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,.2f}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);"><div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);"><div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div></div>
     </div>
     """
     st.markdown(kpi_html, unsafe_allow_html=True)
@@ -863,12 +844,25 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Funnel chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
+        y=["IVR","Press1","Leads","RCS Sent","RCS Delivered","RCS Read","Clicks"],
         x=[total_ivr, press1, leads, sent, delivered, read, clicks],
-        textinfo="value+percent previous",
-        marker={"color":["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2"]}
+        textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
+
+    # Conversion metrics
+    st.subheader("📊 Conversion")
+    press_rate = (press1 / total_ivr * 100) if total_ivr else 0
+    delivery_rate = (delivered / sent * 100) if sent else 0
+    read_rate = (read / delivered * 100) if delivered else 0
+    cpl = (cost / leads) if leads else 0
+
+    r1,r2,r3,r4,r5 = st.columns(5)
+    r1.metric("Press %", f"{press_rate:.2f}%")
+    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
+    r3.metric("Read %", f"{read_rate:.2f}%")
+    r4.metric("Cost/Lead", f"₹{cpl:.2f}")
+    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
 
     # Click Trend
     if "Date" in filtered.columns:
@@ -877,8 +871,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
-            mode="lines+markers",
-            marker=dict(color="mediumseagreen")
+            mode="lines+markers"
         ))
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -897,6 +890,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if cpl > 100:
         st.warning("High cost per lead")
         insight_text += "High cost per lead. "
+
     if insight_text:
         st.info(insight_text)
 # Sidebar + Logout
