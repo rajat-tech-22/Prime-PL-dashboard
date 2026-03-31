@@ -907,7 +907,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         margin=dict(l=50, r=50, t=30, b=30),
         height=400,
         plot_bgcolor="white",
-        paper_bgcolor="#03c2fc"
+        paper_bgcolor="White"
     )
     
     st.plotly_chart(fig, use_container_width=True)
