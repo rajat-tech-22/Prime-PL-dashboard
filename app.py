@@ -765,7 +765,7 @@ elif dashboard_type == "Campaign Performance":
 # -----------------------------
 # 📊 CAMPAIGN FUNNEL ANALYSIS (NEW)
 # -----------------------------
-elif dashboard_type == "📊 Campaign Funnel Analysis":
+if dashboard_type == "📊 Campaign Funnel Analysis":
 
     st.header("📊 Campaign Funnel Analysis")
 
@@ -815,6 +815,7 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
     c6.metric("Total Cost", f"₹{cost:,.2f}")
     c7.metric("ARG CTR %", f"{arg_ctr:.2f}%")
 
+    # Funnel chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
         y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
@@ -865,7 +866,7 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
         insight_text += "High cost per lead. "
 
     if insight_text:
-        st.info(insight_text)-
+        st.info(insight_text)
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
