@@ -892,7 +892,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         x=[total_ivr, press1, leads, delivered, read, clicks],
         textinfo="value+percent previous",
         textposition="inside",
-        marker={"color": funnel_colors},
+        marker={"color": Black},
         orientation="h",  # horizontal funnel
         opacity=0.95
     ))
@@ -900,14 +900,14 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Update layout for clear small labels
     fig.update_traces(
         texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>",
-        textfont=dict(size=12, family="Arial", color="white")
+        textfont=dict(size=12, family="Arial", color="Black")
     )
     
     fig.update_layout(
         margin=dict(l=50, r=50, t=30, b=30),
         height=400,
         plot_bgcolor="white",
-        paper_bgcolor="white"
+        paper_bgcolor="#03c2fc"
     )
     
     st.plotly_chart(fig, use_container_width=True)
