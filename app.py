@@ -800,7 +800,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
     cost = int(filtered["Cost"].sum())
-    # Total_DISB = int(filtered["Disbursed"].sum())
+    Total_DISB = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # Colorful KPI cards using HTML
