@@ -851,17 +851,4 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
     if cpl > 100:
         st.warning("High cost per lead")
 
-# -----------------------------
-# LOGOUT
-# -----------------------------
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.rerun()
-# -----------------------------
-# Sidebar + Logout
-# -----------------------------
-st.sidebar.title("")
 
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.rerun()
