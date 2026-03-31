@@ -771,12 +771,10 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # Sidebar filters
     months = sorted(df2["Month"].dropna().unique())
-    Date = sorted(df2["Date"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
     managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
     selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
-    selected_Date = st.sidebar.selectbox("Select Date", ["All"] + Date)
     selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
     selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
 
@@ -784,8 +782,6 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     filtered = df2.copy()
     if selected_month != "All":
         filtered = filtered[filtered["Month"] == selected_month]
-    if selected_Date != "All":
-        filtered = filtered[filtered["Date"] == selected_Date]
     if selected_campaign != "All":
         filtered = filtered[filtered["Campaign Name"] == selected_campaign]
     if selected_manager != "All" and "Manager" in filtered.columns:
@@ -794,13 +790,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Aggregate metrics
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
-    Total_Request = int(filtered["Total Request"].sum())
-    # sent = int(filtered["RCS Sent"].sum())
+    leads = int(filtered["Total Request"].sum())
+    sent = int(filtered["RCS Sent"].sum())
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost = int(filtered["Cost"].sum())
-    Total_DISB = int(filtered["Disbursed"].sum())
+    cost = round(filtered["Cost"].sum(), 2)
+    Total_DISB = round(filtered["Disbursed"].sum(), 2)
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # Colorful KPI cards using HTML
@@ -836,7 +832,10 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">Total_Request</div><div class="kpi-value">{Total_Request:,}</div>
+            <div class="kpi-title">Leads</div><div class="kpi-value">{leads:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
@@ -845,13 +844,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
-            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
+            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,.2f}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:,.2f}%</div>
+            <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{Total_DISB:,}</div>
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{Total_DISB:,.2f}</div>
         </div>
     </div>
     """
@@ -861,8 +860,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Funnel chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Total_Request","Delivered","Read","Clicks"],
-        x=[total_ivr, press1,Total_Request,delivered, read, clicks],
+        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
+        x=[total_ivr, press1, leads, sent, delivered, read, clicks],
         textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
@@ -870,15 +869,15 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Conversion metrics
     st.subheader("📊 Conversion")
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-    # delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
+    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
     read_rate = round((read / delivered * 100) if delivered else 0, 2)
-    cpl = round((cost / Total_Request) if leads else 0, 2)
+    cpl = round((cost / leads) if leads else 0, 2)
 
     r1,r2,r3,r4,r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
-    # r2.metric("Delivery %", f"{delivery_rate:.2f}%")
+    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("Cost/Total_Request", f"₹{cpl:,.2f}")
+    r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
     r5.metric("Total Disbursed", f"₹{Total_DISB:,.2f}")
 
     # Click Trend
