@@ -885,8 +885,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # -----------------------------
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
-        x=[total_ivr, press1, leads, sent, delivered, read, clicks],
+        y=["IVR","Press1","Total Request","Delivered","Read","Clicks"],
+        x=[total_ivr, press1, leads, delivered, read, clicks],
         textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
