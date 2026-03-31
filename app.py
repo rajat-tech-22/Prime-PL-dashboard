@@ -795,7 +795,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
     Total_Request = int(filtered["Total Request"].sum())
-    # sent = int(filtered["RCS Sent"].sum())
+    sent = int(filtered["RCS Sent"].sum())
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
