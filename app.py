@@ -883,13 +883,29 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # -----------------------------
     # Funnel chart
     # -----------------------------
-    st.subheader("📉 Funnel")
-    fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Total Request","Delivered","Read","Clicks"],
-        x=[total_ivr, press1, leads, delivered, read, clicks],
-        textinfo="value+percent previous"
-    ))
-    st.plotly_chart(fig, use_container_width=True)
+   st.subheader("📉 Funnel")
+
+funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]  # colors per stage
+
+fig = go.Figure(go.Funnel(
+    y=["IVR","Press1","Total Request","Delivered","Read","Clicks"],
+    x=[total_ivr, press1, leads, delivered, read, clicks],
+    textinfo="value+percent previous",
+    textposition="inside",
+    marker={"color": funnel_colors},
+    opacity=0.9
+))
+
+# Update layout for better clarity
+fig.update_layout(
+    margin=dict(l=20, r=20, t=30, b=20),
+    font=dict(size=14, family="Arial", color="black"),
+)
+
+# Make text bold
+fig.update_traces(texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>")
+
+st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
     # Conversion metrics
