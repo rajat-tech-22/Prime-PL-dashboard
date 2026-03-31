@@ -761,11 +761,11 @@ elif dashboard_type == "Campaign Performance":
 
     st.info(insight_text)
 
-
 # -----------------------------
-# Campaign Funnel Analysis
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Manager, Disbursed AMT & Conditional Colors
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
+
     st.header("📊 Campaign Funnel Analysis")
 
     df2 = campaign_df.copy()
@@ -773,78 +773,104 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Sidebar filters
     months = sorted(df2["Month"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
-    managers = sorted(df2["Manager"].dropna().unique())
+    managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
-    selected_month = st.sidebar.selectbox("Select Month", months)
-    selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
-    selected_manager = st.sidebar.selectbox("Select Manager", managers)
+    selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
+    selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
+    selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
 
-    # Filter data
-    filtered = df2[
-        (df2["Month"] == selected_month) &
-        (df2["Campaign Name"] == selected_campaign) &
-        (df2["Manager"] == selected_manager)
-    ]
+    # Filter data based on sidebar selection
+    filtered = df2.copy()
+    if selected_month != "All":
+        filtered = filtered[filtered["Month"] == selected_month]
+    if selected_campaign != "All":
+        filtered = filtered[filtered["Campaign Name"] == selected_campaign]
+    if selected_manager != "All" and "Manager" in filtered.columns:
+        filtered = filtered[filtered["Manager"] == selected_manager]
 
-    # -----------------------------
-    # Metrics
-    # -----------------------------
-    total_ivr = filtered["IVR Data"].sum()
-    press1 = filtered["Press 1"].sum()
-    leads = filtered["Total Request"].sum()
-    sent = filtered["RCS Sent"].sum()
-    delivered = filtered["RCS Delivered"].sum()
-    read = filtered["RCS Read"].sum()
-    clicks = filtered["RCS Unique Clicks"].sum()
-    cost = filtered["Cost"].sum()
-    disbursed = filtered["Disbursed AMT"].sum()
-    ctr = (clicks / delivered * 100) if delivered else 0
+    # Aggregate metrics safely
+    def safe_sum(col):
+        return filtered[col].sum() if col in filtered.columns else 0
+
+    total_ivr = safe_sum("IVR Data")
+    press1 = safe_sum("Press 1")
+    leads = safe_sum("Total Request")
+    sent = safe_sum("RCS Sent")
+    delivered = safe_sum("RCS Delivered")
+    read = safe_sum("RCS Read")
+    clicks = safe_sum("RCS Unique Clicks")
+    cost = safe_sum("Cost")
+    total_disbursed = safe_sum("Disbursed AMT")
+
+    # Conversion metrics
+    arg_ctr = (clicks / delivered * 100) if delivered else 0
     press_rate = (press1 / total_ivr * 100) if total_ivr else 0
     delivery_rate = (delivered / sent * 100) if sent else 0
     read_rate = (read / delivered * 100) if delivered else 0
     cpl = (cost / leads) if leads else 0
 
-    # -----------------------------
-    # Colorful KPI Cards
-    # -----------------------------
-    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+    # Function to choose color based on thresholds
+    def metric_color(value, metric):
+        if metric == "CTR":
+            if value < 2: return "#ff4b2b"  # red
+            elif value < 5: return "#ffb347"  # orange
+            else: return "#38ef7d"  # green
+        elif metric == "Delivery":
+            if value < 70: return "#ff4b2b"
+            elif value < 90: return "#ffb347"
+            else: return "#38ef7d"
+        elif metric == "Read":
+            if value < 50: return "#ff4b2b"
+            elif value < 75: return "#ffb347"
+            else: return "#38ef7d"
+        elif metric == "CPL":
+            if value > 100: return "#ff4b2b"
+            elif value > 50: return "#ffb347"
+            else: return "#38ef7d"
+        else:
+            return "#2575fc"  # default blue
 
-    c1.metric("IVR Data", f"{total_ivr:,}")
-    c2.metric("Press 1", f"{press1:,}")
-    c3.metric("Leads", f"{leads:,}")
-    c4.metric("RCS Sent", f"{sent:,}")
-    c5.metric("RCS Read", f"{read:,}")
-    c6.metric("Clicks", f"{clicks:,}")
-    c7.metric("Cost (₹)", f"{cost:,.2f}")
-    
-    st.markdown(f"**Total Disbursed: ₹{disbursed:,.2f} | ARG CTR: {ctr:.2f}%**")
+    # Colorful KPI cards with dynamic colors
+    kpi_html = f"""
+    <style>
+        .kpi-card {{
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-family: sans-serif;
+            flex:1;
+        }}
+        .kpi-title {{ font-size:16px; font-weight:bold; }}
+        .kpi-value {{ font-size:28px; margin-top:5px; }}
+        .kpi-container {{ display:flex; gap:10px; flex-wrap:wrap; }}
+    </style>
+    <div class="kpi-container">
+        <div class="kpi-card" style="background:{metric_color(press_rate,'CTR')};"><div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div></div>
+        <div class="kpi-card" style="background:{metric_color(delivery_rate,'Delivery')};"><div class="kpi-title">Delivery %</div><div class="kpi-value">{delivery_rate:.2f}%</div></div>
+        <div class="kpi-card" style="background:{metric_color(read_rate,'Read')};"><div class="kpi-title">Read %</div><div class="kpi-value">{read_rate:.2f}%</div></div>
+        <div class="kpi-card" style="background:{metric_color(cpl,'CPL')};"><div class="kpi-title">Cost/Lead</div><div class="kpi-value">₹{cpl:.2f}</div></div>
+        <div class="kpi-card" style="background:#6a11cb;"><div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div></div>
+        <div class="kpi-card" style="background:#ff416c;"><div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div></div>
+        <div class="kpi-card" style="background:#11998e;"><div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div></div>
+        <div class="kpi-card" style="background:#fc4a1a;"><div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div></div>
+        <div class="kpi-card" style="background:#8e2de2;"><div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div></div>
+        <div class="kpi-card" style="background:#ffd700;"><div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div></div>
+    </div>
+    """
+    st.markdown(kpi_html, unsafe_allow_html=True)
 
-    # -----------------------------
-    # Funnel Chart
-    # -----------------------------
+    # Funnel chart
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Leads","RCS Sent","Delivered","Read","Clicks"],
+        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
         x=[total_ivr, press1, leads, sent, delivered, read, clicks],
         textinfo="value+percent previous",
-        marker={"color": ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692"]}
+        marker={"color":["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2"]}
     ))
     st.plotly_chart(fig, use_container_width=True)
 
-    # -----------------------------
-    # Conversion Metrics
-    # -----------------------------
-    st.subheader("📊 Conversion")
-    r1, r2, r3, r4, r5 = st.columns(5)
-    r1.metric("Press %", f"{press_rate:.2f}%")
-    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
-    r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("CTR", f"{ctr:.2f}%")
-    r5.metric("Cost/Lead", f"₹{cpl:.2f}")
-
-    # -----------------------------
     # Click Trend
-    # -----------------------------
     if "Date" in filtered.columns:
         st.subheader("📈 Click Trend")
         trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
@@ -852,22 +878,27 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
             mode="lines+markers",
-            line=dict(color="#EF553B", width=3)
+            marker=dict(color="mediumseagreen")
         ))
         st.plotly_chart(fig2, use_container_width=True)
 
-    # -----------------------------
     # Insights
-    # -----------------------------
     st.subheader("🤖 Insights")
-    if ctr < 2:
+    insight_text = ""
+    if arg_ctr < 2:
         st.warning("Low CTR")
+        insight_text += "CTR is low. "
     if delivery_rate < 70:
         st.warning("Delivery issue")
+        insight_text += "Delivery issues detected. "
     if read_rate < 50:
         st.warning("Low read rate")
+        insight_text += "Read rate is low. "
     if cpl > 100:
         st.warning("High cost per lead")
+        insight_text += "High cost per lead. "
+    if insight_text:
+        st.info(insight_text)
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
