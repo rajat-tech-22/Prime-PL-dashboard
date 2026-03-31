@@ -868,13 +868,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
-            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,.2f}</div>
+            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div>
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
         </div>
     </div>
     """
