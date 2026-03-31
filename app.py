@@ -882,16 +882,18 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # -----------------------------
     # Funnel chart
-    # ----------------------------
+        # ----------------------------
     st.subheader("📉 Funnel")
     
-    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]  # Colors for stages
+    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
     stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
     
-    # Determine text position and font size based on value
+    # Determine text position: inside if segment > 5% of max, else outside
     text_positions = ["inside" if v/max(values) > 0.05 else "outside" for v in values]
-    font_sizes = [max(10, min(16, int(12 + (v/max(values))*6))) for v in values]
+    
+    # Set a single font size for clarity
+    font_size = 14
     
     fig = go.Figure(go.Funnel(
         y=stages,
@@ -901,14 +903,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         marker={"color": funnel_colors},
         orientation="h",
         opacity=0.95,
-        textfont=dict(color="white", family="Arial")
+        textfont=dict(size=font_size, color="white", family="Arial")
     ))
     
-    # Apply font sizes dynamically
-    for i, size in enumerate(font_sizes):
-        fig.data[i].textfont.size = size
-    
-    # Layout for clarity
     fig.update_layout(
         margin=dict(l=50, r=50, t=30, b=30),
         height=450,
