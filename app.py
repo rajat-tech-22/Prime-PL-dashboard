@@ -771,10 +771,12 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # Sidebar filters
     months = sorted(df2["Month"].dropna().unique())
+    Date = sorted(df2["Date"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
     managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
     selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
+    selected_Date = st.sidebar.selectbox("Select Date", ["All"] + Date)
     selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
     selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
 
@@ -782,6 +784,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     filtered = df2.copy()
     if selected_month != "All":
         filtered = filtered[filtered["Month"] == selected_month]
+    if selected_Date != "All":
+        filtered = filtered[filtered["Date"] == selected_Date]
     if selected_campaign != "All":
         filtered = filtered[filtered["Campaign Name"] == selected_campaign]
     if selected_manager != "All" and "Manager" in filtered.columns:
@@ -832,10 +836,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">Leads</div><div class="kpi-value">{leads:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
+            <div class="kpi-title">Total Reques</div><div class="kpi-value">{leads:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
