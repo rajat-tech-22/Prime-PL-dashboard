@@ -905,7 +905,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             textinfo="value+percent previous",
             textposition="inside",
             marker={"color": color},
-            textfont=dict(size=fsize, color="black", family="Arial"),
+            textfont=dict(size=fsize, color="Black", family="Arial"),
             opacity=0.95
         ))
     
