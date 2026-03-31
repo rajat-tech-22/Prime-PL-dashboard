@@ -801,7 +801,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     arg_ctr = (clicks / delivered * 100) if delivered else 0
 
     # Safely sum Disbursed AMT
-    if "Disbursed AMT" in filtered.columns:
+    if "Disbursed" in filtered.columns:
         filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce')
         total_disbursed = filtered["Disbursed"].sum()
     else:
@@ -830,7 +830,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     <div class="kpi-container" style="display:flex; gap:10px; flex-wrap:wrap;">
         <div class="kpi-card"><div class="kpi-title">IVR</div><div class="kpi-value">{total_ivr:,}</div></div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);"><div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div></div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);"><div class="kpi-title">Leads</div><div class="kpi-value">{Total_Request:,}</div></div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);"><div class="kpi-title">Total_Request</div><div class="kpi-value">{Total_Request:,}</div></div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);"><div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div></div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);"><div class="kpi-title">RCS Delivered</div><div class="kpi-value">{delivered:,}</div></div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);"><div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div></div>
