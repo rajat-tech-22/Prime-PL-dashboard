@@ -846,7 +846,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     st.subheader("📉 Funnel")
     fig = go.Figure(go.Funnel(
         y=["IVR","Press1","Leads","RCS Sent","RCS Delivered","RCS Read","Clicks"],
-        x=[total_ivr, press1, leads, sent, delivered, read, clicks],
+        x=[total_ivr, press1,Total_Request, sent, delivered, read, clicks],
         textinfo="value+percent previous"
     ))
     st.plotly_chart(fig, use_container_width=True)
@@ -856,7 +856,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     press_rate = (press1 / total_ivr * 100) if total_ivr else 0
     delivery_rate = (delivered / sent * 100) if sent else 0
     read_rate = (read / delivered * 100) if delivered else 0
-    cpl = (cost / leads) if leads else 0
+    cpl = (cost / Total_Request) if leads else 0
 
     r1,r2,r3,r4,r5 = st.columns(5)
     r1.metric("Press %", f"{press_rate:.2f}%")
