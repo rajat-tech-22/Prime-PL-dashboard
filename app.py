@@ -785,8 +785,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if selected_month != "All":
         filtered = filtered[filtered["Month"] == selected_month]
     if selected_Date != "All":
-        filtered = filtered[filtered["Date"] == selected_month]
-    if selected_campaign != "All":
+        filtered = filtered[filtered["Date"] == selected_Date]
     if selected_campaign != "All":
         filtered = filtered[filtered["Campaign Name"] == selected_campaign]
     if selected_manager != "All" and "Manager" in filtered.columns:
