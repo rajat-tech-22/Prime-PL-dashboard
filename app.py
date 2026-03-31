@@ -850,8 +850,7 @@ elif dashboard_type == "📊 Campaign Funnel Analysis":
         st.warning("Low read rate")
     if cpl > 100:
         st.warning("High cost per lead")
-
-    st.info(insight_text)
+        st.info(insight_text)
 # -----------------------------
 # Sidebar + Logout
 # -----------------------------
