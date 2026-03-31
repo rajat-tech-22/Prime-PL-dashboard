@@ -43,11 +43,11 @@ if not st.session_state.login:
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background: linear-gradient(135deg, #11998e, #38ef7d);
-        padding: 12px;
+        background-color: linear-gradient(135deg, #fc4a1a, #f7b733);
+        padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
-        box-shadow: 2px 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
         text-align: center;
         margin-bottom: 15px;
         height: 120px;
@@ -57,36 +57,30 @@ def colored_metric_auto_fit(label, value, color="#2596be"):
         align-items: center;
         overflow: hidden;
     ">
-        <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-            
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
             <span style="
-                font-size: 13px; 
+                font-size: 14px; 
                 font-weight: 700; 
                 text-transform: uppercase; 
-                color: #eafff5;
-                letter-spacing: 0.5px;
+                color: #6c757d;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            ">
-                {label}
-            </span>
-
+            ">{label}</span>
             <span style="
-                font-weight: 900; 
-                color: white;
-                font-size: 28px; 
-                margin-top: 5px;
+                font-weight: 800; 
+                color: #212529;
+                font-size: 2rem; 
+                display: inline-block;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-            ">
-                {value}
-            </span>
-
+            ">{value}</span>
         </div>
     </div>
     """
+
+
 
 
 # -----------------------------
