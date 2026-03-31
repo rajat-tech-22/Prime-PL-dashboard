@@ -78,8 +78,9 @@ def colored_metric_auto_fit(label, value, color="#2596be"):
     """
 
 
+
 # -----------------------------
-# Load Data
+# LOAD MAIN DATA
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_data():
@@ -88,7 +89,18 @@ def load_data():
     df.replace("null", None, inplace=True)
     return df
 
+# -----------------------------
+# LOAD CAMPAIGN DATA
+# -----------------------------
+@st.cache_data(ttl=60)
+def load_campaign_data():
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?gid=0&single=true&output=csv"
+    df2 = pd.read_csv(url)
+    df2.columns = df2.columns.str.strip()
+    return df2
+
 df = load_data()
+campaign_df = load_campaign_data()
 
 # -----------------------------
 # Helper Functions
@@ -166,12 +178,20 @@ def colored_metric(label, value, color="#2596be"):
         </div>
         """, unsafe_allow_html=True)
 
+
 # -----------------------------
-# Sidebar Filters
+# SIDEBAR
 # -----------------------------
-st.sidebar.title("📊 Filters")
-with st.sidebar.expander("Select Dashboard Type", expanded=True):
-    dashboard_type = st.radio("Dashboard", ["All Managers", "Single Manager", "Comparison", "Campaign Performance"])
+st.sidebar.title("📊 Dashboard")
+
+dashboard_type = st.sidebar.radio("Select Dashboard", [
+    "All Managers",
+    "Single Manager",
+    "Comparison",
+    "Campaign Performance",
+    "📊 Campaign Funnel Analysis"
+])
+
 
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
@@ -740,6 +760,103 @@ elif dashboard_type == "Campaign Performance":
 """
 
     st.info(insight_text)
+
+
+# -----------------------------
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW)
+# -----------------------------
+elif dashboard_type == "📊 Campaign Funnel Analysis":
+
+    st.header("📊 Campaign Funnel Analysis")
+
+    df2 = campaign_df.copy()
+
+    months = sorted(df2["Month"].dropna().unique())
+    campaigns = sorted(df2["Campaign Name"].dropna().unique())
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        selected_month = st.selectbox("Month", months)
+    with col2:
+        selected_campaign = st.selectbox("Campaign", campaigns)
+
+    filtered = df2[
+        (df2["Month"] == selected_month) &
+        (df2["Campaign Name"] == selected_campaign)
+    ]
+
+    total_ivr = filtered["IVR Data"].sum()
+    press1 = filtered["Press 1"].sum()
+    leads = filtered["Total Request"].sum()
+    sent = filtered["RCS Sent"].sum()
+    delivered = filtered["RCS Delivered"].sum()
+    read = filtered["RCS Read"].sum()
+    clicks = filtered["RCS Unique Clicks"].sum()
+    cost = filtered["Cost"].sum()
+
+    press_rate = (press1/total_ivr*100) if total_ivr else 0
+    delivery_rate = (delivered/sent*100) if sent else 0
+    read_rate = (read/delivered*100) if delivered else 0
+    ctr = (clicks/delivered*100) if delivered else 0
+    cpl = (cost/leads) if leads else 0
+
+    c1,c2,c3,c4,c5 = st.columns(5)
+    c1.metric("IVR", total_ivr)
+    c2.metric("Press1", press1)
+    c3.metric("Leads", leads)
+    c4.metric("Clicks", clicks)
+    c5.metric("Cost", format_inr(cost))
+
+    st.subheader("📉 Funnel")
+
+    fig = go.Figure(go.Funnel(
+        y=["IVR","Press1","Leads","Sent","Delivered","Read","Clicks"],
+        x=[total_ivr,press1,leads,sent,delivered,read,clicks],
+        textinfo="value+percent previous"
+    ))
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("📊 Conversion")
+
+    r1,r2,r3,r4,r5 = st.columns(5)
+    r1.metric("Press %", f"{press_rate:.2f}%")
+    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
+    r3.metric("Read %", f"{read_rate:.2f}%")
+    r4.metric("CTR", f"{ctr:.2f}%")
+    r5.metric("Cost/Lead", f"₹{cpl:.2f}")
+
+    if "Date" in filtered.columns:
+        st.subheader("📈 Click Trend")
+
+        trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
+
+        fig2 = go.Figure(go.Scatter(
+            x=trend["Date"],
+            y=trend["RCS Unique Clicks"],
+            mode="lines+markers"
+        ))
+
+        st.plotly_chart(fig2, use_container_width=True)
+
+    st.subheader("🤖 Insights")
+
+    if ctr < 2:
+        st.warning("Low CTR")
+    if delivery_rate < 70:
+        st.warning("Delivery issue")
+    if read_rate < 50:
+        st.warning("Low read rate")
+    if cpl > 100:
+        st.warning("High cost per lead")
+
+# -----------------------------
+# LOGOUT
+# -----------------------------
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.login = False
+    st.rerun()
 # -----------------------------
 # Sidebar + Logout
 # -----------------------------
