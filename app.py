@@ -760,7 +760,6 @@ elif dashboard_type == "Campaign Performance":
 """
 
     st.info(insight_text)
-
 # -----------------------------
 # 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Manager & Disbursed
 # -----------------------------
@@ -799,14 +798,14 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     cost = filtered["Cost"].sum()
     arg_ctr = (clicks / delivered * 100) if delivered else 0
 
-    # Sum Disbursed column safely
+    # Handle Disbursed column safely
     if "Disbursed" in filtered.columns:
-        filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce')
+        filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce').fillna(0)
         total_disbursed = filtered["Disbursed"].sum()
     else:
         total_disbursed = 0
 
-    # Colorful KPI cards using HTML in sequence
+    # Colorful KPI cards using HTML
     kpi_html = f"""
     <style>
         .kpi-card {{
@@ -815,6 +814,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             padding: 20px;
             text-align: center;
             font-family: sans-serif;
+            flex:1;
         }}
         .kpi-title {{
             font-size: 16px;
@@ -824,30 +824,35 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             font-size: 28px;
             margin-top: 5px;
         }}
+        .kpi-container {{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }}
     </style>
-    <div class="kpi-container" style="display:flex; gap:10px; flex-wrap:wrap;">
+    <div class="kpi-container">
         <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
             <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+            <div class="kpi-title">Leads</div><div class="kpi-value">{leads:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
             <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
             <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
             <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,.2f}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #ff7eb9, #ff758c);">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
