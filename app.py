@@ -94,7 +94,7 @@ def load_data():
 # -----------------------------
 @st.cache_data(ttl=60)
 def load_campaign_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?gid=0&single=true&output=csv"
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
     df2 = pd.read_csv(url)
     df2.columns = df2.columns.str.strip()
     return df2
