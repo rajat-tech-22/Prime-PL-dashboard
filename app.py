@@ -796,14 +796,15 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     read = filtered["RCS Read"].sum()
     clicks = filtered["RCS Unique Clicks"].sum()
     cost = filtered["Cost"].sum()
+    Total_DISB=filtered["Disbursed"].sum()
     arg_ctr = (clicks / delivered * 100) if delivered else 0
 
-    # Handle Disbursed column safely
-    if "Disbursed" in filtered.columns:
-        filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce').fillna(0)
-        total_disbursed = filtered["Disbursed"].sum()
-    else:
-        total_disbursed = 0
+    # # Handle Disbursed column safely
+    # if "Disbursed" in filtered.columns:
+    #     filtered["Disbursed"] = pd.to_numeric(filtered["Disbursed"], errors='coerce').fillna(0)
+    #     total_disbursed = filtered["Disbursed"].sum()
+    # else:
+    #     total_disbursed = 0
 
     # Colorful KPI cards using HTML
     kpi_html = f"""
@@ -856,7 +857,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,.2f}</div>
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{Total_DISB:,.2f}</div>
         </div>
     </div>
     """
@@ -884,7 +885,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     r2.metric("Delivery %", f"{delivery_rate:.2f}%")
     r3.metric("Read %", f"{read_rate:.2f}%")
     r4.metric("Cost/Lead", f"₹{cpl:.2f}")
-    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
+    r5.metric("Total Disbursed", f"₹{Total_DISB:,.2f}")
 
     # Click Trend
     if "Date" in filtered.columns:
