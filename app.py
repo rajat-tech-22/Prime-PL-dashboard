@@ -4,6 +4,12 @@ import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 
 # -----------------------------
+# 🔄 Refresh Button
+# -----------------------------
+if st.sidebar.button("🔄 Refresh Dashboard"):
+    st.experimental_rerun()  # This will rerun the script and reload all data
+
+# -----------------------------
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
