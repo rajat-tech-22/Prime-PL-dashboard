@@ -884,30 +884,37 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     # Funnel chart
     # ----------------------------
     st.subheader("📉 Funnel")
-
+    
     funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]  # Colors for stages
+    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
+    values = [total_ivr, press1, leads, delivered, read, clicks]
+    
+    # Determine text position and font size based on value
+    text_positions = ["inside" if v/max(values) > 0.05 else "outside" for v in values]
+    font_sizes = [max(10, min(16, int(12 + (v/max(values))*6))) for v in values]
     
     fig = go.Figure(go.Funnel(
-        y=["IVR","Press1","Total Request","Delivered","Read","Clicks"],
-        x=[total_ivr, press1, leads, delivered, read, clicks],
+        y=stages,
+        x=values,
         textinfo="value+percent previous",
-        textposition="inside",
+        textposition=text_positions,
         marker={"color": funnel_colors},
-        orientation="h",  # horizontal funnel
-        opacity=0.95
+        orientation="h",
+        opacity=0.95,
+        textfont=dict(color="white", family="Arial")
     ))
     
-    # Update layout for clear small labels
-    fig.update_traces(
-        texttemplate="<b>%{value}</b><br><b>%{percentPrevious:.1%}</b>",
-        textfont=dict(size=12, family="Arial", color="white")
-    )
+    # Apply font sizes dynamically
+    for i, size in enumerate(font_sizes):
+        fig.data[i].textfont.size = size
     
+    # Layout for clarity
     fig.update_layout(
         margin=dict(l=50, r=50, t=30, b=30),
-        height=400,
+        height=450,
         plot_bgcolor="white",
-        paper_bgcolor="white"
+        paper_bgcolor="white",
+        funnelmode="stack"
     )
     
     st.plotly_chart(fig, use_container_width=True)
