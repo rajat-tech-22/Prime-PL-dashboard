@@ -771,10 +771,12 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     # Sidebar filters
     months = sorted(df2["Month"].dropna().unique())
+    Date = sorted(df2["Date"].dropna().unique())
     campaigns = sorted(df2["Campaign Name"].dropna().unique())
     managers = sorted(df2["Manager"].dropna().unique()) if "Manager" in df2.columns else ["All"]
 
     selected_month = st.sidebar.selectbox("Select Month", ["All"] + months)
+    selected_Date = st.sidebar.selectbox("Select Date", ["All"] + Date)
     selected_campaign = st.sidebar.selectbox("Select Campaign", ["All"] + campaigns)
     selected_manager = st.sidebar.selectbox("Select Manager", ["All"] + managers)
 
@@ -782,6 +784,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     filtered = df2.copy()
     if selected_month != "All":
         filtered = filtered[filtered["Month"] == selected_month]
+    if selected_Date != "All":
+        filtered = filtered[filtered["Date"] == selected_month]
+    if selected_campaign != "All":
     if selected_campaign != "All":
         filtered = filtered[filtered["Campaign Name"] == selected_campaign]
     if selected_manager != "All" and "Manager" in filtered.columns:
