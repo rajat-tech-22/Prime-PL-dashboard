@@ -866,7 +866,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">Total_allocate_lead</div><div class="kpi-value">₹{Total_allocate_lead:,}</div>
+            <div class="kpi-title">Total_allocate_lead</div><div class="kpi-value">{Total_allocate_lead:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
             <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
