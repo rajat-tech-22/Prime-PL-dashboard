@@ -883,26 +883,21 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     </div>
     """
     st.markdown(kpi_html, unsafe_allow_html=True)
-    
-       # -----------------------------
+    # -----------------------------
     # Funnel chart
     # -----------------------------
     st.subheader("📉 Funnel")
     
-    # Funnel stages and values
     stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
     
-    # Funnel colors
     funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
     
-    # ✅ Safe max to avoid division error
+    # Safe max
     max_val = max(values) if max(values) > 0 else 1
     
-    # Text position logic
     text_positions = ["inside" if (v / max_val) > 0.05 else "outside" for v in values]
     
-    # Create funnel
     fig = go.Figure(go.Funnel(
         y=stages,
         x=values,
@@ -911,27 +906,34 @@ if dashboard_type == "Prefr & PW Campaign Reports":
         marker=dict(color=funnel_colors),
         orientation="h",
         opacity=0.95,
-        
-        # ✅ BOLD TEXT
+    
+        # Text inside funnel
         textfont=dict(
-            size=15,
-            color="Black",   # better contrast
-            family="Arial Black"
+            size=12,
+            color="Black",
+            family="Arial Black"   # ✅ bold text
         )
     ))
     
-    # Layout
+    # ✅ Y-axis bold
     fig.update_layout(
         margin=dict(l=50, r=50, t=30, b=30),
         height=450,
         plot_bgcolor="white",
         paper_bgcolor="white",
-        funnelmode="stack"
+        funnelmode="stack",
+    
+        yaxis=dict(
+            tickfont=dict(
+                family="Arial Black",  # ✅ bold Y labels
+                size=14,
+                color="black"
+            )
+        )
     )
     
     st.plotly_chart(fig, use_container_width=True)
-        
-                
+                    
     # -----------------------------
     # CONVERSION
     # -----------------------------
