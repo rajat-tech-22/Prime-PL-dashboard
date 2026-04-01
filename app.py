@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
-
+import hashlib
+import time
 
 
 # -----------------------------
@@ -11,31 +12,142 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-# -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
-# -----------------------------
-USERNAME = "PrimePL"
-PASSWORD = "@1234"
 
+# -----------------------------
+# 👥 USERS (Username: Password)
+# -----------------------------
+USERS = {
+    "PrimePL": "@1234",
+    "Mymoneymantra": "-Prime110"
+}
+
+# Hash passwords for security
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+HASHED_USERS = {u: hash_password(p) for u, p in USERS.items()}
+
+# -----------------------------
+# 🧠 SESSION INIT
+# -----------------------------
 if "login" not in st.session_state:
     st.session_state.login = False
+if "user" not in st.session_state:
+    st.session_state.user = None
+if "failed_attempts" not in st.session_state:
+    st.session_state.failed_attempts = {}
+if "lock_time" not in st.session_state:
+    st.session_state.lock_time = {}
 
+# -----------------------------
+# 🎨 PREMIUM LOGIN UI
+# -----------------------------
 if not st.session_state.login:
-    st.title("🔐 Login")
 
-    u = st.text_input("Username", value="PrimePL")
-    p = st.text_input("Password", type="password")
+    st.markdown("""
+        <style>
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .login-container {
+            max-width: 420px;
+            margin: auto;
+            margin-top: 80px;
+            padding: 35px;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .title {
+            font-size: 30px;
+            font-weight: 800;
+            color: #1f2937;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+        .stTextInput > div > div > input {
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .stButton button {
+            width: 100%;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #fc4a1a, #f7b733);
+            color: white;
+            font-weight: 600;
+            height: 45px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="login-container">
+        <div class="title">🚀 Welcome to Prime PL</div>
+        <div class="subtitle">Secure Manager Dashboard Login</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Inputs
+    username = st.text_input("👤 Username")
+    password = st.text_input("🔑 Password", type="password")
 
     if st.button("Login"):
-        if u == USERNAME and p == PASSWORD:
+
+        # -----------------------------
+        # 🔒 CHECK LOCK
+        # -----------------------------
+        if username in st.session_state.lock_time:
+            lock_timestamp = st.session_state.lock_time[username]
+            if time.time() - lock_timestamp < 12 * 60 * 60:
+                remaining = int((12 * 60 * 60 - (time.time() - lock_timestamp)) / 60)
+                st.error(f"⛔ Account locked. Try again in {remaining} minutes")
+                st.stop()
+            else:
+                # Unlock after 12 hours
+                st.session_state.failed_attempts[username] = 0
+                del st.session_state.lock_time[username]
+
+        # -----------------------------
+        # 🔑 LOGIN VALIDATION
+        # -----------------------------
+        if username in HASHED_USERS and HASHED_USERS[username] == hash_password(password):
             st.session_state.login = True
-            st.success("Login Successful ✅")
-            st.rerun()
+            st.session_state.user = username
+            st.session_state.failed_attempts[username] = 0
+            st.success(f"Welcome {username} ✅")
+            st.experimental_rerun()
+
         else:
-            st.error("Invalid Credentials ❌")
+            # ❌ FAILED ATTEMPT
+            st.session_state.failed_attempts[username] = st.session_state.failed_attempts.get(username, 0) + 1
+            attempts_left = 5 - st.session_state.failed_attempts[username]
+
+            if attempts_left <= 0:
+                st.session_state.lock_time[username] = time.time()
+                st.error("⛔ Too many failed attempts. Locked for 12 hours.")
+            else:
+                st.error(f"Invalid Credentials ❌ ({attempts_left} attempts left)")
 
     st.stop()
 
+# -----------------------------
+# ✅ LOGGED IN DASHBOARD
+# -----------------------------
+st.markdown(f"<h2 style='text-align:center;'>🚀 Welcome {st.session_state.user} to Prime PL Dashboard</h2>", unsafe_allow_html=True)
+
+st.sidebar.markdown(f"👤 Logged in as: **{st.session_state.user}**")
+
+if st.sidebar.button("🚪 Logout"):
+    st.session_state.login = False
+    st.session_state.user = None
+    st.experimental_rerun()
+
+# Example Dashboard Content
+st.write("This is your premium dashboard. Add charts, metrics, or management tools here!")
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
