@@ -1105,7 +1105,7 @@ if dashboard_type == "Prefer & PW Campaign Report":
             text=manager_allocated['label'],
             textposition='inside',
             textinfo='text',  # use custom label
-            textfont=dict(color='black', size=14, weight='bold')  # ✅ correct way to make bold
+              # ✅ correct way to make bold
         )
         
         st.plotly_chart(fig_donut, width='stretch')
