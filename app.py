@@ -10,9 +10,8 @@ import plotly.express as px
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
-
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# 🔐 PREMIUM LOGIN SYSTEM
 # -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
@@ -20,9 +19,7 @@ PASSWORD = "Prime110"
 if "login" not in st.session_state:
     st.session_state.login = False
 
-# -----------------------------
-# LOGIN PAGE (ONLY)
-# -----------------------------
+# Full page gradient background
 st.markdown("""
     <style>
     body {
@@ -55,6 +52,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# -----------------------------
+# LOGIN PAGE
+# -----------------------------
 if not st.session_state.login:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
@@ -64,14 +64,14 @@ if not st.session_state.login:
 
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
-            st.session_state.login = True
-
-            # Animated welcome
+            # Animated welcome message ONLY on login page
             placeholder = st.empty()
             for i in range(101):
                 placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
                 time.sleep(0.01)
             placeholder.empty()
+            
+            st.session_state.login = True
             st.success("✅ Login Successful")
             st.rerun()
         else:
@@ -81,13 +81,10 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# DASHBOARD (AFTER LOGIN)
+# MAIN APP (after login)
 # -----------------------------
-st.markdown("""
-    <h1 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h1>
-    <p style="text-align:center; font-size:18px;">You are logged in as <b>{}</b></p>
-""".format(USERNAME), unsafe_allow_html=True)
-
+st.title("📊 Prime Dashboard")
+st.markdown(f"<h2 style='text-align:center; color:#11998e;'>Welcome, <b>{USERNAME}</b>!</h2>", unsafe_allow_html=True)
 
 
 # -----------------------------
