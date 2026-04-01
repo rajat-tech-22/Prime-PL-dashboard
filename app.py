@@ -13,6 +13,9 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 # 🔐 PREMIUM LOGIN SYSTEM
 # -----------------------------
+import streamlit as st
+import time
+
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
@@ -52,9 +55,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
-# LOGIN PAGE
-# -----------------------------
 if not st.session_state.login:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
@@ -64,14 +64,14 @@ if not st.session_state.login:
 
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
-            # Animated welcome message ONLY on login page
+            st.session_state.login = True
+
+            # Animated welcome
             placeholder = st.empty()
             for i in range(101):
                 placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
                 time.sleep(0.01)
             placeholder.empty()
-            
-            st.session_state.login = True
             st.success("✅ Login Successful")
             st.rerun()
         else:
@@ -79,14 +79,11 @@ if not st.session_state.login:
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-
-# -----------------------------
-# MAIN APP (after login)
-# -----------------------------
-st.title("📊 Prime Dashboard")
-st.markdown(f"<h2 style='text-align:center; color:#11998e;'>Welcome, <b>{USERNAME}</b>!</h2>", unsafe_allow_html=True)
-
-
+else:
+    st.markdown("""
+        <h1 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h1>
+        <p style="text-align:center; font-size:18px;">You are logged in as <b>{}</b></p>
+    """.format(USERNAME), unsafe_allow_html=True)
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
