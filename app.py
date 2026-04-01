@@ -15,35 +15,12 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM WITH GRADIENT
+# 🔐 LOGIN SYSTEM WITH LOGIN-ONLY GRADIENT
 # -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 MAX_ATTEMPTS = 4
 BLOCK_HOURS = 12
-
-# Custom gradient background
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-    }
-    .stTextInput>div>div>input {
-        background-color: rgba(255,255,255,0.2);
-        color: white;
-    }
-    .stButton>button {
-        background-color: #ff4b2b;
-        color: white;
-        border-radius: 10px;
-        border: none;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # Initialize session state variables
 if "login" not in st.session_state:
@@ -65,10 +42,32 @@ if st.session_state.block_until:
         st.session_state.attempts = 0
         st.session_state.block_until = None
 
-# Login form
+# Login page
 if not st.session_state.login:
-    st.title("🔐 Login")
+    # Gradient background ONLY for login
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        .stTextInput>div>div>input {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .stButton>button {
+            background-color: #ff4b2b;
+            color: white;
+            border-radius: 10px;
+            border: none;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
+    st.title("🔐 Login")
     u = st.text_input("Username", value="")
     p = st.text_input("Password", type="password")
 
@@ -87,9 +86,10 @@ if not st.session_state.login:
                 st.error(f"Too many wrong attempts. You are blocked for {BLOCK_HOURS} hours ❌")
             st.stop()
 
-# Logged in view
+# Dashboard / logged-in page
 if st.session_state.login:
     st.title("Welcome to Prime PL 🎉")
+    st.write("This is your dashboard. No gradient background here!")
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
