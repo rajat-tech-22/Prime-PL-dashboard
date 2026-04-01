@@ -884,47 +884,52 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     """
     st.markdown(kpi_html, unsafe_allow_html=True)
 
-    # -----------------------------
-    # Funnel chart
-        # ----------------------------
-    st.subheader("📉 Funnel")
+   # -----------------------------
+# Funnel chart
+# -----------------------------
+st.subheader("📉 Funnel")
+
+# Funnel stages and values
+stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
+values = [total_ivr, press1, leads, delivered, read, clicks]
+
+# Funnel colors
+funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
+
+# ✅ Safe max to avoid division error
+max_val = max(values) if max(values) > 0 else 1
+
+# Text position logic
+text_positions = ["inside" if (v / max_val) > 0.05 else "outside" for v in values]
+
+# Create funnel
+fig = go.Figure(go.Funnel(
+    y=stages,
+    x=values,
+    textinfo="value+percent previous",
+    textposition=text_positions,
+    marker=dict(color=funnel_colors),
+    orientation="h",
+    opacity=0.95,
     
-    # Funnel stages and values
-    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
-    values = [total_ivr, press1, leads, delivered, read, clicks]
-    
-    # Funnel colors
-    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
-    
-    # Determine text position: inside if segment > 5% of max, else outside
-    text_positions = ["inside" if v / max(values) > 0.05 else "outside" for v in values]
-    
-    # Font size for labels
-    font_size = 14
-    
-    # Create funnel
-    fig = go.Figure(go.Funnel(
-        y=stages,
-        x=values,
-        textinfo="value+percent previous",
-        textposition=text_positions,
-        marker={"color": funnel_colors},
-        orientation="h",
-        opacity=0.95,
-        textfont=dict(size=font_size, color="Black", family="Arial")
-    ))
-    
-    # Layout adjustments
-    fig.update_layout(
-        margin=dict(l=50, r=50, t=30, b=30),
-        height=450,
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        funnelmode="stack"
+    # ✅ BOLD TEXT
+    textfont=dict(
+        size=15,
+        color="white",   # better contrast
+        family="Arial Black"
     )
-    
-    st.plotly_chart(fig, use_container_width=True)
-        
+))
+
+# Layout
+fig.update_layout(
+    margin=dict(l=50, r=50, t=30, b=30),
+    height=450,
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+    funnelmode="stack"
+)
+
+st.plotly_chart(fig, use_container_width=True)
     
                 
     # -----------------------------
