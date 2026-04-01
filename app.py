@@ -969,23 +969,37 @@ if dashboard_type =="Prefer & PW Campaign Report":
         st.plotly_chart(fig_campaign, use_container_width=True)
 
     # -----------------------------
-    # 2️⃣ Manager-wise Disbursed Bar
-    # -----------------------------
-    if "Manager" in filtered.columns:
-        st.subheader("💰 Manager-wise Disbursed")
-        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-        fig_manager = px.bar(
-            manager_disbursed,
-            x="Manager",
-            y="Disbursed",
-            text="Disbursed",
-            color="Disbursed",
-            color_continuous_scale="Oranges"
-        )
-        fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
-        fig_manager.update_layout(xaxis_title="Manager", yaxis_title="Disbursed Amount")
-        st.plotly_chart(fig_manager, use_container_width=True)
-
+# 3️⃣ Manager-wise Allocated Leads Donut
+# -----------------------------
+if "Manager" in filtered.columns:
+    st.subheader("🍩 Manager-wise Allocated Leads")
+    
+    manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
+    
+    # Create custom labels with count + %
+    total_leads = manager_allocated["Total Request"].sum()
+    manager_allocated['label_text'] = manager_allocated.apply(
+        lambda row: f"{row['Manager']}<br>{row['Total Request']} ({row['Total Request']/total_leads*100:.1f}%)",
+        axis=1
+    )
+    
+    fig_donut = px.pie(
+        manager_allocated,
+        names="Manager",
+        values="Total Request",
+        hole=0.5,
+        color_discrete_sequence=px.colors.qualitative.Pastel
+    )
+    
+    # Use custom label
+    fig_donut.update_traces(
+        text=manager_allocated['label_text'],
+        textposition='inside',
+        textinfo='text',  # show custom text only
+        textfont=dict(color='black', size=14, weight='bold')  # bold + black
+    )
+    
+    st.plotly_chart(fig_donut, use_container_width=True)
     # -----------------------------
     # 3️⃣ Manager-wise Allocated Leads Donut
     # -----------------------------
