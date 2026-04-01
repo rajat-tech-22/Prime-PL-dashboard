@@ -768,21 +768,9 @@ elif dashboard_type == "Campaign Performance":
 # -----------------------------
 # 📊 FULL CAMPAIGN FUNNEL ANALYSIS DASHBOARD
 # -----------------------------
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
+if dashboard_type =="Prefer & PW Campaign Report":
 
-# -----------------------------
-# Assume campaign_df is already loaded
-# -----------------------------
-
-
-
-
-if dashboard_type =="Prefer & PW campaign Report":
-
-    st.header("Prefer & PW campaign Report")
+    st.header("Prefer & PW Campaign Report")
 
     df2 = campaign_df.copy()
 
