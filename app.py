@@ -955,67 +955,85 @@ if dashboard_type =="Prefer & PW Campaign Report":
     # -----------------------------
     if "Campaign Name" in filtered.columns:
         st.subheader("📊 Campaign-wise Leads")
+        
+        # Aggregate campaign leads
         campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+        
+        # Bar chart with fixed color
         fig_campaign = px.bar(
             campaign_leads,
             x="Campaign Name",
             y="Total Request",
             text="Total Request",
-            color="#ffd200",
-    
+            color_discrete_sequence=["#11998e"]  # solid color
         )
-        fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
-        fig_campaign.update_layout(xaxis_title="Campaign", yaxis_title="Leads", uniformtext_minsize=8, uniformtext_mode='hide')
+        
+        # Show text outside bars
+        fig_campaign.update_traces(
+            texttemplate='%{text}', 
+            textposition='outside',
+            textfont=dict(color='black', size=14)  # black text, readable
+        )
+        
+        # Layout adjustments
+        fig_campaign.update_layout(
+            xaxis_title="Campaign",
+            yaxis_title="Leads",
+            uniformtext_minsize=8,
+            uniformtext_mode='hide',
+            plot_bgcolor="white",
+            paper_bgcolor="white"
+        )
+        
         st.plotly_chart(fig_campaign, use_container_width=True)
-
-    # -----------------------------
-# 3️⃣ Manager-wise Allocated Leads Donut
-# -----------------------------
-if "Manager" in filtered.columns:
-    st.subheader("🍩 Manager-wise Allocated Leads")
-    
-    manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-    
-    # Create custom labels with count + %
-    total_leads = manager_allocated["Total Allocated Lead"].sum()
-    manager_allocated['label_text'] = manager_allocated.apply(
-        lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
-        axis=1
-    )
-    
-    fig_donut = px.pie(
-        manager_allocated,
-        names="Manager",
-        values="Total Allocated Lead",
-        hole=0.5,
-        color_discrete_sequence=px.colors.qualitative.Pastel
-    )
-    
-    # Use custom label
-    fig_donut.update_traces(
-        text=manager_allocated['label_text'],
-        textposition='inside',
-        textinfo='text',  # show custom text only
-        textfont=dict(color='black', size=14, weight='bold')  # bold + black
-    )
-    
-    st.plotly_chart(fig_donut, use_container_width=True)
-      # -----------------------------
-    # 2️⃣ Manager-wise Disbursed Bar
+        # -----------------------------
+    # 3️⃣ Manager-wise Allocated Leads Donut
     # -----------------------------
     if "Manager" in filtered.columns:
-        st.subheader("💰 Manager-wise Disbursed")
-        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-        fig_manager = px.bar(
-            manager_disbursed,
-            x="Manager",
-            y="Disbursed",
-            text="Disbursed",
-            color_discrete_sequence=["#fc4a1a"]
+        st.subheader("🍩 Manager-wise Allocated Leads")
+        
+        manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
+        
+        # Create custom labels with count + %
+        total_leads = manager_allocated["Total Allocated Lead"].sum()
+        manager_allocated['label_text'] = manager_allocated.apply(
+            lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
+            axis=1
         )
-        fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
-        st.plotly_chart(fig_manager, use_container_width=True)
- 
+        
+        fig_donut = px.pie(
+            manager_allocated,
+            names="Manager",
+            values="Total Allocated Lead",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        
+        # Use custom label
+        fig_donut.update_traces(
+            text=manager_allocated['label_text'],
+            textposition='inside',
+            textinfo='text',  # show custom text only
+            textfont=dict(color='black', size=14, weight='bold')  # bold + black
+        )
+        
+        st.plotly_chart(fig_donut, use_container_width=True)
+          # -----------------------------
+        # 2️⃣ Manager-wise Disbursed Bar
+        # -----------------------------
+        if "Manager" in filtered.columns:
+            st.subheader("💰 Manager-wise Disbursed")
+            manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+            fig_manager = px.bar(
+                manager_disbursed,
+                x="Manager",
+                y="Disbursed",
+                text="Disbursed",
+                color_discrete_sequence=["#fc4a1a"]
+            )
+            fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
+            st.plotly_chart(fig_manager, use_container_width=True)
+     
        
         
 
