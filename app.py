@@ -14,9 +14,6 @@ import os
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-# -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (LATEST STREAMLIT)
-# -----------------------------
 import streamlit as st
 import time
 
@@ -56,14 +53,15 @@ if not st.session_state.login:
     </div>
     """, unsafe_allow_html=True)
 
-    username = st.text_input("Username", value="")
+    username = st.text_input("Username", value="PrimePL")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
             st.session_state.login = True
             st.success("Login Successful ✅")
-            st.experimental_rerun()
+            # ✅ rerun alternative
+            st.experimental_set_query_params(logged_in="true")
         else:
             st.session_state.wrong_attempts += 1
             attempts_left = 5 - st.session_state.wrong_attempts
