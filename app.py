@@ -3,6 +3,9 @@ import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 
+import time
+import pickle
+import os
 
 
 # -----------------------------
@@ -116,7 +119,7 @@ if not st.session_state.login:
             wrong_attempts = 0
             lock_time = None
             save_lock_status()
-            st.experimental_rerun()
+            st.experimental_set_query_params(logged_in="true")  # triggers rerun
         else:
             wrong_attempts += 1
             if wrong_attempts >= 5:
