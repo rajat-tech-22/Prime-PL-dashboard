@@ -999,10 +999,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         fig_donut.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig_donut, use_container_width=True)
 
-✅ Changes Made:
 
-All bar charts now use color_discrete_sequence for solid colors.
-Donut chart uses a Set3 palette for distinct
+
 
 # Sidebar + Logout
 # -----------------------------
