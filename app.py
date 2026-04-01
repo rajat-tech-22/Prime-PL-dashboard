@@ -39,7 +39,7 @@ if not st.session_state.login:
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
-def colored_metric_auto_fit(label, value, color="#2596be"):
+def colored_metric_auto_fit(label, value, color="white"):
     return f"""
     <div style="
         background: linear-gradient(135deg, #00c6ff, #0072ff);
