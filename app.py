@@ -11,63 +11,18 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-import streamlit as st
-from datetime import datetime, timedelta
-
 # -----------------------------
-# 🔐 LOGIN SYSTEM WITH LOGIN-ONLY GRADIENT
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
 # -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
-MAX_ATTEMPTS = 4
-BLOCK_HOURS = 12
 
-# Initialize session state variables
 if "login" not in st.session_state:
     st.session_state.login = False
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 0
-if "block_until" not in st.session_state:
-    st.session_state.block_until = None
 
-# Check if user is blocked
-if st.session_state.block_until:
-    if datetime.now() < st.session_state.block_until:
-        remaining = st.session_state.block_until - datetime.now()
-        hours = remaining.seconds // 3600
-        minutes = (remaining.seconds % 3600) // 60
-        st.error(f"Too many wrong attempts. Try again in {hours}h {minutes}m ❌")
-        st.stop()
-    else:
-        st.session_state.attempts = 0
-        st.session_state.block_until = None
-
-# Login page
 if not st.session_state.login:
-    # Gradient background ONLY for login
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-        }
-        .stTextInput>div>div>input {
-            background-color: rgba(255,255,255,0.2);
-            color: white;
-        }
-        .stButton>button {
-            background-color: #ff4b2b;
-            color: white;
-            border-radius: 10px;
-            border: none;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     st.title("🔐 Login")
+
     u = st.text_input("Username", value="")
     p = st.text_input("Password", type="password")
 
@@ -77,19 +32,12 @@ if not st.session_state.login:
             st.success("Login Successful ✅")
             st.rerun()
         else:
-            st.session_state.attempts += 1
-            remaining_attempts = MAX_ATTEMPTS - st.session_state.attempts
-            if remaining_attempts > 0:
-                st.warning(f"Invalid Credentials ❌ | {remaining_attempts} attempts left")
-            else:
-                st.session_state.block_until = datetime.now() + timedelta(hours=BLOCK_HOURS)
-                st.error(f"Too many wrong attempts. You are blocked for {BLOCK_HOURS} hours ❌")
-            st.stop()
+            st.error("Invalid Credentials ❌")
 
-# Dashboard / logged-in page
-if st.session_state.login:
-    st.title("Welcome to Prime PL 🎉")
-    st.write("This is your dashboard. No gradient background here!")
+    st.stop()
+
+
+es code me itna kr do 4 bar wrong password dalne pr block ho jaye 12 hor tk or ui me welcome to Prime PL
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
