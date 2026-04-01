@@ -1080,35 +1080,21 @@ if dashboard_type == "Prefer & PW Campaign Report":
         )
         fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
         st.plotly_chart(fig_manager, use_container_width=True)
-    # -----------------------------
-    # Manager-wise Allocated Leads Donut (fixed for Plotly 6+)
+     # -----------------------------
+    # 3️⃣ Manager-wise Allocated Leads Donut
     # -----------------------------
     if "Manager" in filtered.columns:
         st.subheader("🍩 Manager-wise Allocated Leads")
         manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
-        
-        # Add a column for custom labels with count + %
-        manager_allocated['label'] = manager_allocated.apply(
-            lambda row: f"{row['Manager']}<br>{row['Total Request']} ({row['Total Request']/manager_allocated['Total Request'].sum()*100:.1f}%)", axis=1
-        )
-        
         fig_donut = px.pie(
             manager_allocated,
             names="Manager",
             values="Total Request",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set3
+            color_discrete_sequence=px.colors.qualitative.Set3  # solid distinct colors
         )
-        
-        # Use weight to make text bold
-        fig_donut.update_traces(
-            text=manager_allocated['label'],
-            textposition='inside',
-            textinfo='text',  # use custom label
-              # ✅ correct way to make bold
-        )
-        
-        st.plotly_chart(fig_donut, width='stretch')
+        fig_donut.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_donut, use_container_width=True)
     
 
 
