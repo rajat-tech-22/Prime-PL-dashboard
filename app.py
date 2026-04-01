@@ -11,11 +11,6 @@ import plotly.express as px
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-# -----------------------------
-# 🔐 ENHANCED LOGIN SYSTEM
-# -----------------------------
-
-
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
@@ -24,19 +19,40 @@ if "login" not in st.session_state:
 
 # Full page gradient background
 st.markdown("""
-<style>
-body {background: linear-gradient(135deg, #36d1dc, #5b86e5); color: #333;}
-.login-card {
-    background: rgba(255,255,255,0.95); padding:50px; max-width:450px;
-    margin:80px auto; border-radius:20px; box-shadow:0 12px 24px rgba(0,0,0,0.4);
-    text-align:center;
-}
-.login-title {font-size:32px; font-weight:bold; color:#11998e; margin-bottom:30px;}
-.login-button button {background-color:#11998e !important; color:white !important;
-font-weight:bold; font-size:16px; padding:8px 25px; border-radius:10px;}
-</style>
+    <style>
+    body {
+        background: linear-gradient(135deg, #36d1dc, #5b86e5);
+        color: #333333;
+    }
+    .login-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 50px;
+        max-width: 450px;
+        margin: 80px auto;
+        border-radius: 20px;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+        text-align: center;
+    }
+    .login-title {
+        font-size: 32px;
+        font-weight: bold;
+        color: #11998e;
+        margin-bottom: 30px;
+    }
+    .login-button button {
+        background-color: #11998e !important;
+        color: white !important;
+        font-weight: bold;
+        font-size: 16px;
+        padding: 8px 25px;
+        border-radius: 10px;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
+# -----------------------------
+# LOGIN PAGE
+# -----------------------------
 if not st.session_state.login:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
@@ -46,21 +62,21 @@ if not st.session_state.login:
 
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
+            # Animated welcome message ONLY on login page
             placeholder = st.empty()
             for i in range(101):
-                # placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
+                placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
                 time.sleep(0.01)
             placeholder.empty()
+            
             st.session_state.login = True
             st.success("✅ Login Successful")
             st.rerun()
         else:
             st.error("❌ Invalid Credentials")
+
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-
-
-
 
 # -----------------------------
 # LOAD MAIN DATA
