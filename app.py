@@ -106,7 +106,7 @@ if not st.session_state.login:
         <h1 style='color:#1f3c88;'>Welcome to <span style='color:#ff5733;'>Prime PL</span></h1>
     """, unsafe_allow_html=True)
 
-    u = st.text_input("Username", value="PrimePL")
+    u = st.text_input("Username", value="Username")
     p = st.text_input("Password", type="password")
 
     if st.button("Login"):
