@@ -14,14 +14,6 @@ import os
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-# -----------------------------
-# 🔐 STYLISH LOGIN SYSTEM (CENTER + GRADIENT + COLORS)
-# -----------------------------
-import streamlit as st
-import time
-import pickle
-import os
-
 # ----------------- CONFIG -----------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
@@ -50,8 +42,8 @@ lock_duration = 12 * 3600  # 12 hours
 
 if lock_time and current_time - lock_time < lock_duration:
     remaining_seconds = int(lock_duration - (current_time - lock_time))
-    minutes, seconds = divmod(remaining_seconds, 60)
-    hours, minutes = divmod(minutes, 60)
+    hours, rem = divmod(remaining_seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
     st.markdown(f"<h2 style='color:red; text-align:center;'>Account locked! Try after {hours:02d}:{minutes:02d}:{seconds:02d}</h2>", unsafe_allow_html=True)
     st.stop()
 elif lock_time and current_time - lock_time >= lock_duration:
@@ -69,7 +61,7 @@ if not st.session_state.login:
         height: 100vh;
     }
     .login-box {
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.95);
         padding: 40px;
         border-radius: 15px;
         width: 400px;
@@ -119,7 +111,7 @@ if not st.session_state.login:
             wrong_attempts = 0
             lock_time = None
             save_lock_status()
-            st.experimental_set_query_params(logged_in="true")  # triggers rerun
+            st.experimental_rerun()  # ✅ Latest Streamlit still supports this
         else:
             wrong_attempts += 1
             if wrong_attempts >= 5:
