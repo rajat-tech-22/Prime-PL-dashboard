@@ -961,8 +961,8 @@ if dashboard_type =="Prefer & PW Campaign Report":
             x="Campaign Name",
             y="Total Request",
             text="Total Request",
-            color="Total Request",
-            color_continuous_scale="Blues",
+            color="#ffd200",
+    
         )
         fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
         fig_campaign.update_layout(xaxis_title="Campaign", yaxis_title="Leads", uniformtext_minsize=8, uniformtext_mode='hide')
