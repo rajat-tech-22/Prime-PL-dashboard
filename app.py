@@ -950,116 +950,121 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if insight_text:
         st.info(insight_text)
 
- # -----------------------------
-# 1️⃣ Campaign-wise Leads
-# # -----------------------------
-# if "Campaign Name" in filtered.columns and not filtered.empty:
-#     st.subheader("📊 Campaign-wise Leads")
-    
-#     campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-    
-#     # prevent empty chart
-#     if campaign_leads["Total Request"].sum() == 0:
-#         campaign_leads["Total Request"] = 0
-    
-#     fig_campaign = px.bar(
-#         campaign_leads,
-#         x="Campaign Name",
-#         y="Total Request",
-#         text="Total Request",
-#         color_discrete_sequence=["#11998e"]
-#     )
-    
-#     fig_campaign.update_traces(
-#         texttemplate='%{text}', 
-#         textposition='outside',
-#         textfont=dict(color='black', size=14, family='Arial Black')
-#     )
-    
-#     fig_campaign.update_layout(
-#         xaxis_title="Campaign",
-#         yaxis_title="Leads",
-#         xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-#                    tickfont=dict(family="Arial Black", size=12, color="black")),
-#         yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-#                    tickfont=dict(family="Arial Black", size=12, color="black")),
-#         plot_bgcolor="white",
-#         paper_bgcolor="white"
-#     )
-    
-#     st.plotly_chart(fig_campaign, use_container_width=True)
+     # -----------------------------
+# 📊 Additional Analysis Charts
+# -----------------------------
+
+if not filtered.empty:
+
+    # -----------------------------
+    # 1️⃣ Campaign-wise Leads
+    # -----------------------------
+    if "Campaign Name" in filtered.columns:
+        st.subheader("📊 Campaign-wise Leads")
+
+        campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+
+        if campaign_leads.empty:
+            st.info("No campaign data available")
+        else:
+            fig_campaign = px.bar(
+                campaign_leads,
+                x="Campaign Name",
+                y="Total Request",
+                text="Total Request",
+                color_discrete_sequence=["#11998e"]
+            )
+
+            fig_campaign.update_traces(
+                texttemplate='%{text}',
+                textposition='outside',
+                textfont=dict(color='black', size=14)
+            )
+
+            fig_campaign.update_layout(
+                xaxis_title="Campaign",
+                yaxis_title="Leads",
+                plot_bgcolor="white",
+                paper_bgcolor="white"
+            )
+
+            st.plotly_chart(fig_campaign, use_container_width=True)
 
 
-# -----------------------------
-# 2️⃣ Manager-wise Lead Allocation
-# -----------------------------
-if "Manager" in filtered.columns and not filtered.empty:
-    st.subheader("🍩 Manager-wise Lead Allocation")
-    
-    manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-    
-    total_leads = manager_allocated["Total Allocated Lead"].sum()
-    if total_leads == 0:
-        total_leads = 1  # avoid division by zero
-    
-    manager_allocated['label_text'] = manager_allocated.apply(
-        lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
-        axis=1
-    )
-    
-    fig_donut = px.pie(
-        manager_allocated,
-        names="Manager",
-        values="Total Allocated Lead",
-        hole=0.5,
-        color_discrete_sequence=px.colors.qualitative.Pastel
-    )
-    
-    fig_donut.update_traces(
-        text=manager_allocated['label_text'],
-        textposition='inside',
-        textinfo='text',
-        textfont=dict(color='black', size=14, family='Arial Black')
-    )
-    
-    st.plotly_chart(fig_donut, use_container_width=True)
+    # -----------------------------
+    # 2️⃣ Manager-wise Lead Allocation
+    # -----------------------------
+    if "Manager" in filtered.columns and "Total Allocated Lead" in filtered.columns:
+        st.subheader("🍩 Manager-wise Lead Allocation")
+
+        manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
+
+        if manager_allocated.empty:
+            st.info("No manager allocation data available")
+        else:
+            total_leads = manager_allocated["Total Allocated Lead"].sum()
+            if total_leads == 0:
+                total_leads = 1  # avoid divide by zero
+
+            manager_allocated["label"] = manager_allocated.apply(
+                lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
+                axis=1
+            )
+
+            fig_donut = px.pie(
+                manager_allocated,
+                names="Manager",
+                values="Total Allocated Lead",
+                hole=0.5,
+                color_discrete_sequence=px.colors.qualitative.Pastel
+            )
+
+            fig_donut.update_traces(
+                text=manager_allocated["label"],
+                textinfo="text",
+                textposition="inside"
+            )
+
+            st.plotly_chart(fig_donut, use_container_width=True)
 
 
-# -----------------------------
-# 3️⃣ Manager-wise Disbursed
-# -----------------------------
-if "Manager" in filtered.columns and not filtered.empty:
-    st.subheader("💰 Manager-wise Disbursed")
-    
-    manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-    
-    fig_manager = px.bar(
-        manager_disbursed,
-        x="Manager",
-        y="Disbursed",
-        text="Disbursed",
-        color_discrete_sequence=["#fc4a1a"]
-    )
-    
-    fig_manager.update_traces(
-        texttemplate='₹%{text:,}',
-        textposition='outside',
-        textfont=dict(color='black', size=14, family='Arial Black')
-    )
-    
-    fig_manager.update_layout(
-        xaxis_title="Manager",
-        yaxis_title="Disbursed Amount",
-        xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-                   tickfont=dict(family="Arial Black", size=12, color="black")),
-        yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-                   tickfont=dict(family="Arial Black", size=12, color="black")),
-        plot_bgcolor="white",
-        paper_bgcolor="white"
-    )
-    
-    st.plotly_chart(fig_manager, use_container_width=True)
-       
+    # -----------------------------
+    # 3️⃣ Manager-wise Disbursed
+    # -----------------------------
+    if "Manager" in filtered.columns and "Disbursed" in filtered.columns:
+        st.subheader("💰 Manager-wise Disbursed")
+
+        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+
+        if manager_disbursed.empty:
+            st.info("No disbursed data available")
+        else:
+            fig_manager = px.bar(
+                manager_disbursed,
+                x="Manager",
+                y="Disbursed",
+                text="Disbursed",
+                color_discrete_sequence=["#fc4a1a"]
+            )
+
+            fig_manager.update_traces(
+                texttemplate='₹%{text:,}',
+                textposition='outside',
+                textfont=dict(color='black', size=14)
+            )
+
+            fig_manager.update_layout(
+                xaxis_title="Manager",
+                yaxis_title="Disbursed Amount",
+                plot_bgcolor="white",
+                paper_bgcolor="white"
+            )
+
+            st.plotly_chart(fig_manager, use_container_width=True)
+
+else:
+    st.warning("No data available for selected filters")
+
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
