@@ -974,19 +974,19 @@ if dashboard_type =="Prefer & PW Campaign Report":
 if "Manager" in filtered.columns:
     st.subheader("🍩 Manager-wise Allocated Leads")
     
-    manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
+    manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
     
     # Create custom labels with count + %
-    total_leads = manager_allocated["Total Request"].sum()
+    total_leads = manager_allocated["Total Allocated Lead"].sum()
     manager_allocated['label_text'] = manager_allocated.apply(
-        lambda row: f"{row['Manager']}<br>{row['Total Request']} ({row['Total Request']/total_leads*100:.1f}%)",
+        lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
         axis=1
     )
     
     fig_donut = px.pie(
         manager_allocated,
         names="Manager",
-        values="Total Request",
+        values="Total Allocated Lead",
         hole=0.5,
         color_discrete_sequence=px.colors.qualitative.Pastel
     )
@@ -1000,21 +1000,21 @@ if "Manager" in filtered.columns:
     )
     
     st.plotly_chart(fig_donut, use_container_width=True)
-    # -----------------------------
-    # 3️⃣ Manager-wise Allocated Leads Donut
+      # -----------------------------
+    # 2️⃣ Manager-wise Disbursed Bar
     # -----------------------------
     if "Manager" in filtered.columns:
-        st.subheader("🍩 Manager-wise Allocated Leads")
-        manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
-        fig_donut = px.pie(
-            manager_allocated,
-            names="Manager",
-            values="Total Request",
-            hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Pastel
+        st.subheader("💰 Manager-wise Disbursed")
+        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+        fig_manager = px.bar(
+            manager_disbursed,
+            x="Manager",
+            y="Disbursed",
+            text="Disbursed",
+            color_discrete_sequence=["#fc4a1a"]
         )
-        fig_donut.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_donut, use_container_width=True) 
+        fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
+        st.plotly_chart(fig_manager, use_container_width=True)
  
        
         
