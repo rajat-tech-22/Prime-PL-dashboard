@@ -779,46 +779,52 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     df2 = campaign_df.copy()
 
+    # -----------------------------
     # Initialize filters
+    # -----------------------------
     months = ["All"] + sorted(df2["Month"].dropna().unique())
     selected_month = st.sidebar.selectbox("Select Month", months)
 
-    # Filter month first
     filtered_month = df2.copy()
     if selected_month != "All":
         filtered_month = filtered_month[filtered_month["Month"] == selected_month]
 
-    # Dynamic Dates
     dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
     selected_date = st.sidebar.selectbox("Select Date", dates)
+
     filtered_date = filtered_month.copy()
     if selected_date != "All":
         filtered_date = filtered_date[filtered_date["Date"] == selected_date]
 
-    # Dynamic Campaigns
-    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique())
+    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique()) if "Campaign Name" in filtered_date.columns else ["All"]
     selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
+
     filtered_campaign = filtered_date.copy()
-    if selected_campaign != "All":
+    if selected_campaign != "All" and "Campaign Name" in filtered_campaign.columns:
         filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
 
-    # Dynamic Managers
     managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
     selected_manager = st.sidebar.selectbox("Select Manager", managers)
+
     filtered = filtered_campaign.copy()
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
-    # Aggregate metrics
-    total_ivr = int(filtered["IVR Data"].sum())
-    press1 = int(filtered["Press 1"].sum())
-    leads = int(filtered["Total Request"].sum())
-    sent = int(filtered["RCS Sent"].sum())
-    delivered = int(filtered["RCS Delivered"].sum())
-    read = int(filtered["RCS Read"].sum())
-    clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost =int(filtered["Cost"].sum())
-    total_disbursed = int(filtered["Disbursed"].sum())
+    # -----------------------------
+    # Aggregate metrics safely
+    # -----------------------------
+    def safe_sum(col):
+        return int(filtered[col].sum()) if col in filtered.columns else 0
+
+    total_ivr = safe_sum("IVR Data")
+    press1 = safe_sum("Press 1")
+    leads = safe_sum("Total Request")
+    sent = safe_sum("RCS Sent")
+    delivered = safe_sum("RCS Delivered")
+    read = safe_sum("RCS Read")
+    clicks = safe_sum("RCS Unique Clicks")
+    cost = safe_sum("Cost")
+    total_disbursed = safe_sum("Disbursed")
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # -----------------------------
@@ -831,22 +837,12 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             border-radius: 10px;
             padding: 20px;
             text-align: center;
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
             flex:1;
         }}
-        .kpi-title {{
-            font-size: 16px;
-            font-weight: bold;
-        }}
-        .kpi-value {{
-            font-size: 28px;
-            margin-top: 5px;
-        }}
-        .kpi-container {{
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-        }}
+        .kpi-title {{ font-size: 16px; font-weight: bold; }}
+        .kpi-value {{ font-size: 28px; margin-top: 5px; }}
+        .kpi-container {{ display:flex; gap:10px; flex-wrap:wrap; }}
     </style>
     <div class="kpi-container">
         <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
@@ -881,24 +877,16 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     st.markdown(kpi_html, unsafe_allow_html=True)
 
     # -----------------------------
-    # Funnel chart
-        # ----------------------------
+    # Funnel chart with safe max
+    # -----------------------------
     st.subheader("📉 Funnel")
-    
-    # Funnel stages and values
     stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
-    
-    # Funnel colors
     funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
-    
-    # Determine text position: inside if segment > 5% of max, else outside
-    text_positions = ["inside" if v / max(values) > 0.05 else "outside" for v in values]
-    
-    # Font size for labels
-    font_size = 14
-    
-    # Create funnel
+
+    max_val = max(values) if max(values) > 0 else 1
+    text_positions = ["inside" if v / max_val > 0.05 else "outside" for v in values]
+
     fig = go.Figure(go.Funnel(
         y=stages,
         x=values,
@@ -907,26 +895,14 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         marker={"color": funnel_colors},
         orientation="h",
         opacity=0.95,
-        textfont=dict(size=font_size, color="white", family="Arial")
+        textfont=dict(size=14, color="white", family="Arial")
     ))
-    
-    # Layout adjustments
-    fig.update_layout(
-        margin=dict(l=50, r=50, t=30, b=30),
-        height=450,
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        funnelmode="stack"
-    )
-    
+    fig.update_layout(margin=dict(l=50,r=50,t=30,b=30), height=450, plot_bgcolor="white", paper_bgcolor="white", funnelmode="stack")
     st.plotly_chart(fig, use_container_width=True)
-        
-    
-                
+
     # -----------------------------
-    # Conversion metrics
+    # Conversion metrics safely
     # -----------------------------
-    st.subheader("📊 Conversion")
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
     delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
     read_rate = round((read / delivered * 100) if delivered else 0, 2)
@@ -940,11 +916,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
 
     # -----------------------------
-    # Click Trend
+    # Click Trend safely
     # -----------------------------
-    if "Date" in filtered.columns:
+    if "Date" in filtered.columns and not filtered.empty:
         st.subheader("📈 Click Trend")
+        filtered['Date'] = pd.to_datetime(filtered['Date'])
         trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
+        trend = trend.sort_values("Date")
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
@@ -971,18 +949,13 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         insight_text += "High cost per lead. "
     if insight_text:
         st.info(insight_text)
-        
-        
-    
 
     # -----------------------------
-    # 1️⃣ Campaign-wise Leads Bar
+    # Campaign-wise Leads Bar
     # -----------------------------
-    if "Campaign Name" in filtered.columns:
+    if "Campaign Name" in filtered.columns and not filtered.empty:
         st.subheader("📊 Campaign-wise Leads")
-        
         campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-        
         fig_campaign = px.bar(
             campaign_leads,
             x="Campaign Name",
@@ -990,48 +963,34 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             text="Total Request",
             color_discrete_sequence=["#11998e"]
         )
-        
-        # Bold data labels
         fig_campaign.update_traces(
             texttemplate='%{text}', 
             textposition='outside',
-            textfont=dict(color='black', size=14, family='Arial Black')  # bold
+            textfont=dict(color='black', size=14, family='Arial Black')
         )
-        
-        # Bold axis titles + tick labels
         fig_campaign.update_layout(
             xaxis_title="Campaign",
             yaxis_title="Leads",
-            xaxis=dict(
-                title_font=dict(family="Arial Black", size=14, color="black"),
-                tickfont=dict(family="Arial Black", size=12, color="black")  # bold ticks
-            ),
-            yaxis=dict(
-                title_font=dict(family="Arial Black", size=14, color="black"),
-                tickfont=dict(family="Arial Black", size=12, color="black")  # bold ticks
-            ),
-            uniformtext_minsize=8,
-            uniformtext_mode='hide',
+            xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+                       tickfont=dict(family="Arial Black", size=12, color="black")),
+            yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+                       tickfont=dict(family="Arial Black", size=12, color="black")),
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
-        
         st.plotly_chart(fig_campaign, use_container_width=True)
-    
+
     # -----------------------------
-    # 3️⃣ Manager-wise Allocated Leads Donut
+    # Manager-wise Donut & Disbursed
     # -----------------------------
-    if "Manager" in filtered.columns:
+    if "Manager" in filtered.columns and not filtered.empty:
         st.subheader("🍩 Manager-wise Allocated Leads")
-        
         manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-        total_leads = manager_allocated["Total Allocated Lead"].sum()
-        
+        total_leads = manager_allocated["Total Allocated Lead"].sum() if total_leads := manager_allocated["Total Allocated Lead"].sum() else 1
         manager_allocated['label_text'] = manager_allocated.apply(
             lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
             axis=1
         )
-        
         fig_donut = px.pie(
             manager_allocated,
             names="Manager",
@@ -1039,25 +998,16 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             hole=0.5,
             color_discrete_sequence=px.colors.qualitative.Pastel
         )
-        
         fig_donut.update_traces(
             text=manager_allocated['label_text'],
             textposition='inside',
             textinfo='text',
-            textfont=dict(color='black', size=14, family='Arial Black')  # bold + black
+            textfont=dict(color='black', size=14, family='Arial Black')
         )
-        
         st.plotly_chart(fig_donut, use_container_width=True)
-    
-    
-    # -----------------------------
-    # 2️⃣ Manager-wise Disbursed Bar
-    # -----------------------------
-    if "Manager" in filtered.columns:
+
         st.subheader("💰 Manager-wise Disbursed")
-        
         manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-        
         fig_manager = px.bar(
             manager_disbursed,
             x="Manager",
@@ -1065,31 +1015,22 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             text="Disbursed",
             color_discrete_sequence=["#fc4a1a"]
         )
-        
         fig_manager.update_traces(
             texttemplate='₹%{text:,}',
             textposition='outside',
-            textfont=dict(color='black', size=14, family='Arial Black')  # bold
+            textfont=dict(color='black', size=14, family='Arial Black')
         )
-        
         fig_manager.update_layout(
             xaxis_title="Manager",
             yaxis_title="Disbursed Amount",
-            xaxis=dict(
-                title_font=dict(family="Arial Black", size=14, color="black"),
-                tickfont=dict(family="Arial Black", size=12, color="black")
-            ),
-            yaxis=dict(
-                title_font=dict(family="Arial Black", size=14, color="black"),
-                tickfont=dict(family="Arial Black", size=12, color="black")
-            ),
+            xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+                       tickfont=dict(family="Arial Black", size=12, color="black")),
+            yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+                       tickfont=dict(family="Arial Black", size=12, color="black")),
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
-        
         st.plotly_chart(fig_manager, use_container_width=True)
-    
-    
        
 # Sidebar + Logout
 # -----------------------------
