@@ -16,125 +16,49 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 
 
-# -----------------------------
-# Login Credentials
-# -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
 if "login" not in st.session_state:
     st.session_state.login = False
 
-# -----------------------------
 # Full page gradient background
-# -----------------------------
 st.markdown("""
-    <style>
-    body {
-        background: linear-gradient(135deg, #36d1dc, #5b86e5);
-        color: #333333;
-    }
-    .login-card {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 50px;
-        max-width: 450px;
-        margin: 80px auto;
-        border-radius: 20px;
-        box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-        text-align: center;
-    }
-    .login-title {
-        font-size: 32px;
-        font-weight: bold;
-        color: #11998e;
-        margin-bottom: 30px;
-    }
-    .login-button button {
-        background-color: #11998e !important;
-        color: white !important;
-        font-weight: bold;
-        font-size: 16px;
-        padding: 8px 25px;
-        border-radius: 10px;
-    }
-    </style>
+<style>
+body {background: linear-gradient(135deg, #36d1dc, #5b86e5); color: #333;}
+.login-card {
+    background: rgba(255,255,255,0.95); padding:50px; max-width:450px;
+    margin:80px auto; border-radius:20px; box-shadow:0 12px 24px rgba(0,0,0,0.4);
+    text-align:center;
+}
+.login-title {font-size:32px; font-weight:bold; color:#11998e; margin-bottom:30px;}
+.login-button button {background-color:#11998e !important; color:white !important;
+font-weight:bold; font-size:16px; padding:8px 25px; border-radius:10px;}
+</style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
-# LOGIN PAGE
-# -----------------------------
 if not st.session_state.login:
-    # Show welcome message only on login page
-    st.markdown("""
-        <h1 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h1>
-        <p style="text-align:center; font-size:18px;">You are logging in as <b>{}</b></p>
-    """.format(USERNAME), unsafe_allow_html=True)
-
-    # st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    # st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
 
     username = st.text_input("Username", value="")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
-            st.session_state.login = True
-
-            # Animated login placeholder
             placeholder = st.empty()
             for i in range(101):
-                placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Logging in {i}%</h2>", unsafe_allow_html=True)
+                # placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
                 time.sleep(0.01)
             placeholder.empty()
+            st.session_state.login = True
             st.success("✅ Login Successful")
             st.rerun()
         else:
             st.error("❌ Invalid Credentials")
-
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# Auto-fit Card Function
-# -----------------------------
-def colored_metric_auto_fit(label, value, color="White"):
-    return f"""
-    <div style="
-        background: linear-gradient(135deg, #00c6ff, #0072ff);
-        padding: 10px;
-        border-radius: 12px;
-        border-left: 6px solid {color};
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-        text-align: center;
-        margin-bottom: 15px;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    ">
-        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
-            <span style="
-                font-size: 14px; 
-                font-weight: 700; 
-                text-transform: uppercase; 
-                color: White;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            ">{label}</span>
-            <span style="
-                font-weight: 800; 
-                color: #212529;
-                font-size: 2rem; 
-                display: inline-block;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            ">{value}</span>
-        </div>
-    </div>
-    """
 
 
 
