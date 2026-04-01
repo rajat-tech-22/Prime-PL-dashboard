@@ -850,31 +850,31 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         }}
     </style>
     <div class="kpi-container">
-        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
+        <div class="kpi-card" style="background:#6a11cb;">
             <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
+        <div class="kpi-card" style="background:#ff416c;">
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+        <div class="kpi-card" style="background:#f7971e;">
             <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+        <div class="kpi-card" style="background:#11998e;">
             <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
+        <div class="kpi-card" style="background:#fc4a1a;">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
+        <div class="kpi-card" style="background:#00c6ff;">
             <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
+        <div class="kpi-card" style="background:#8e2de2;">
             <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+        <div class="kpi-card" style="background:#f7971e;">
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
+        <div class="kpi-card" style="background:#36d1dc;">
             <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
         </div>
     </div>
@@ -930,7 +930,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
-            mode="lines+markers"
+            mode="lines+markers",
+            line=dict(color="#36d1dc")
         ))
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -961,11 +962,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             x="Campaign Name",
             y="Total Request",
             text="Total Request",
-            color="Total Request",
-            color_continuous_scale="Blues",
+            color_discrete_sequence=["#11998e"]  # solid color
         )
         fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
-        fig_campaign.update_layout(xaxis_title="Campaign", yaxis_title="Leads", uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig_campaign, use_container_width=True)
 
     # -----------------------------
@@ -979,11 +978,9 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             x="Manager",
             y="Disbursed",
             text="Disbursed",
-            color="Disbursed",
-            color_continuous_scale="Oranges"
+            color_discrete_sequence=["#fc4a1a"]  # solid color
         )
         fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
-        fig_manager.update_layout(xaxis_title="Manager", yaxis_title="Disbursed Amount")
         st.plotly_chart(fig_manager, use_container_width=True)
 
     # -----------------------------
@@ -997,10 +994,15 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
             names="Manager",
             values="Total Request",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Pastel
+            color_discrete_sequence=px.colors.qualitative.Set3  # solid distinct colors
         )
         fig_donut.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(fig_donut, use_container_width=True)
+
+✅ Changes Made:
+
+All bar charts now use color_discrete_sequence for solid colors.
+Donut chart uses a Set3 palette for distinct
 
 # Sidebar + Logout
 # -----------------------------
