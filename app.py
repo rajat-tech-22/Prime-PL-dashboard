@@ -37,7 +37,7 @@ if not st.session_state.login:
     st.stop()
 
 
-es code me itna kr do 4 bar wrong password dalne pr block ho jaye 12 hor tk or ui me welcome to Prime PL
+
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
