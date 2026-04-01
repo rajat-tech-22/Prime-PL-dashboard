@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
-import hashlib
-import time
+
 
 
 # -----------------------------
@@ -12,101 +11,38 @@ import time
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-
-import tkinter as tk
-from tkinter import messagebox
-import time
-import pickle
-import os
-
-# Fixed credentials
+# -----------------------------
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
-# Lock file to save attempts and lock time
-LOCK_FILE = "lock_status.pkl"
+if "login" not in st.session_state:
+    st.session_state.login = False
 
-# Load previous lock status
-if os.path.exists(LOCK_FILE):
-    with open(LOCK_FILE, "rb") as f:
-        data = pickle.load(f)
-        wrong_attempts = data.get("wrong_attempts", 0)
-        lock_time = data.get("lock_time", None)
-else:
-    wrong_attempts = 0
-    lock_time = None
+if not st.session_state.login:
+    st.title("🔐 Login")
 
-def save_lock_status():
-    with open(LOCK_FILE, "wb") as f:
-        pickle.dump({"wrong_attempts": wrong_attempts, "lock_time": lock_time}, f)
+    u = st.text_input("Username", value="PrimePL")
+    p = st.text_input("Password", type="password")
 
-def check_login():
-    global wrong_attempts, lock_time
-
-    current_time = time.time()
-
-    # Check if account is locked
-    if lock_time and current_time - lock_time < 12*3600:
-        remaining = int((12*3600 - (current_time - lock_time)) / 60)
-        messagebox.showerror("Locked", f"Account locked. Try after {remaining} minutes.")
-        return
-    elif lock_time and current_time - lock_time >= 12*3600:
-        wrong_attempts = 0
-        lock_time = None
-        save_lock_status()
-
-    username = entry_user.get()
-    password = entry_pass.get()
-
-    if username == USERNAME and password == PASSWORD:
-        messagebox.showinfo("Success", "Login Successful!")
-        wrong_attempts = 0
-        lock_time = None
-        save_lock_status()
-    else:
-        wrong_attempts += 1
-        if wrong_attempts >= 5:
-            lock_time = time.time()
-            save_lock_status()
-            messagebox.showerror("Locked", "Too many wrong attempts! Locked for 12 hours.")
+    if st.button("Login"):
+        if u == USERNAME and p == PASSWORD:
+            st.session_state.login = True
+            st.success("Login Successful ✅")
+            st.rerun()
         else:
-            save_lock_status()
-            messagebox.showerror("Error", f"Wrong credentials! Attempts left: {5-wrong_attempts}")
+            st.error("Invalid Credentials ❌")
 
-# GUI
-root = tk.Tk()
-root.title("Login - Prime PL")
-root.geometry("300x200")
+    st.stop()
 
-# Welcome Label
-label_welcome = tk.Label(root, text="Welcome to Prime PL", font=("Arial", 16))
-label_welcome.pack(pady=10)
-
-# Username
-tk.Label(root, text="Username").pack()
-entry_user = tk.Entry(root)
-entry_user.pack()
-
-# Password
-tk.Label(root, text="Password").pack()
-entry_pass = tk.Entry(root, show="*")
-entry_pass.pack()
-
-# Login Button
-tk.Button(root, text="Login", command=check_login).pack(pady=10)
-
-root.mainloop()
-
-# Example Dashboard Content
-st.write("This is your premium dashboard. Add charts, metrics, or management tools here!")
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
-
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background: linear-gradient(135deg, #fc4a1a, #f7b733);
+        background-color: #d058e8;
         padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
@@ -143,8 +79,14 @@ def colored_metric_auto_fit(label, value, color="#2596be"):
     </div>
     """
 
+# Initialize refresh flag
+if "refresh" not in st.session_state:
+    st.session_state.refresh = False
 
-
+# Refresh button in sidebar
+if st.sidebar.button("🔄 Refresh Dashboard"):
+    st.session_state.refresh = True
+    st.experimental_rerun()
 
 # -----------------------------
 # LOAD MAIN DATA
@@ -232,7 +174,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
-            background-color: #07aaf5;
+            background-color: #07f2c3;
             padding: 20px;
             border-radius: 12px;
             border-left: 6px solid {color};
@@ -877,7 +819,6 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     clicks = int(filtered["RCS Unique Clicks"].sum())
     cost =int(filtered["Cost"].sum())
     total_disbursed = int(filtered["Disbursed"].sum())
-    Total_allocate_lead = int(filtered["Total Allocated Lead"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # -----------------------------
@@ -917,20 +858,20 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
         </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
+        </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
-            <div class="kpi-title">Total Clicks</div><div class="kpi-value">{clicks:,}</div>
+            <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
             <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
-    </div>
+        </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">Total Allocated Lead</div><div class="kpi-value">{Total_allocate_lead:,}</div>
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
             <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
@@ -966,7 +907,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         marker={"color": funnel_colors},
         orientation="h",
         opacity=0.95,
-        textfont=dict(size=font_size, color="Black", family="Arial")
+        textfont=dict(size=font_size, color="white", family="Arial")
     ))
     
     # Layout adjustments
