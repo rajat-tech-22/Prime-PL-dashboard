@@ -1,3 +1,10 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objs as go
+from streamlit_autorefresh import st_autorefresh
+
+
+
 # -----------------------------
 # Page Config
 # -----------------------------
@@ -764,51 +771,45 @@ elif dashboard_type == "Campaign Performance":
     st.info(insight_text)
 
 # -----------------------------
-# 📊 FULL CAMPAIGN FUNNEL ANALYSIS DASHBOARD
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
 # -----------------------------
-if dashboard_type =="Prefer & PW Campaign Report":
+if dashboard_type == "📊 Campaign Funnel Analysis":
 
-    st.header("Prefer & PW Campaign Report")
+    st.header("📊 Campaign Funnel Analysis")
 
     df2 = campaign_df.copy()
 
-    # -----------------------------
-    # Dynamic Filters
-    # -----------------------------
+    # Initialize filters
     months = ["All"] + sorted(df2["Month"].dropna().unique())
     selected_month = st.sidebar.selectbox("Select Month", months)
 
+    # Filter month first
     filtered_month = df2.copy()
     if selected_month != "All":
         filtered_month = filtered_month[filtered_month["Month"] == selected_month]
 
+    # Dynamic Dates
     dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
     selected_date = st.sidebar.selectbox("Select Date", dates)
     filtered_date = filtered_month.copy()
     if selected_date != "All":
         filtered_date = filtered_date[filtered_date["Date"] == selected_date]
 
+    # Dynamic Campaigns
     campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique())
     selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
     filtered_campaign = filtered_date.copy()
     if selected_campaign != "All":
         filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
 
+    # Dynamic Managers
     managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
     selected_manager = st.sidebar.selectbox("Select Manager", managers)
     filtered = filtered_campaign.copy()
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
-    # Fill missing numeric values
-    numeric_cols = ["IVR Data","Press 1","Total Request","RCS Sent","RCS Delivered","RCS Read","RCS Unique Clicks","Cost","Disbursed"]
-    for col in numeric_cols:
-        if col in filtered.columns:
-            filtered[col] = filtered[col].fillna(0)
-
-    # -----------------------------
-    # Aggregate Metrics
-    # -----------------------------
+    # Aggregate metrics
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
     leads = int(filtered["Total Request"].sum())
@@ -816,12 +817,12 @@ if dashboard_type =="Prefer & PW Campaign Report":
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost = int(filtered["Cost"].sum())
+    cost =int(filtered["Cost"].sum())
     total_disbursed = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # -----------------------------
-    # KPI Cards
+    # Colorful KPI cards
     # -----------------------------
     kpi_html = f"""
     <style>
@@ -880,14 +881,24 @@ if dashboard_type =="Prefer & PW Campaign Report":
     st.markdown(kpi_html, unsafe_allow_html=True)
 
     # -----------------------------
-    # Funnel Chart
-    # -----------------------------
+    # Funnel chart
+        # ----------------------------
     st.subheader("📉 Funnel")
+    
+    # Funnel stages and values
     stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
-    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
-    text_positions = ["inside" if max(values) > 0 and v / max(values) > 0.05 else "outside" for v in values]
     
+    # Funnel colors
+    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
+    
+    # Determine text position: inside if segment > 5% of max, else outside
+    text_positions = ["inside" if v / max(values) > 0.05 else "outside" for v in values]
+    
+    # Font size for labels
+    font_size = 14
+    
+    # Create funnel
     fig = go.Figure(go.Funnel(
         y=stages,
         x=values,
@@ -896,13 +907,24 @@ if dashboard_type =="Prefer & PW Campaign Report":
         marker={"color": funnel_colors},
         orientation="h",
         opacity=0.95,
-        textfont=dict(size=14, color="white", family="Arial")
+        textfont=dict(size=font_size, color="white", family="Arial")
     ))
-    fig.update_layout(margin=dict(l=50, r=50, t=30, b=30), height=450, plot_bgcolor="white", paper_bgcolor="white", funnelmode="stack")
+    
+    # Layout adjustments
+    fig.update_layout(
+        margin=dict(l=50, r=50, t=30, b=30),
+        height=450,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        funnelmode="stack"
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
-
+        
+    
+                
     # -----------------------------
-    # Conversion Metrics
+    # Conversion metrics
     # -----------------------------
     st.subheader("📊 Conversion")
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
@@ -923,8 +945,6 @@ if dashboard_type =="Prefer & PW Campaign Report":
     if "Date" in filtered.columns:
         st.subheader("📈 Click Trend")
         trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
-        trend["Date"] = pd.to_datetime(trend["Date"])
-        trend = trend.sort_values("Date")
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
@@ -936,20 +956,24 @@ if dashboard_type =="Prefer & PW Campaign Report":
     # Insights
     # -----------------------------
     st.subheader("🤖 Insights")
-    insights = []
+    insight_text = ""
     if arg_ctr < 2:
-        insights.append("CTR is low")
+        st.warning("Low CTR")
+        insight_text += "CTR is low. "
     if delivery_rate < 70:
-        insights.append("Delivery issues detected")
+        st.warning("Delivery issue")
+        insight_text += "Delivery issues detected. "
     if read_rate < 50:
-        insights.append("Read rate is low")
+        st.warning("Low read rate")
+        insight_text += "Read rate is low. "
     if cpl > 100:
-        insights.append("High cost per lead")
-    if insights:
-        st.warning(" | ".join(insights))
-
-
-
+        st.warning("High cost per lead")
+        insight_text += "High cost per lead. "
+    if insight_text:
+        st.info(insight_text)
+        
+        
+    
 
     # -----------------------------
     # 1️⃣ Campaign-wise Leads Bar
@@ -994,6 +1018,37 @@ if dashboard_type =="Prefer & PW Campaign Report":
         
         st.plotly_chart(fig_campaign, use_container_width=True)
     
+    # -----------------------------
+    # 3️⃣ Manager-wise Allocated Leads Donut
+    # -----------------------------
+    if "Manager" in filtered.columns:
+        st.subheader("🍩 Manager-wise Allocated Leads")
+        
+        manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
+        total_leads = manager_allocated["Total Allocated Lead"].sum()
+        
+        manager_allocated['label_text'] = manager_allocated.apply(
+            lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
+            axis=1
+        )
+        
+        fig_donut = px.pie(
+            manager_allocated,
+            names="Manager",
+            values="Total Allocated Lead",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        
+        fig_donut.update_traces(
+            text=manager_allocated['label_text'],
+            textposition='inside',
+            textinfo='text',
+            textfont=dict(color='black', size=14, family='Arial Black')  # bold + black
+        )
+        
+        st.plotly_chart(fig_donut, use_container_width=True)
+    
     
     # -----------------------------
     # 2️⃣ Manager-wise Disbursed Bar
@@ -1035,40 +1090,7 @@ if dashboard_type =="Prefer & PW Campaign Report":
         st.plotly_chart(fig_manager, use_container_width=True)
     
     
-    # -----------------------------
-    # 3️⃣ Manager-wise Allocated Leads Donut
-    # -----------------------------
-    if "Manager" in filtered.columns:
-        st.subheader("🍩 Manager-wise Allocated Leads")
-        
-        manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-        total_leads = manager_allocated["Total Allocated Lead"].sum()
-        
-        manager_allocated['label_text'] = manager_allocated.apply(
-            lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
-            axis=1
-        )
-        
-        fig_donut = px.pie(
-            manager_allocated,
-            names="Manager",
-            values="Total Allocated Lead",
-            hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        
-        fig_donut.update_traces(
-            text=manager_allocated['label_text'],
-            textposition='inside',
-            textinfo='text',
-            textfont=dict(color='black', size=14, family='Arial Black')  # bold + black
-        )
-        
-        st.plotly_chart(fig_donut, use_container_width=True)
        
-        
-
-
 # Sidebar + Logout
 # -----------------------------
 st.sidebar.title("")
