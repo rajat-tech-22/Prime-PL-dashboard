@@ -13,138 +13,89 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 
-# -----------------------------
-# 👥 USERS (Username: Password)
-# -----------------------------
-USERS = {
-    "PrimePL": "@1234",
-    "Mymoneymantra": "-Prime110"
-}
+import tkinter as tk
+from tkinter import messagebox
+import time
+import pickle
+import os
 
-# Hash passwords for security
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+# Fixed credentials
+USERNAME = "Mymoneymantra"
+PASSWORD = "Prime110"
 
-HASHED_USERS = {u: hash_password(p) for u, p in USERS.items()}
+# Lock file to save attempts and lock time
+LOCK_FILE = "lock_status.pkl"
 
-# -----------------------------
-# 🧠 SESSION INIT
-# -----------------------------
-if "login" not in st.session_state:
-    st.session_state.login = False
-if "user" not in st.session_state:
-    st.session_state.user = None
-if "failed_attempts" not in st.session_state:
-    st.session_state.failed_attempts = {}
-if "lock_time" not in st.session_state:
-    st.session_state.lock_time = {}
+# Load previous lock status
+if os.path.exists(LOCK_FILE):
+    with open(LOCK_FILE, "rb") as f:
+        data = pickle.load(f)
+        wrong_attempts = data.get("wrong_attempts", 0)
+        lock_time = data.get("lock_time", None)
+else:
+    wrong_attempts = 0
+    lock_time = None
 
-# -----------------------------
-# 🎨 PREMIUM LOGIN UI
-# -----------------------------
-if not st.session_state.login:
+def save_lock_status():
+    with open(LOCK_FILE, "wb") as f:
+        pickle.dump({"wrong_attempts": wrong_attempts, "lock_time": lock_time}, f)
 
-    st.markdown("""
-        <style>
-        body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-        .login-container {
-            max-width: 420px;
-            margin: auto;
-            margin-top: 80px;
-            padding: 35px;
-            border-radius: 15px;
-            background: white;
-            box-shadow: 0px 10px 30px rgba(0,0,0,0.15);
-            text-align: center;
-        }
-        .title {
-            font-size: 30px;
-            font-weight: 800;
-            color: #1f2937;
-        }
-        .subtitle {
-            font-size: 14px;
-            color: #6b7280;
-            margin-bottom: 25px;
-        }
-        .stTextInput > div > div > input {
-            border-radius: 10px;
-            padding: 10px;
-        }
-        .stButton button {
-            width: 100%;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #fc4a1a, #f7b733);
-            color: white;
-            font-weight: 600;
-            height: 45px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+def check_login():
+    global wrong_attempts, lock_time
 
-    st.markdown("""
-    <div class="login-container">
-        <div class="title">🚀 Welcome to Prime PL</div>
-        <div class="subtitle">Secure Manager Dashboard Login</div>
-    </div>
-    """, unsafe_allow_html=True)
+    current_time = time.time()
 
-    # Inputs
-    username = st.text_input("👤 Username")
-    password = st.text_input("🔑 Password", type="password")
+    # Check if account is locked
+    if lock_time and current_time - lock_time < 12*3600:
+        remaining = int((12*3600 - (current_time - lock_time)) / 60)
+        messagebox.showerror("Locked", f"Account locked. Try after {remaining} minutes.")
+        return
+    elif lock_time and current_time - lock_time >= 12*3600:
+        wrong_attempts = 0
+        lock_time = None
+        save_lock_status()
 
-    if st.button("Login"):
+    username = entry_user.get()
+    password = entry_pass.get()
 
-        # -----------------------------
-        # 🔒 CHECK LOCK
-        # -----------------------------
-        if username in st.session_state.lock_time:
-            lock_timestamp = st.session_state.lock_time[username]
-            if time.time() - lock_timestamp < 12 * 60 * 60:
-                remaining = int((12 * 60 * 60 - (time.time() - lock_timestamp)) / 60)
-                st.error(f"⛔ Account locked. Try again in {remaining} minutes")
-                st.stop()
-            else:
-                # Unlock after 12 hours
-                st.session_state.failed_attempts[username] = 0
-                del st.session_state.lock_time[username]
-
-        # -----------------------------
-        # 🔑 LOGIN VALIDATION
-        # -----------------------------
-        if username in HASHED_USERS and HASHED_USERS[username] == hash_password(password):
-            st.session_state.login = True
-            st.session_state.user = username
-            st.session_state.failed_attempts[username] = 0
-            st.success(f"Welcome {username} ✅")
-            st.experimental_rerun()
-
+    if username == USERNAME and password == PASSWORD:
+        messagebox.showinfo("Success", "Login Successful!")
+        wrong_attempts = 0
+        lock_time = None
+        save_lock_status()
+    else:
+        wrong_attempts += 1
+        if wrong_attempts >= 5:
+            lock_time = time.time()
+            save_lock_status()
+            messagebox.showerror("Locked", "Too many wrong attempts! Locked for 12 hours.")
         else:
-            # ❌ FAILED ATTEMPT
-            st.session_state.failed_attempts[username] = st.session_state.failed_attempts.get(username, 0) + 1
-            attempts_left = 5 - st.session_state.failed_attempts[username]
+            save_lock_status()
+            messagebox.showerror("Error", f"Wrong credentials! Attempts left: {5-wrong_attempts}")
 
-            if attempts_left <= 0:
-                st.session_state.lock_time[username] = time.time()
-                st.error("⛔ Too many failed attempts. Locked for 12 hours.")
-            else:
-                st.error(f"Invalid Credentials ❌ ({attempts_left} attempts left)")
+# GUI
+root = tk.Tk()
+root.title("Login - Prime PL")
+root.geometry("300x200")
 
-    st.stop()
+# Welcome Label
+label_welcome = tk.Label(root, text="Welcome to Prime PL", font=("Arial", 16))
+label_welcome.pack(pady=10)
 
-# -----------------------------
-# ✅ LOGGED IN DASHBOARD
-# -----------------------------
-st.markdown(f"<h2 style='text-align:center;'>🚀 Welcome {st.session_state.user} to Prime PL Dashboard</h2>", unsafe_allow_html=True)
+# Username
+tk.Label(root, text="Username").pack()
+entry_user = tk.Entry(root)
+entry_user.pack()
 
-st.sidebar.markdown(f"👤 Logged in as: **{st.session_state.user}**")
+# Password
+tk.Label(root, text="Password").pack()
+entry_pass = tk.Entry(root, show="*")
+entry_pass.pack()
 
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.session_state.user = None
-    st.experimental_rerun()
+# Login Button
+tk.Button(root, text="Login", command=check_login).pack(pady=10)
+
+root.mainloop()
 
 # Example Dashboard Content
 st.write("This is your premium dashboard. Add charts, metrics, or management tools here!")
