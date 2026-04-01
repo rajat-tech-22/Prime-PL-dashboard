@@ -770,9 +770,11 @@ elif dashboard_type == "Campaign Performance":
 """
 
     st.info(insight_text)
+import plotly.express as px
+import plotly.graph_objects as go
 
 # -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
+# 📊 CAMPAIGN FUNNEL ANALYSIS
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
 
@@ -781,38 +783,32 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     df2 = campaign_df.copy()
 
     # -----------------------------
-    # Initialize filters
+    # FILTERS
     # -----------------------------
     months = ["All"] + sorted(df2["Month"].dropna().unique())
     selected_month = st.sidebar.selectbox("Select Month", months)
 
-    filtered_month = df2.copy()
+    filtered = df2.copy()
     if selected_month != "All":
-        filtered_month = filtered_month[filtered_month["Month"] == selected_month]
+        filtered = filtered[filtered["Month"] == selected_month]
 
-    dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
+    dates = ["All"] + sorted(filtered["Date"].dropna().unique())
     selected_date = st.sidebar.selectbox("Select Date", dates)
-
-    filtered_date = filtered_month.copy()
     if selected_date != "All":
-        filtered_date = filtered_date[filtered_date["Date"] == selected_date]
+        filtered = filtered[filtered["Date"] == selected_date]
 
-    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique()) if "Campaign Name" in filtered_date.columns else ["All"]
+    campaigns = ["All"] + sorted(filtered["Campaign Name"].dropna().unique()) if "Campaign Name" in filtered.columns else ["All"]
     selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
+    if selected_campaign != "All" and "Campaign Name" in filtered.columns:
+        filtered = filtered[filtered["Campaign Name"] == selected_campaign]
 
-    filtered_campaign = filtered_date.copy()
-    if selected_campaign != "All" and "Campaign Name" in filtered_campaign.columns:
-        filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
-
-    managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
+    managers = ["All"] + sorted(filtered["Manager"].dropna().unique()) if "Manager" in filtered.columns else ["All"]
     selected_manager = st.sidebar.selectbox("Select Manager", managers)
-
-    filtered = filtered_campaign.copy()
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
     # -----------------------------
-    # Aggregate metrics safely
+    # SAFE SUM
     # -----------------------------
     def safe_sum(col):
         return int(filtered[col].sum()) if col in filtered.columns else 0
@@ -826,245 +822,139 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     clicks = safe_sum("RCS Unique Clicks")
     cost = safe_sum("Cost")
     total_disbursed = safe_sum("Disbursed")
+
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # -----------------------------
-    # Colorful KPI cards
+    # KPI STYLE (BOLD METRICS)
     # -----------------------------
-    kpi_html = f"""
+    st.markdown("""
     <style>
-        .kpi-card {{
-            color: white;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            flex:1;
-        }}
-        .kpi-title {{ font-size: 16px; font-weight: bold; }}
-        .kpi-value {{ font-size: 28px; margin-top: 5px; }}
-        .kpi-container {{ display:flex; gap:10px; flex-wrap:wrap; }}
+    [data-testid="stMetricValue"] {
+        font-size: 28px;
+        font-weight: bold;
+    }
+    [data-testid="stMetricLabel"] {
+        font-weight: bold;
+    }
     </style>
-    <div class="kpi-container">
-        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
-            <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
-            <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
-            <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
-            <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
-            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
-        </div>
-    </div>
-    """
-    st.markdown(kpi_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     # -----------------------------
-    # Funnel chart with safe max
+    # KPI CARDS
+    # -----------------------------
+    col1,col2,col3,col4,col5 = st.columns(5)
+    col1.metric("Total IVR", f"{total_ivr:,}")
+    col2.metric("Press 1", f"{press1:,}")
+    col3.metric("Total Request", f"{leads:,}")
+    col4.metric("Clicks", f"{clicks:,}")
+    col5.metric("Total Cost", f"₹{cost:,}")
+
+    col6,col7,col8,col9 = st.columns(4)
+    col6.metric("RCS Sent", f"{sent:,}")
+    col7.metric("Delivered", f"{delivered:,}")
+    col8.metric("Read", f"{read:,}")
+    col9.metric("Disbursed", f"₹{total_disbursed:,}")
+
+    # -----------------------------
+    # FUNNEL
     # -----------------------------
     st.subheader("📉 Funnel")
-    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
+
+    stages = ["IVR","Press1","Leads","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
-    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
 
     max_val = max(values) if max(values) > 0 else 1
-    text_positions = ["inside" if v / max_val > 0.05 else "outside" for v in values]
 
     fig = go.Figure(go.Funnel(
         y=stages,
         x=values,
         textinfo="value+percent previous",
-        textposition=text_positions,
-        marker={"color": funnel_colors},
-        orientation="h",
-        opacity=0.95,
-        textfont=dict(size=14, color="white", family="Arial")
+        textposition="inside",
+        marker=dict(color=["#6a11cb","#ff416c","#f7971e","#11998e","#fc4a1a","#00c6ff"]),
+        textfont=dict(size=15, family="Arial Black", color="white")  # ✅ BOLD
     ))
-    fig.update_layout(margin=dict(l=50,r=50,t=30,b=30), height=450, plot_bgcolor="white", paper_bgcolor="white", funnelmode="stack")
+
     st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
-    # Conversion metrics safely
+    # CONVERSION
     # -----------------------------
+    st.subheader("📊 Conversion")
+
     press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
     delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
     read_rate = round((read / delivered * 100) if delivered else 0, 2)
     cpl = round((cost / leads) if leads else 0, 2)
 
-    r1,r2,r3,r4,r5 = st.columns(5)
-    r1.metric("Press %", f"{press_rate:.2f}%")
-    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
-    r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
-    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric("Press %", f"{press_rate}%")
+    c2.metric("Delivery %", f"{delivery_rate}%")
+    c3.metric("Read %", f"{read_rate}%")
+    c4.metric("Cost/Lead", f"₹{cpl}")
 
     # -----------------------------
-    # Click Trend safely
-    # -----------------------------
-    if "Date" in filtered.columns and not filtered.empty:
-        st.subheader("📈 Click Trend")
-        filtered['Date'] = pd.to_datetime(filtered['Date'])
-        trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
-        trend = trend.sort_values("Date")
-        fig2 = go.Figure(go.Scatter(
-            x=trend["Date"],
-            y=trend["RCS Unique Clicks"],
-            mode="lines+markers"
-        ))
-        st.plotly_chart(fig2, use_container_width=True)
-
-    # -----------------------------
-    # Insights
+    # INSIGHTS
     # -----------------------------
     st.subheader("🤖 Insights")
-    insight_text = ""
+
     if arg_ctr < 2:
         st.warning("Low CTR")
-        insight_text += "CTR is low. "
     if delivery_rate < 70:
         st.warning("Delivery issue")
-        insight_text += "Delivery issues detected. "
     if read_rate < 50:
         st.warning("Low read rate")
-        insight_text += "Read rate is low. "
     if cpl > 100:
         st.warning("High cost per lead")
-        insight_text += "High cost per lead. "
-    if insight_text:
-        st.info(insight_text)
-
-     # -----------------------------
-# 📊 Additional Analysis Charts
-# -----------------------------
-
-if not filtered.empty:
 
     # -----------------------------
-    # 1️⃣ Campaign-wise Leads
+    # CHARTS SECTION
     # -----------------------------
-    if "Campaign Name" in filtered.columns:
-        st.subheader("📊 Campaign-wise Leads")
+    if not filtered.empty:
 
-        campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+        # Campaign-wise
+        if "Campaign Name" in filtered.columns:
+            st.subheader("📊 Campaign-wise Leads")
+            df_c = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
 
-        if campaign_leads.empty:
-            st.info("No campaign data available")
-        else:
-            fig_campaign = px.bar(
-                campaign_leads,
-                x="Campaign Name",
-                y="Total Request",
-                text="Total Request",
-                color_discrete_sequence=["#11998e"]
+            fig1 = px.bar(df_c, x="Campaign Name", y="Total Request", text="Total Request")
+            fig1.update_traces(textfont=dict(family="Arial Black", size=14))
+            fig1.update_layout(
+                xaxis=dict(tickfont=dict(family="Arial Black")),
+                yaxis=dict(tickfont=dict(family="Arial Black"))
             )
+            st.plotly_chart(fig1, use_container_width=True)
 
-            fig_campaign.update_traces(
-                texttemplate='%{text}',
-                textposition='outside',
-                textfont=dict(color='black', size=14)
-            )
+        # Manager Allocation
+        if "Manager" in filtered.columns:
+            st.subheader("🍩 Manager-wise Allocation")
+            df_m = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
 
-            fig_campaign.update_layout(
-                xaxis_title="Campaign",
-                yaxis_title="Leads",
-                plot_bgcolor="white",
-                paper_bgcolor="white"
-            )
+            total = df_m["Total Allocated Lead"].sum() or 1
+            df_m["label"] = df_m.apply(lambda r: f"{r['Manager']}<br>{r['Total Allocated Lead']} ({r['Total Allocated Lead']/total*100:.1f}%)", axis=1)
 
-            st.plotly_chart(fig_campaign, use_container_width=True)
+            fig2 = px.pie(df_m, names="Manager", values="Total Allocated Lead", hole=0.5)
+            fig2.update_traces(text=df_m["label"], textfont=dict(family="Arial Black", size=14))
+            st.plotly_chart(fig2, use_container_width=True)
 
+        # Disbursed
+        if "Manager" in filtered.columns:
+            st.subheader("💰 Manager-wise Disbursed")
+            df_d = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
 
-    # -----------------------------
-    # 2️⃣ Manager-wise Lead Allocation
-    # -----------------------------
-    if "Manager" in filtered.columns and "Total Allocated Lead" in filtered.columns:
-        st.subheader("🍩 Manager-wise Lead Allocation")
-
-        manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-
-        if manager_allocated.empty:
-            st.info("No manager allocation data available")
-        else:
-            total_leads = manager_allocated["Total Allocated Lead"].sum()
-            if total_leads == 0:
-                total_leads = 1  # avoid divide by zero
-
-            manager_allocated["label"] = manager_allocated.apply(
-                lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
-                axis=1
-            )
-
-            fig_donut = px.pie(
-                manager_allocated,
-                names="Manager",
-                values="Total Allocated Lead",
-                hole=0.5,
-                color_discrete_sequence=px.colors.qualitative.Pastel
-            )
-
-            fig_donut.update_traces(
-                text=manager_allocated["label"],
-                textinfo="text",
-                textposition="inside"
-            )
-
-            st.plotly_chart(fig_donut, use_container_width=True)
-
-
-    # -----------------------------
-    # 3️⃣ Manager-wise Disbursed
-    # -----------------------------
-    if "Manager" in filtered.columns and "Disbursed" in filtered.columns:
-        st.subheader("💰 Manager-wise Disbursed")
-
-        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-
-        if manager_disbursed.empty:
-            st.info("No disbursed data available")
-        else:
-            fig_manager = px.bar(
-                manager_disbursed,
-                x="Manager",
-                y="Disbursed",
-                text="Disbursed",
-                color_discrete_sequence=["#fc4a1a"]
-            )
-
-            fig_manager.update_traces(
+            fig3 = px.bar(df_d, x="Manager", y="Disbursed", text="Disbursed")
+            fig3.update_traces(
                 texttemplate='₹%{text:,}',
-                textposition='outside',
-                textfont=dict(color='black', size=14)
+                textfont=dict(family="Arial Black", size=14)
             )
-
-            fig_manager.update_layout(
-                xaxis_title="Manager",
-                yaxis_title="Disbursed Amount",
-                plot_bgcolor="white",
-                paper_bgcolor="white"
+            fig3.update_layout(
+                xaxis=dict(tickfont=dict(family="Arial Black")),
+                yaxis=dict(tickfont=dict(family="Arial Black"))
             )
+            st.plotly_chart(fig3, use_container_width=True)
 
-            st.plotly_chart(fig_manager, use_container_width=True)
-
-else:
-    st.warning("No data available for selected filters")
+    else:
+        st.warning("No data available")
 
 # Sidebar + Logout
 # -----------------------------
