@@ -61,7 +61,7 @@ def colored_metric_auto_fit(label, value, color="White"):
                 font-size: 14px; 
                 font-weight: 700; 
                 text-transform: uppercase; 
-                color: #6c757d;
+                color: White;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
