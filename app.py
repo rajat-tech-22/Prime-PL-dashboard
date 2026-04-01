@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 
-import time
-import pickle
-import os
 
 
 # -----------------------------
@@ -14,70 +11,38 @@ import os
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-import streamlit as st
-import time
-
-# ----------------- CONFIG -----------------
+# -----------------------------
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
-# ----------------- SESSION STATE -----------------
 if "login" not in st.session_state:
     st.session_state.login = False
-if "wrong_attempts" not in st.session_state:
-    st.session_state.wrong_attempts = 0
-if "lock_time" not in st.session_state:
-    st.session_state.lock_time = 0
 
-# ----------------- LOCK CHECK -----------------
-lock_duration = 12 * 3600  # 12 hours
-current_time = time.time()
-
-if st.session_state.lock_time and current_time - st.session_state.lock_time < lock_duration:
-    remaining = int(lock_duration - (current_time - st.session_state.lock_time))
-    hours, rem = divmod(remaining, 3600)
-    minutes, seconds = divmod(rem, 60)
-    st.markdown(f"<h2 style='color:red;text-align:center;'>Account locked! Try after {hours:02d}:{minutes:02d}:{seconds:02d}</h2>", unsafe_allow_html=True)
-    st.stop()
-elif st.session_state.lock_time and current_time - st.session_state.lock_time >= lock_duration:
-    st.session_state.wrong_attempts = 0
-    st.session_state.lock_time = 0
-
-# ----------------- LOGIN UI -----------------
 if not st.session_state.login:
-    st.markdown("""
-    <div style="background: linear-gradient(135deg,#89f7fe 0%,#66a6ff 100%);
-                padding:50px; border-radius:15px; width:400px; margin:auto; margin-top:10%;
-                text-align:center; box-shadow:0px 8px 20px rgba(0,0,0,0.3);">
-        <h1 style="color:#1f3c88;">Welcome to <span style="color:#ff5733;">Prime PL</span></h1>
-    </div>
-    """, unsafe_allow_html=True)
+    st.title("🔐 Login")
 
-    username = st.text_input("Username", value="PrimePL")
-    password = st.text_input("Password", type="password")
+    u = st.text_input("Username", value="")
+    p = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username == USERNAME and password == PASSWORD:
+        if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.success("Login Successful ✅")
-            # ✅ rerun alternative
-            st.experimental_set_query_params(logged_in="true")
+            st.rerun()
         else:
-            st.session_state.wrong_attempts += 1
-            attempts_left = 5 - st.session_state.wrong_attempts
-            if attempts_left <= 0:
-                st.session_state.lock_time = time.time()
-                st.error("Too many wrong attempts! Locked for 12 hours ⏰")
-            else:
-                st.warning(f"Invalid Credentials ❌ | Attempts left: {attempts_left}")
+            st.error("Invalid Credentials ❌")
+
     st.stop()
+
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background-color: #d058e8;
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
         padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
