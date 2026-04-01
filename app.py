@@ -43,7 +43,7 @@ if not st.session_state.login:
 def colored_metric_auto_fit(label, value, color="#2596be"):
     return f"""
     <div style="
-        background-color: #d058e8;
+        background :  linear-gradient(135deg, #fc4a1a, #f7b733);
         padding: 10px;
         border-radius: 12px;
         border-left: 6px solid {color};
@@ -199,7 +199,7 @@ dashboard_type = st.sidebar.radio("Select Dashboard", [
     "Single Manager",
     "Comparison",
     "Campaign Performance",
-    "📊 Campaign Funnel Analysis"
+    "Prefr & PW Campaign Reports"
 ])
 
 
@@ -270,7 +270,7 @@ if dashboard_type == "All Managers":
 
         st.markdown(f"""
         <div style="
-            background-color: #07f2c3;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -395,7 +395,7 @@ elif dashboard_type == "Single Manager":
         # Insight Summary
         st.markdown(f"""
         <div style="
-            background-color: #07f2c3;
+            background : linear-gradient(135deg, #ff416c, #ff4b2b);
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -528,7 +528,7 @@ elif dashboard_type == "Comparison":
     # Insights Summary
     st.markdown("### 📝 Insights")
     st.markdown(f"""
-    <div style="background-color: #07f2c3; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+    <div style="background : linear-gradient(135deg, #ff416c, #ff4b2b); padding: 15px; border-radius: 10px; margin-bottom: 20px;
                 display: flex; justify-content: space-around; text-align: center;">
         <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
         <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
@@ -777,9 +777,9 @@ import plotly.graph_objects as go
 # -----------------------------
 # 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
 # -----------------------------
-if dashboard_type == "📊 Campaign Funnel Analysis":
+if dashboard_type == "Prefr & PW Campaign Reports":
 
-    st.header("📊 Campaign Funnel Analysis")
+    st.header("Prefr & PW Campaign Reports")
 
     df2 = campaign_df.copy()
 
@@ -915,7 +915,7 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         # ✅ BOLD TEXT
         textfont=dict(
             size=15,
-            color="white",   # better contrast
+            color="Black",   # better contrast
             family="Arial Black"
         )
     ))
