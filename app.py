@@ -166,12 +166,12 @@ def plot_bar(f, col, top_value, manager_name, key_val):
     return fig
 
 # --- UPDATED MODERN CARD UI ---
-def colored_metric(label, value, color="#2596be"):
+def colored_metric(label, value, color="Blue"):
     st.markdown(f"""
         <div style="
-            background: linear-gradient(135deg, #fc4a1a, #f7b733);
+            background : linear-gradient(135deg, #fc4a1a, #f7b733);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 15px;
             border-left: 6px solid {color};
             box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
             text-align: left;
@@ -264,7 +264,7 @@ if dashboard_type == "All Managers":
 
         st.markdown(f"""
         <div style="
-            background-color: #07f2c3;
+            background-color : #07f2c3;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
