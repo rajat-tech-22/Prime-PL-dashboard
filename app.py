@@ -106,7 +106,7 @@ if not st.session_state.login:
         <h1 style='color:#1f3c88;'>Welcome to <span style='color:#ff5733;'>Prime PL</span></h1>
     """, unsafe_allow_html=True)
 
-    u = st.text_input("Username", value="")
+    u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
 
     if st.button("Login"):
@@ -117,11 +117,18 @@ if not st.session_state.login:
             lock_time = None
             save_lock_status()
             st.experimental_rerun()
-          
+        else:
+            wrong_attempts += 1
+            if wrong_attempts >= 5:
+                lock_time = time.time()
+                save_lock_status()
+                st.error("Too many wrong attempts! Locked for 12 hours.")
+            else:
+                save_lock_status()
+                st.error(f"Invalid Credentials ❌ | Attempts left: {5 - wrong_attempts}")
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
-
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
