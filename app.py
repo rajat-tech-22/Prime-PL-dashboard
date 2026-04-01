@@ -952,42 +952,42 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
  # -----------------------------
 # 1️⃣ Campaign-wise Leads
-# -----------------------------
-if "Campaign Name" in filtered.columns and not filtered.empty:
-    st.subheader("📊 Campaign-wise Leads")
+# # -----------------------------
+# if "Campaign Name" in filtered.columns and not filtered.empty:
+#     st.subheader("📊 Campaign-wise Leads")
     
-    campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+#     campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
     
-    # prevent empty chart
-    if campaign_leads["Total Request"].sum() == 0:
-        campaign_leads["Total Request"] = 0
+#     # prevent empty chart
+#     if campaign_leads["Total Request"].sum() == 0:
+#         campaign_leads["Total Request"] = 0
     
-    fig_campaign = px.bar(
-        campaign_leads,
-        x="Campaign Name",
-        y="Total Request",
-        text="Total Request",
-        color_discrete_sequence=["#11998e"]
-    )
+#     fig_campaign = px.bar(
+#         campaign_leads,
+#         x="Campaign Name",
+#         y="Total Request",
+#         text="Total Request",
+#         color_discrete_sequence=["#11998e"]
+#     )
     
-    fig_campaign.update_traces(
-        texttemplate='%{text}', 
-        textposition='outside',
-        textfont=dict(color='black', size=14, family='Arial Black')
-    )
+#     fig_campaign.update_traces(
+#         texttemplate='%{text}', 
+#         textposition='outside',
+#         textfont=dict(color='black', size=14, family='Arial Black')
+#     )
     
-    fig_campaign.update_layout(
-        xaxis_title="Campaign",
-        yaxis_title="Leads",
-        xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-                   tickfont=dict(family="Arial Black", size=12, color="black")),
-        yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
-                   tickfont=dict(family="Arial Black", size=12, color="black")),
-        plot_bgcolor="white",
-        paper_bgcolor="white"
-    )
+#     fig_campaign.update_layout(
+#         xaxis_title="Campaign",
+#         yaxis_title="Leads",
+#         xaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+#                    tickfont=dict(family="Arial Black", size=12, color="black")),
+#         yaxis=dict(title_font=dict(family="Arial Black", size=14, color="black"),
+#                    tickfont=dict(family="Arial Black", size=12, color="black")),
+#         plot_bgcolor="white",
+#         paper_bgcolor="white"
+#     )
     
-    st.plotly_chart(fig_campaign, use_container_width=True)
+#     st.plotly_chart(fig_campaign, use_container_width=True)
 
 
 # -----------------------------
