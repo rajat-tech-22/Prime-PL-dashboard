@@ -1,146 +1,185 @@
-import streamlit as st
-import pandas as pd
-import plotly.graph_objs as go
-from streamlit_autorefresh import st_autorefresh
-import plotly.express as px
-
-
 # -----------------------------
 # Page Config
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
-# -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM
-# -----------------------------
-USERNAME = "Mymoneymantra"
-PASSWORD = "Prime110"
 
-# Initialize login state
+# -----------------------------
+# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# -----------------------------
+USERNAME = "PrimePL"
+PASSWORD = "@1234"
+
 if "login" not in st.session_state:
     st.session_state.login = False
 
-# Login page
 if not st.session_state.login:
     st.title("🔐 Login")
-    
-    u = st.text_input("Username", value="")
+
+    u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
-    
+
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.success("Login Successful ✅")
-            st.experimental_rerun()  # refresh page to show welcome message
+            st.rerun()
         else:
             st.error("Invalid Credentials ❌")
-    
-    st.stop()  # stop here until login is successful
 
-    # -----------------------------
-    # 👋 WELCOME MESSAGE AFTER LOGIN
-    # -----------------------------
-    st.success(f"Hello Prime, welcome back 👋")
-    
-    # -----------------------------
-    # LOAD MAIN DATA
-    # -----------------------------
-    @st.cache_data(ttl=60)
-    def load_data():
-        url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
-        df = pd.read_csv(url)
-        df.replace("null", None, inplace=True)
-        return df
+    st.stop()
 
-    # -----------------------------
-    # LOAD CAMPAIGN DATA
-    # -----------------------------
-    @st.cache_data(ttl=60)
-    def load_campaign_data():
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
-        df2 = pd.read_csv(url)
-        df2.columns = df2.columns.str.strip()
-        return df2
-    
-    df = load_data()
-    campaign_df = load_campaign_data()
-    
-    # -----------------------------
-    # Helper Functions
-    # -----------------------------
-    def format_inr(number):
-        if number is None or number == 0:
-            return "₹0"
-        s = str(int(number))
-        last3 = s[-3:]
-        rest = s[:-3]
-        parts = []
-        while len(rest) > 2:
-            parts.append(rest[-2:])
-            rest = rest[:-2]
-        if rest:
-            parts.append(rest)
-        parts.reverse()
-        return "₹" + ",".join(parts) + "," + last3
-    
-    base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-    
-    def get_colors(index_list, top_value):
-        colors = []
-        for i, val in enumerate(index_list):
-            if val == top_value:
-                colors.append("#FFD700")
-            else:
-                colors.append(base_colors[i % len(base_colors)])
-        return colors
-    
-    def calc_metrics(f):
-        total_disb = f["Disbursed AMT"].sum()
-        total_rev = f["Total_Revenue"].sum()
-        avg_payout = (total_rev/total_disb)*100 if total_disb else 0
-        txn_count = len(f)
-        avg_disb = total_disb/txn_count if txn_count else 0
-        top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-        top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-        top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-        return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
-    
-    def plot_bar(f, col, top_value, manager_name, key_val):
-        summary = f.groupby(col)["Disbursed AMT"].sum()
-        colors = get_colors(summary.index, top_value)
-        fig = go.Figure(go.Bar(
-            x=summary.index,
-            y=summary.values/100000,
-            text=[f"{v/100000:.2f}L" for v in summary.values],
-            textposition="auto",
-            marker_color=colors,
-            name=manager_name
-        ))
-        fig.update_layout(
-            yaxis_title="Amount (L)",
-            template="plotly_white",
-            height=400,
-            title=f"{manager_name} - {col} Summary"
-        )
-        return fig
-    
-    # --- UPDATED MODERN CARD UI ---
-    def colored_metric(label, value, color="Blue"):
-        st.markdown(f"""
-            <div style="
-                background : linear-gradient(135deg, #fc4a1a, #f7b733);
-                padding: 20px;
-                border-radius: 15px;
-                border-left: 6px solid {color};
-                box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-                text-align: left;
-                margin-bottom: 15px;
-            ">
-                <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-                <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
-            </div>
-            """, unsafe_allow_html=True)
-    
+# -----------------------------
+# Auto-fit Card Function
+# -----------------------------
+def colored_metric_auto_fit(label, value, color="#2596be"):
+    return f"""
+    <div style="
+        background-color: #d058e8;
+        padding: 10px;
+        border-radius: 12px;
+        border-left: 6px solid {color};
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 15px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    ">
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <span style="
+                font-size: 14px; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                color: #6c757d;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{label}</span>
+            <span style="
+                font-weight: 800; 
+                color: #212529;
+                font-size: 2rem; 
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            ">{value}</span>
+        </div>
+    </div>
+    """
+
+# Initialize refresh flag
+if "refresh" not in st.session_state:
+    st.session_state.refresh = False
+
+# Refresh button in sidebar
+if st.sidebar.button("🔄 Refresh Dashboard"):
+    st.session_state.refresh = True
+    st.experimental_rerun()
+
+# -----------------------------
+# LOAD MAIN DATA
+# -----------------------------
+@st.cache_data(ttl=60)
+def load_data():
+    url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
+    df = pd.read_csv(url)
+    df.replace("null", None, inplace=True)
+    return df
+
+# -----------------------------
+# LOAD CAMPAIGN DATA
+# -----------------------------
+@st.cache_data(ttl=60)
+def load_campaign_data():
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
+    df2 = pd.read_csv(url)
+    df2.columns = df2.columns.str.strip()
+    return df2
+
+df = load_data()
+campaign_df = load_campaign_data()
+
+# -----------------------------
+# Helper Functions
+# -----------------------------
+def format_inr(number):
+    if number is None or number == 0:
+        return "₹0"
+    s = str(int(number))
+    last3 = s[-3:]
+    rest = s[:-3]
+    parts = []
+    while len(rest) > 2:
+        parts.append(rest[-2:])
+        rest = rest[:-2]
+    if rest:
+        parts.append(rest)
+    parts.reverse()
+    return "₹" + ",".join(parts) + "," + last3
+
+base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
+
+def get_colors(index_list, top_value):
+    colors = []
+    for i, val in enumerate(index_list):
+        if val == top_value:
+            colors.append("#FFD700")
+        else:
+            colors.append(base_colors[i % len(base_colors)])
+    return colors
+
+def calc_metrics(f):
+    total_disb = f["Disbursed AMT"].sum()
+    total_rev = f["Total_Revenue"].sum()
+    avg_payout = (total_rev/total_disb)*100 if total_disb else 0
+    txn_count = len(f)
+    avg_disb = total_disb/txn_count if txn_count else 0
+    top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
+
+def plot_bar(f, col, top_value, manager_name, key_val):
+    summary = f.groupby(col)["Disbursed AMT"].sum()
+    colors = get_colors(summary.index, top_value)
+    fig = go.Figure(go.Bar(
+        x=summary.index,
+        y=summary.values/100000,
+        text=[f"{v/100000:.2f}L" for v in summary.values],
+        textposition="auto",
+        marker_color=colors,
+        name=manager_name
+    ))
+    fig.update_layout(
+        yaxis_title="Amount (L)",
+        template="plotly_white",
+        height=400,
+        title=f"{manager_name} - {col} Summary"
+    )
+    return fig
+
+# --- UPDATED MODERN CARD UI ---
+def colored_metric(label, value, color="#2596be"):
+    st.markdown(f"""
+        <div style="
+            background-color: #07f2c3;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 6px solid {color};
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            margin-bottom: 15px;
+        ">
+            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 # -----------------------------
 # SIDEBAR
@@ -152,7 +191,7 @@ dashboard_type = st.sidebar.radio("Select Dashboard", [
     "Single Manager",
     "Comparison",
     "Campaign Performance",
-    "Prefer & PW Campaign Report"
+    "📊 Campaign Funnel Analysis"
 ])
 
 
@@ -223,7 +262,7 @@ if dashboard_type == "All Managers":
 
         st.markdown(f"""
         <div style="
-            background-color : #07f2c3;
+            background-color: #07f2c3;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -348,7 +387,7 @@ elif dashboard_type == "Single Manager":
         # Insight Summary
         st.markdown(f"""
         <div style="
-            background : linear-gradient(135deg, #f7971e, #ffd200);
+            background-color: #07f2c3;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
@@ -481,7 +520,7 @@ elif dashboard_type == "Comparison":
     # Insights Summary
     st.markdown("### 📝 Insights")
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #f7971e, #ffd200);; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+    <div style="background-color: #07f2c3; padding: 15px; border-radius: 10px; margin-bottom: 20px;
                 display: flex; justify-content: space-around; text-align: center;">
         <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
         <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
