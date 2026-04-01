@@ -37,110 +37,110 @@ if not st.session_state.login:
     
     st.stop()  # stop here until login is successful
 
-# -----------------------------
-# 👋 WELCOME MESSAGE AFTER LOGIN
-# -----------------------------
-st.success(f"Hello Prime, welcome back 👋")
+    # -----------------------------
+    # 👋 WELCOME MESSAGE AFTER LOGIN
+    # -----------------------------
+    st.success(f"Hello Prime, welcome back 👋")
+    
+    # -----------------------------
+    # LOAD MAIN DATA
+    # -----------------------------
+    @st.cache_data(ttl=60)
+    def load_data():
+        url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
+        df = pd.read_csv(url)
+        df.replace("null", None, inplace=True)
+        return df
 
-# -----------------------------
-# LOAD MAIN DATA
-# -----------------------------
-@st.cache_data(ttl=60)
-def load_data():
-    url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
-    df = pd.read_csv(url)
-    df.replace("null", None, inplace=True)
-    return df
-
-# -----------------------------
-# LOAD CAMPAIGN DATA
-# -----------------------------
-@st.cache_data(ttl=60)
-def load_campaign_data():
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
-    df2 = pd.read_csv(url)
-    df2.columns = df2.columns.str.strip()
-    return df2
-
-df = load_data()
-campaign_df = load_campaign_data()
-
-# -----------------------------
-# Helper Functions
-# -----------------------------
-def format_inr(number):
-    if number is None or number == 0:
-        return "₹0"
-    s = str(int(number))
-    last3 = s[-3:]
-    rest = s[:-3]
-    parts = []
-    while len(rest) > 2:
-        parts.append(rest[-2:])
-        rest = rest[:-2]
-    if rest:
-        parts.append(rest)
-    parts.reverse()
-    return "₹" + ",".join(parts) + "," + last3
-
-base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-
-def get_colors(index_list, top_value):
-    colors = []
-    for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
-    return colors
-
-def calc_metrics(f):
-    total_disb = f["Disbursed AMT"].sum()
-    total_rev = f["Total_Revenue"].sum()
-    avg_payout = (total_rev/total_disb)*100 if total_disb else 0
-    txn_count = len(f)
-    avg_disb = total_disb/txn_count if txn_count else 0
-    top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
-
-def plot_bar(f, col, top_value, manager_name, key_val):
-    summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = get_colors(summary.index, top_value)
-    fig = go.Figure(go.Bar(
-        x=summary.index,
-        y=summary.values/100000,
-        text=[f"{v/100000:.2f}L" for v in summary.values],
-        textposition="auto",
-        marker_color=colors,
-        name=manager_name
-    ))
-    fig.update_layout(
-        yaxis_title="Amount (L)",
-        template="plotly_white",
-        height=400,
-        title=f"{manager_name} - {col} Summary"
-    )
-    return fig
-
-# --- UPDATED MODERN CARD UI ---
-def colored_metric(label, value, color="Blue"):
-    st.markdown(f"""
-        <div style="
-            background : linear-gradient(135deg, #fc4a1a, #f7b733);
-            padding: 20px;
-            border-radius: 15px;
-            border-left: 6px solid {color};
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-            text-align: left;
-            margin-bottom: 15px;
-        ">
-            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
+    # -----------------------------
+    # LOAD CAMPAIGN DATA
+    # -----------------------------
+    @st.cache_data(ttl=60)
+    def load_campaign_data():
+        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
+        df2 = pd.read_csv(url)
+        df2.columns = df2.columns.str.strip()
+        return df2
+    
+    df = load_data()
+    campaign_df = load_campaign_data()
+    
+    # -----------------------------
+    # Helper Functions
+    # -----------------------------
+    def format_inr(number):
+        if number is None or number == 0:
+            return "₹0"
+        s = str(int(number))
+        last3 = s[-3:]
+        rest = s[:-3]
+        parts = []
+        while len(rest) > 2:
+            parts.append(rest[-2:])
+            rest = rest[:-2]
+        if rest:
+            parts.append(rest)
+        parts.reverse()
+        return "₹" + ",".join(parts) + "," + last3
+    
+    base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
+    
+    def get_colors(index_list, top_value):
+        colors = []
+        for i, val in enumerate(index_list):
+            if val == top_value:
+                colors.append("#FFD700")
+            else:
+                colors.append(base_colors[i % len(base_colors)])
+        return colors
+    
+    def calc_metrics(f):
+        total_disb = f["Disbursed AMT"].sum()
+        total_rev = f["Total_Revenue"].sum()
+        avg_payout = (total_rev/total_disb)*100 if total_disb else 0
+        txn_count = len(f)
+        avg_disb = total_disb/txn_count if txn_count else 0
+        top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+        top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+        top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+        return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
+    
+    def plot_bar(f, col, top_value, manager_name, key_val):
+        summary = f.groupby(col)["Disbursed AMT"].sum()
+        colors = get_colors(summary.index, top_value)
+        fig = go.Figure(go.Bar(
+            x=summary.index,
+            y=summary.values/100000,
+            text=[f"{v/100000:.2f}L" for v in summary.values],
+            textposition="auto",
+            marker_color=colors,
+            name=manager_name
+        ))
+        fig.update_layout(
+            yaxis_title="Amount (L)",
+            template="plotly_white",
+            height=400,
+            title=f"{manager_name} - {col} Summary"
+        )
+        return fig
+    
+    # --- UPDATED MODERN CARD UI ---
+    def colored_metric(label, value, color="Blue"):
+        st.markdown(f"""
+            <div style="
+                background : linear-gradient(135deg, #fc4a1a, #f7b733);
+                padding: 20px;
+                border-radius: 15px;
+                border-left: 6px solid {color};
+                box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+                text-align: left;
+                margin-bottom: 15px;
+            ">
+                <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
+                <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+    
 
 # -----------------------------
 # SIDEBAR
