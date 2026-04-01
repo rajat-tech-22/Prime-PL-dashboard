@@ -16,39 +16,60 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 
 
+# -----------------------------
+# Login Credentials
+# -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
 if "login" not in st.session_state:
     st.session_state.login = False
 
-# Custom CSS for card-style login box
+# -----------------------------
+# Full page gradient background
+# -----------------------------
 st.markdown("""
     <style>
+    body {
+        background: linear-gradient(135deg, #36d1dc, #5b86e5);
+        color: #333333;
+    }
     .login-card {
-        background: #f5f5f5;
-        padding: 40px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 50px;
         max-width: 450px;
-        margin: 50px auto;
-        border-radius: 15px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        margin: 80px auto;
+        border-radius: 20px;
+        box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+        text-align: center;
     }
     .login-title {
-        text-align: center;
-        font-size: 28px;
+        font-size: 32px;
         font-weight: bold;
         color: #11998e;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
-    .login-button {
-        background-color: #11998e;
-        color: white;
+    .login-button button {
+        background-color: #11998e !important;
+        color: white !important;
         font-weight: bold;
+        font-size: 16px;
+        padding: 8px 25px;
+        border-radius: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# -----------------------------
+# LOGIN PAGE
+# -----------------------------
 if not st.session_state.login:
+    # Show welcome message only on login page
+    st.markdown("""
+        <h1 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h1>
+        <p style="text-align:center; font-size:18px;">You are logging in as <b>{}</b></p>
+    """.format(USERNAME), unsafe_allow_html=True)
+
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
 
@@ -58,18 +79,20 @@ if not st.session_state.login:
     if st.button("Login"):
         if username == USERNAME and password == PASSWORD:
             st.session_state.login = True
-            st.success("Login Successful ✅")
+
+            # Animated login placeholder
+            placeholder = st.empty()
+            for i in range(101):
+                placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Logging in {i}%</h2>", unsafe_allow_html=True)
+                time.sleep(0.01)
+            placeholder.empty()
+            st.success("✅ Login Successful")
             st.rerun()
         else:
             st.error("❌ Invalid Credentials")
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-else:
-    st.markdown("""
-        <h2 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h2>
-        <p style="text-align:center; font-size:16px;">You are logged in as <b>{}</b></p>
-    """.format(USERNAME), unsafe_allow_html=True)
 
 # Auto-fit Card Function
 # -----------------------------
