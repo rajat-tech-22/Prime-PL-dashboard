@@ -20,21 +20,54 @@ PASSWORD = "Prime110"
 if "login" not in st.session_state:
     st.session_state.login = False
 
-if not st.session_state.login:
-    st.title("🔐 Login")
+# Custom CSS for card-style login box
+st.markdown("""
+    <style>
+    .login-card {
+        background: #f5f5f5;
+        padding: 40px;
+        max-width: 450px;
+        margin: 50px auto;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    .login-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+        color: #11998e;
+        margin-bottom: 20px;
+    }
+    .login-button {
+        background-color: #11998e;
+        color: white;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-    u = st.text_input("Username", value="")
-    p = st.text_input("Password", type="password")
+if not st.session_state.login:
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
+
+    username = st.text_input("Username", value="")
+    password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if u == USERNAME and p == PASSWORD:
+        if username == USERNAME and password == PASSWORD:
             st.session_state.login = True
             st.success("Login Successful ✅")
             st.rerun()
         else:
-            st.error("Invalid Credentials ❌")
+            st.error("❌ Invalid Credentials")
 
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
+else:
+    st.markdown("""
+        <h2 style="text-align:center; color:#11998e;">🎉 Hello Prime! Welcome Back!</h2>
+        <p style="text-align:center; font-size:16px;">You are logged in as <b>{}</b></p>
+    """.format(USERNAME), unsafe_allow_html=True)
 
 
 
