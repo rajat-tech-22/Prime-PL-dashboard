@@ -70,8 +70,8 @@ if not st.session_state.login:
         <p style="text-align:center; font-size:18px;">You are logging in as <b>{}</b></p>
     """.format(USERNAME), unsafe_allow_html=True)
 
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
+    # st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    # st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
 
     username = st.text_input("Username", value="")
     password = st.text_input("Password", type="password")
