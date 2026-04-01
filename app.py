@@ -766,11 +766,23 @@ elif dashboard_type == "Campaign Performance":
     st.info(insight_text)
 
 # -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
+# 📊 FULL CAMPAIGN FUNNEL ANALYSIS DASHBOARD
 # -----------------------------
-if dashboard_type == "Prefer & PW Campaign Report":
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
 
-    st.header("Prefer & PW Campaign Report")
+# -----------------------------
+# Assume campaign_df is already loaded
+# -----------------------------
+
+
+
+
+if dashboard_type =="Prefr & PW campaign Report":
+
+    st.header("Prefr & PW campaign Report")
 
     df2 = campaign_df.copy()
 
@@ -850,31 +862,31 @@ if dashboard_type == "Prefer & PW Campaign Report":
         }}
     </style>
     <div class="kpi-container">
-        <div class="kpi-card" style="background:#6a11cb;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
             <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
         </div>
-        <div class="kpi-card" style="background:#ff416c;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
             <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
         </div>
-        <div class="kpi-card" style="background:#f7971e;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
         </div>
-        <div class="kpi-card" style="background:#11998e;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
             <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
         </div>
-        <div class="kpi-card" style="background:#fc4a1a;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
             <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
         </div>
-        <div class="kpi-card" style="background:#00c6ff;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
             <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
         </div>
-        <div class="kpi-card" style="background:#8e2de2;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
             <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
         </div>
-        <div class="kpi-card" style="background:#f7971e;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
             <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
         </div>
-        <div class="kpi-card" style="background:#36d1dc;">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
             <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
         </div>
     </div>
@@ -930,8 +942,7 @@ if dashboard_type == "Prefer & PW Campaign Report":
         fig2 = go.Figure(go.Scatter(
             x=trend["Date"],
             y=trend["RCS Unique Clicks"],
-            mode="lines+markers",
-            line=dict(color="#36d1dc")
+            mode="lines+markers"
         ))
         st.plotly_chart(fig2, use_container_width=True)
 
@@ -962,9 +973,11 @@ if dashboard_type == "Prefer & PW Campaign Report":
             x="Campaign Name",
             y="Total Request",
             text="Total Request",
-            color_discrete_sequence=["#11998e"]
+            color="Total Request",
+            color_continuous_scale="Blues",
         )
         fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
+        fig_campaign.update_layout(xaxis_title="Campaign", yaxis_title="Leads", uniformtext_minsize=8, uniformtext_mode='hide')
         st.plotly_chart(fig_campaign, use_container_width=True)
 
     # -----------------------------
@@ -978,9 +991,11 @@ if dashboard_type == "Prefer & PW Campaign Report":
             x="Manager",
             y="Disbursed",
             text="Disbursed",
-            color_discrete_sequence=["#fc4a1a"]
+            color="Disbursed",
+            color_continuous_scale="Oranges"
         )
         fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
+        fig_manager.update_layout(xaxis_title="Manager", yaxis_title="Disbursed Amount")
         st.plotly_chart(fig_manager, use_container_width=True)
 
     # -----------------------------
@@ -994,107 +1009,12 @@ if dashboard_type == "Prefer & PW Campaign Report":
             names="Manager",
             values="Total Request",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set3
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
-        fig_donut.update_traces(
-            textposition='inside',
-            textinfo='percent+value',
-            textfont=dict(color='black', size=14, family='Arial', bold=True)
-        )
-        st.plotly_chart(fig_donut, use_container_width=True)    # -----------------------------
-    # Conversion Metrics
-    # -----------------------------
-    st.subheader("📊 Conversion")
-    press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
-    read_rate = round((read / delivered * 100) if delivered else 0, 2)
-    cpl = round((cost / leads) if leads else 0, 2)
-
-    r1,r2,r3,r4,r5 = st.columns(5)
-    r1.metric("Press %", f"{press_rate:.2f}%")
-    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
-    r3.metric("Read %", f"{read_rate:.2f}%")
-    r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
-    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
-
-    # -----------------------------
-    # Click Trend
-    # -----------------------------
-    if "Date" in filtered.columns:
-        st.subheader("📈 Click Trend")
-        trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
-        trend["Date"] = pd.to_datetime(trend["Date"])
-        trend = trend.sort_values("Date")
-        fig2 = go.Figure(go.Scatter(
-            x=trend["Date"],
-            y=trend["RCS Unique Clicks"],
-            mode="lines+markers",
-            line=dict(color="#36d1dc")
-        ))
-        st.plotly_chart(fig2, use_container_width=True)
-
-    # -----------------------------
-    # Insights
-    # -----------------------------
-    st.subheader("🤖 Insights")
-    insights = []
-    if arg_ctr < 2:
-        insights.append("CTR is low")
-    if delivery_rate < 70:
-        insights.append("Delivery issues detected")
-    if read_rate < 50:
-        insights.append("Read rate is low")
-    if cpl > 100:
-        insights.append("High cost per lead")
-    if insights:
-        st.warning(" | ".join(insights))
-
-    # -----------------------------
-    # 1️⃣ Campaign-wise Leads Bar
-    # -----------------------------
-    if "Campaign Name" in filtered.columns:
-        st.subheader("📊 Campaign-wise Leads")
-        campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-        fig_campaign = px.bar(
-            campaign_leads,
-            x="Campaign Name",
-            y="Total Request",
-            text="Total Request",
-            color_discrete_sequence=["#11998e"]  # solid color
-        )
-        fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
-        st.plotly_chart(fig_campaign, use_container_width=True)
-
-    # -----------------------------
-    # 2️⃣ Manager-wise Disbursed Bar
-    # -----------------------------
-    if "Manager" in filtered.columns:
-        st.subheader("💰 Manager-wise Disbursed")
-        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-        fig_manager = px.bar(
-            manager_disbursed,
-            x="Manager",
-            y="Disbursed",
-            text="Disbursed",
-            color_discrete_sequence=["#fc4a1a"]  # solid color
-        )
-        fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
-        st.plotly_chart(fig_manager, use_container_width=True)
-         # -----------------------------
-        # 3️⃣ Manager-wise Allocated Leads Donut
-        # -----------------------------
-        if "Manager" in filtered.columns:
-            st.subheader("🍩 Manager-wise Allocated Leads")
-            manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
-            fig_donut = px.pie(
-                manager_allocated,
-                names="Manager",
-                values="Total Request",
-                hole=0.5,
-                color_discrete_sequence=px.colors.qualitative.Set3  # solid distinct colors
-            )
-            fig_donut.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_donut, use_container_width=True)
+        fig_donut.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_donut, use_container_width=True) 
+ 
+       
         
 
 
