@@ -79,14 +79,7 @@ def colored_metric_auto_fit(label, value, color="White"):
     </div>
     """
 
-# Initialize refresh flag
-if "refresh" not in st.session_state:
-    st.session_state.refresh = False
 
-# Refresh button in sidebar
-if st.sidebar.button("🔄 Refresh Dashboard"):
-    st.session_state.refresh = True
-    st.experimental_rerun()
 
 # -----------------------------
 # LOAD MAIN DATA
@@ -174,7 +167,7 @@ def plot_bar(f, col, top_value, manager_name, key_val):
 def colored_metric(label, value, color="#2596be"):
     st.markdown(f"""
         <div style="
-            background-color: #07f2c3;
+            background: linear-gradient(135deg, #fc4a1a, #f7b733);
             padding: 20px;
             border-radius: 12px;
             border-left: 6px solid {color};
