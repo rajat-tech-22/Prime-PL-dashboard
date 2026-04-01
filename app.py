@@ -773,8 +773,9 @@ elif dashboard_type == "Campaign Performance":
 import plotly.express as px
 import plotly.graph_objects as go
 
+
 # -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS
+# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
 # -----------------------------
 if dashboard_type == "📊 Campaign Funnel Analysis":
 
@@ -782,101 +783,150 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
 
     df2 = campaign_df.copy()
 
-    # -----------------------------
-    # FILTERS
-    # -----------------------------
+    # Initialize filters
     months = ["All"] + sorted(df2["Month"].dropna().unique())
     selected_month = st.sidebar.selectbox("Select Month", months)
 
-    filtered = df2.copy()
+    # Filter month first
+    filtered_month = df2.copy()
     if selected_month != "All":
-        filtered = filtered[filtered["Month"] == selected_month]
+        filtered_month = filtered_month[filtered_month["Month"] == selected_month]
 
-    dates = ["All"] + sorted(filtered["Date"].dropna().unique())
+    # Dynamic Dates
+    dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
     selected_date = st.sidebar.selectbox("Select Date", dates)
+    filtered_date = filtered_month.copy()
     if selected_date != "All":
-        filtered = filtered[filtered["Date"] == selected_date]
+        filtered_date = filtered_date[filtered_date["Date"] == selected_date]
 
-    campaigns = ["All"] + sorted(filtered["Campaign Name"].dropna().unique()) if "Campaign Name" in filtered.columns else ["All"]
+    # Dynamic Campaigns
+    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique())
     selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
-    if selected_campaign != "All" and "Campaign Name" in filtered.columns:
-        filtered = filtered[filtered["Campaign Name"] == selected_campaign]
+    filtered_campaign = filtered_date.copy()
+    if selected_campaign != "All":
+        filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
 
-    managers = ["All"] + sorted(filtered["Manager"].dropna().unique()) if "Manager" in filtered.columns else ["All"]
+    # Dynamic Managers
+    managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
     selected_manager = st.sidebar.selectbox("Select Manager", managers)
+    filtered = filtered_campaign.copy()
     if selected_manager != "All" and "Manager" in filtered.columns:
         filtered = filtered[filtered["Manager"] == selected_manager]
 
-    # -----------------------------
-    # SAFE SUM
-    # -----------------------------
-    def safe_sum(col):
-        return int(filtered[col].sum()) if col in filtered.columns else 0
-
-    total_ivr = safe_sum("IVR Data")
-    press1 = safe_sum("Press 1")
-    leads = safe_sum("Total Request")
-    sent = safe_sum("RCS Sent")
-    delivered = safe_sum("RCS Delivered")
-    read = safe_sum("RCS Read")
-    clicks = safe_sum("RCS Unique Clicks")
-    cost = safe_sum("Cost")
-    total_disbursed = safe_sum("Disbursed")
-
+    # Aggregate metrics
+    total_ivr = int(filtered["IVR Data"].sum())
+    press1 = int(filtered["Press 1"].sum())
+    leads = int(filtered["Total Request"].sum())
+    sent = int(filtered["RCS Sent"].sum())
+    delivered = int(filtered["RCS Delivered"].sum())
+    read = int(filtered["RCS Read"].sum())
+    clicks = int(filtered["RCS Unique Clicks"].sum())
+    cost =int(filtered["Cost"].sum())
+    total_disbursed = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
     # -----------------------------
-    # KPI STYLE (BOLD METRICS)
+    # Colorful KPI cards
     # -----------------------------
-    st.markdown("""
+    kpi_html = f"""
     <style>
-    [data-testid="stMetricValue"] {
-        font-size: 28px;
-        font-weight: bold;
-    }
-    [data-testid="stMetricLabel"] {
-        font-weight: bold;
-    }
+        .kpi-card {{
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-family: sans-serif;
+            flex:1;
+        }}
+        .kpi-title {{
+            font-size: 16px;
+            font-weight: bold;
+        }}
+        .kpi-value {{
+            font-size: 28px;
+            margin-top: 5px;
+        }}
+        .kpi-container {{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }}
     </style>
-    """, unsafe_allow_html=True)
+    <div class="kpi-container">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
+            <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
+            <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+            <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
+            <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
+            <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
+            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+            <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
+            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
+        </div>
+    </div>
+    """
+    st.markdown(kpi_html, unsafe_allow_html=True)
 
     # -----------------------------
-    # KPI CARDS
-    # -----------------------------
-    col1,col2,col3,col4,col5 = st.columns(5)
-    col1.metric("Total IVR", f"{total_ivr:,}")
-    col2.metric("Press 1", f"{press1:,}")
-    col3.metric("Total Request", f"{leads:,}")
-    col4.metric("Clicks", f"{clicks:,}")
-    col5.metric("Total Cost", f"₹{cost:,}")
-
-    col6,col7,col8,col9 = st.columns(4)
-    col6.metric("RCS Sent", f"{sent:,}")
-    col7.metric("Delivered", f"{delivered:,}")
-    col8.metric("Read", f"{read:,}")
-    col9.metric("Disbursed", f"₹{total_disbursed:,}")
-
-    # -----------------------------
-    # FUNNEL
-    # -----------------------------
+    # Funnel chart
+        # ----------------------------
     st.subheader("📉 Funnel")
-
-    stages = ["IVR","Press1","Leads","Delivered","Read","Clicks"]
+    
+    # Funnel stages and values
+    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
-
-    max_val = max(values) if max(values) > 0 else 1
-
+    
+    # Funnel colors
+    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
+    
+    # Determine text position: inside if segment > 5% of max, else outside
+    text_positions = ["inside" if v / max(values) > 0.05 else "outside" for v in values]
+    
+    # Font size for labels
+    font_size = 14
+    
+    # Create funnel
     fig = go.Figure(go.Funnel(
         y=stages,
         x=values,
         textinfo="value+percent previous",
-        textposition="inside",
-        marker=dict(color=["#6a11cb","#ff416c","#f7971e","#11998e","#fc4a1a","#00c6ff"]),
-        textfont=dict(size=15, family="Arial Black", color="white")  # ✅ BOLD
+        textposition=text_positions,
+        marker={"color": funnel_colors},
+        orientation="h",
+        opacity=0.95,
+        textfont=dict(size=font_size, color="white", family="Arial")
     ))
-
+    
+    # Layout adjustments
+    fig.update_layout(
+        margin=dict(l=50, r=50, t=30, b=30),
+        height=450,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        funnelmode="stack"
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
-
+        
+    
+                
     # -----------------------------
     # CONVERSION
     # -----------------------------
