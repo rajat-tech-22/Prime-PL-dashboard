@@ -193,7 +193,7 @@ dashboard_type = st.sidebar.radio("Select Dashboard", [
     "Single Manager",
     "Comparison",
     "Campaign Performance",
-    "📊 Campaign Funnel Analysis"
+    "Prefer & PW Campaign Report"
 ])
 
 
@@ -768,9 +768,9 @@ elif dashboard_type == "Campaign Performance":
 # -----------------------------
 # 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
 # -----------------------------
-if dashboard_type == "📊 Campaign Funnel Analysis":
+if dashboard_type == "Prefer & PW Campaign Report":
 
-    st.header("📊 Campaign Funnel Analysis")
+    st.header("Prefer & PW Campaign Report")
 
     df2 = campaign_df.copy()
 
@@ -904,6 +904,104 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
+    # Conversion Metrics
+    # -----------------------------
+    st.subheader("📊 Conversion")
+    press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
+    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
+    read_rate = round((read / delivered * 100) if delivered else 0, 2)
+    cpl = round((cost / leads) if leads else 0, 2)
+
+    r1,r2,r3,r4,r5 = st.columns(5)
+    r1.metric("Press %", f"{press_rate:.2f}%")
+    r2.metric("Delivery %", f"{delivery_rate:.2f}%")
+    r3.metric("Read %", f"{read_rate:.2f}%")
+    r4.metric("Cost/Lead", f"₹{cpl:,.2f}")
+    r5.metric("Total Disbursed", f"₹{total_disbursed:,.2f}")
+
+    # -----------------------------
+    # Click Trend
+    # -----------------------------
+    if "Date" in filtered.columns:
+        st.subheader("📈 Click Trend")
+        trend = filtered.groupby("Date")["RCS Unique Clicks"].sum().reset_index()
+        trend["Date"] = pd.to_datetime(trend["Date"])
+        trend = trend.sort_values("Date")
+        fig2 = go.Figure(go.Scatter(
+            x=trend["Date"],
+            y=trend["RCS Unique Clicks"],
+            mode="lines+markers",
+            line=dict(color="#36d1dc")
+        ))
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # -----------------------------
+    # Insights
+    # -----------------------------
+    st.subheader("🤖 Insights")
+    insights = []
+    if arg_ctr < 2:
+        insights.append("CTR is low")
+    if delivery_rate < 70:
+        insights.append("Delivery issues detected")
+    if read_rate < 50:
+        insights.append("Read rate is low")
+    if cpl > 100:
+        insights.append("High cost per lead")
+    if insights:
+        st.warning(" | ".join(insights))
+
+    # -----------------------------
+    # 1️⃣ Campaign-wise Leads Bar
+    # -----------------------------
+    if "Campaign Name" in filtered.columns:
+        st.subheader("📊 Campaign-wise Leads")
+        campaign_leads = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+        fig_campaign = px.bar(
+            campaign_leads,
+            x="Campaign Name",
+            y="Total Request",
+            text="Total Request",
+            color_discrete_sequence=["#11998e"]
+        )
+        fig_campaign.update_traces(texttemplate='%{text}', textposition='outside')
+        st.plotly_chart(fig_campaign, use_container_width=True)
+
+    # -----------------------------
+    # 2️⃣ Manager-wise Disbursed Bar
+    # -----------------------------
+    if "Manager" in filtered.columns:
+        st.subheader("💰 Manager-wise Disbursed")
+        manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+        fig_manager = px.bar(
+            manager_disbursed,
+            x="Manager",
+            y="Disbursed",
+            text="Disbursed",
+            color_discrete_sequence=["#fc4a1a"]
+        )
+        fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
+        st.plotly_chart(fig_manager, use_container_width=True)
+
+    # -----------------------------
+    # 3️⃣ Manager-wise Allocated Leads Donut
+    # -----------------------------
+    if "Manager" in filtered.columns:
+        st.subheader("🍩 Manager-wise Allocated Leads")
+        manager_allocated = filtered.groupby("Manager")["Total Request"].sum().reset_index()
+        fig_donut = px.pie(
+            manager_allocated,
+            names="Manager",
+            values="Total Request",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        fig_donut.update_traces(
+            textposition='inside',
+            textinfo='percent+value',
+            textfont=dict(color='black', size=14, family='Arial', bold=True)
+        )
+        st.plotly_chart(fig_donut, use_container_width=True)    # -----------------------------
     # Conversion Metrics
     # -----------------------------
     st.subheader("📊 Conversion")
