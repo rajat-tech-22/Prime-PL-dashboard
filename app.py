@@ -986,11 +986,17 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
     if "Manager" in filtered.columns and not filtered.empty:
         st.subheader("🍩 Manager-wise Allocated Leads")
         manager_allocated = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
-        total_leads = manager_allocated["Total Allocated Lead"].sum() if total_leads := manager_allocated["Total Allocated Lead"].sum() else 1
+        
+        # Safe total_leads calculation
+        total_leads = manager_allocated["Total Allocated Lead"].sum()
+        if total_leads == 0:
+            total_leads = 1  # prevent division by zero
+        
         manager_allocated['label_text'] = manager_allocated.apply(
             lambda row: f"{row['Manager']}<br>{row['Total Allocated Lead']} ({row['Total Allocated Lead']/total_leads*100:.1f}%)",
             axis=1
         )
+        
         fig_donut = px.pie(
             manager_allocated,
             names="Manager",
@@ -1006,6 +1012,8 @@ if dashboard_type == "📊 Campaign Funnel Analysis":
         )
         st.plotly_chart(fig_donut, use_container_width=True)
 
+        
+    if "Manager" in filtered.columns and not filtered.empty:
         st.subheader("💰 Manager-wise Disbursed")
         manager_disbursed = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
         fig_manager = px.bar(
