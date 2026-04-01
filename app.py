@@ -12,16 +12,99 @@ st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
+# 🔐 STYLISH LOGIN SYSTEM (CENTER + GRADIENT + COLORS)
 # -----------------------------
+import streamlit as st
+import time
+import pickle
+import os
+
+# ----------------- CONFIG -----------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
+LOCK_FILE = "lock_status.pkl"
+
+# ----------------- LOAD LOCK STATUS -----------------
+if os.path.exists(LOCK_FILE):
+    with open(LOCK_FILE, "rb") as f:
+        data = pickle.load(f)
+        wrong_attempts = data.get("wrong_attempts", 0)
+        lock_time = data.get("lock_time", None)
+else:
+    wrong_attempts = 0
+    lock_time = None
+
+def save_lock_status():
+    with open(LOCK_FILE, "wb") as f:
+        pickle.dump({"wrong_attempts": wrong_attempts, "lock_time": lock_time}, f)
 
 if "login" not in st.session_state:
     st.session_state.login = False
 
+# ----------------- LOCK CHECK -----------------
+current_time = time.time()
+lock_duration = 12 * 3600  # 12 hours
+
+if lock_time and current_time - lock_time < lock_duration:
+    remaining_seconds = int(lock_duration - (current_time - lock_time))
+    minutes, seconds = divmod(remaining_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    st.markdown(f"<h2 style='color:red; text-align:center;'>Account locked! Try after {hours:02d}:{minutes:02d}:{seconds:02d}</h2>", unsafe_allow_html=True)
+    st.stop()
+elif lock_time and current_time - lock_time >= lock_duration:
+    wrong_attempts = 0
+    lock_time = None
+    save_lock_status()
+
+# ----------------- STYLISH LOGIN -----------------
 if not st.session_state.login:
-    st.title("🔐 Login")
+    # Centering and gradient background via CSS
+    st.markdown("""
+    <style>
+    body {
+        background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+        height: 100vh;
+    }
+    .login-box {
+        background: rgba(255, 255, 255, 0.85);
+        padding: 40px;
+        border-radius: 15px;
+        width: 400px;
+        margin: auto;
+        margin-top: 10%;
+        text-align: center;
+        box-shadow: 0px 8px 20px rgba(0,0,0,0.3);
+    }
+    .login-box input {
+        height: 40px;
+        width: 90%;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        padding-left: 10px;
+        font-size: 16px;
+    }
+    .login-box button {
+        background-color: #4CAF50;
+        color: white;
+        font-size: 18px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 50%;
+        margin-top: 10px;
+    }
+    .login-box button:hover {
+        background-color: #45a049;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="login-box">
+        <h1 style='color:#1f3c88;'>Welcome to <span style='color:#ff5733;'>Prime PL</span></h1>
+    """, unsafe_allow_html=True)
 
     u = st.text_input("Username", value="PrimePL")
     p = st.text_input("Password", type="password")
@@ -30,10 +113,21 @@ if not st.session_state.login:
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.success("Login Successful ✅")
-            st.rerun()
+            wrong_attempts = 0
+            lock_time = None
+            save_lock_status()
+            st.experimental_rerun()
         else:
-            st.error("Invalid Credentials ❌")
+            wrong_attempts += 1
+            if wrong_attempts >= 5:
+                lock_time = time.time()
+                save_lock_status()
+                st.error("Too many wrong attempts! Locked for 12 hours.")
+            else:
+                save_lock_status()
+                st.error(f"Invalid Credentials ❌ | Attempts left: {5 - wrong_attempts}")
 
+    st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # -----------------------------
