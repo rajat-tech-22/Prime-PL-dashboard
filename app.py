@@ -1081,7 +1081,7 @@ if dashboard_type == "Prefer & PW Campaign Report":
         fig_manager.update_traces(texttemplate='₹%{text:,}', textposition='outside')
         st.plotly_chart(fig_manager, use_container_width=True)
     # -----------------------------
-    # 3️⃣ Manager-wise Allocated Leads Donut (corrected)
+    # 3️⃣ Manager-wise Allocated Leads Donut (with % + count, bold labels)
     # -----------------------------
     if "Manager" in filtered.columns:
         st.subheader("🍩 Manager-wise Allocated Leads")
@@ -1093,13 +1093,13 @@ if dashboard_type == "Prefer & PW Campaign Report":
             hole=0.5,
             color_discrete_sequence=px.colors.qualitative.Set3
         )
+        # Corrected textfont without 'bold'
         fig_donut.update_traces(
             textposition='inside',
             textinfo='percent+value',
-            textfont=dict(color='black', size=14, family='Arial Black')  # use a bold font family
+            textfont=dict(color='black', size=14, family='Arial Black')  # bold via font family
         )
         st.plotly_chart(fig_donut, use_container_width=True)
-
 
 
 
