@@ -10,73 +10,37 @@ import plotly.express as px
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
-
+# -----------------------------
+# 🔐 SIMPLE LOGIN SYSTEM
+# -----------------------------
 USERNAME = "Mymoneymantra"
 PASSWORD = "Prime110"
 
+# Initialize login state
 if "login" not in st.session_state:
     st.session_state.login = False
 
-# Full page gradient background
-st.markdown("""
-    <style>
-    body {
-        background: linear-gradient(135deg, #36d1dc, #5b86e5);
-        color: #333333;
-    }
-    .login-card {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 50px;
-        max-width: 450px;
-        margin: 80px auto;
-        border-radius: 20px;
-        box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-        text-align: center;
-    }
-    .login-title {
-        font-size: 32px;
-        font-weight: bold;
-        color: #11998e;
-        margin-bottom: 30px;
-    }
-    .login-button button {
-        background-color: #11998e !important;
-        color: white !important;
-        font-weight: bold;
-        font-size: 16px;
-        padding: 8px 25px;
-        border-radius: 10px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# -----------------------------
-# LOGIN PAGE
-# -----------------------------
+# Login page
 if not st.session_state.login:
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">👋 Welcome to Prime Dashboard</div>', unsafe_allow_html=True)
-
-    username = st.text_input("Username", value="")
-    password = st.text_input("Password", type="password")
-
+    st.title("🔐 Login")
+    
+    u = st.text_input("Username", value="")
+    p = st.text_input("Password", type="password")
+    
     if st.button("Login"):
-        if username == USERNAME and password == PASSWORD:
-            # Animated welcome message ONLY on login page
-            placeholder = st.empty()
-            for i in range(101):
-                placeholder.markdown(f"<h2 style='text-align:center; color:#11998e;'>🎉 Hello Prime! Logging in {i}%</h2>", unsafe_allow_html=True)
-                time.sleep(0.01)
-            placeholder.empty()
-            
+        if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
-            st.success("✅ Login Successful")
-            st.rerun()
+            st.success("Login Successful ✅")
+            st.experimental_rerun()  # refresh page to show welcome message
         else:
-            st.error("❌ Invalid Credentials")
+            st.error("Invalid Credentials ❌")
+    
+    st.stop()  # stop here until login is successful
 
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+# -----------------------------
+# 👋 WELCOME MESSAGE AFTER LOGIN
+# -----------------------------
+st.success(f"Hello Prime, welcome back 👋")
 
 # -----------------------------
 # LOAD MAIN DATA
