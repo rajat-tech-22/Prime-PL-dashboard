@@ -780,9 +780,9 @@ import plotly.express as px
 
 
 
-if dashboard_type =="Prefr & PW campaign Report":
+if dashboard_type =="Prefer & PW campaign Report":
 
-    st.header("Prefr & PW campaign Report")
+    st.header("Prefer & PW campaign Report")
 
     df2 = campaign_df.copy()
 
