@@ -979,7 +979,7 @@ if dashboard_type == "Prefr & PW Campaign Reports":
             st.subheader("🍩 Manager-wise Allocation")
             df_m = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
 
-            total = df_m["Total Allocated Lead"].sum() or 1
+            total = df_m["Total Lead"].sum() or 1
             df_m["label"] = df_m.apply(lambda r: f"{r['Manager']}<br>{r['Total Lead']} ({r['Total Lead']/total*100:.1f}%)", axis=1)
 
             fig2 = px.pie(df_m, names="Manager", values="Total Lead", hole=0.5)
