@@ -36,7 +36,7 @@ if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE (Compact & Stylish)
+# LOGIN PAGE
 # -----------------------------
 if not st.session_state.login:
 
@@ -87,9 +87,10 @@ if not st.session_state.login:
 
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
+    # ✅ Compact, centered message inside card
     st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
 
-    # 🔒 Check temporary login block
+    # 🔒 Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
@@ -103,7 +104,6 @@ if not st.session_state.login:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    # Input fields
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
@@ -124,7 +124,6 @@ if not st.session_state.login:
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-
 #----------------------------
 # DASHBOARD
 # -----------------------------
