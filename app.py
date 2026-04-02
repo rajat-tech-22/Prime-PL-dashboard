@@ -122,37 +122,59 @@ if not st.session_state.login:
     st.stop()
 
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 # -----------------------------
-# NORMAL APP (TIME-BASED GREETING)
+# DASHBOARD
 # -----------------------------
 st.title("🏠 Dashboard")
 
-# ⏰ Get current hour
-hour = datetime.now().hour
+# ⏰ Indian Standard Time (UTC+5:30)
+ist = timezone(timedelta(hours=5, minutes=30))
+now_ist = datetime.now(ist)
+hour = now_ist.hour
 
+# Determine greeting
 if 5 <= hour < 12:
-    greeting = "Good Morning 🙏"
+    emoji = "🙏"
+    greeting_text = "Good Morning"
 elif 12 <= hour < 16:
-    greeting = "Good Afternoon 🙏"
+    emoji = "🌞"
+    greeting_text = "Good Afternoon"
 elif 16 <= hour < 20:
-    greeting = "Good Evening 🙏"
+    emoji = "🌇"
+    greeting_text = "Good Evening"
 else:
-    greeting = "Good Night 🙏"
+    emoji = "🌙"
+    greeting_text = "Good Night"
 
-# 🎨 Centered, gradient, bold greeting
+# 🎨 Animated bouncing emoji with gradient text
 st.markdown(f"""
-<div style="
-    text-align: center; 
-    font-size: 24px; 
-    font-weight: bold; 
+<style>
+@keyframes bounce {{
+  0%, 20%, 50%, 80%, 100% {{ transform: translateY(0); }}
+  40% {{ transform: translateY(-12px); }}
+  60% {{ transform: translateY(-6px); }}
+}}
+
+.emoji {{
+  display: inline-block;
+  animation: bounce 2s infinite;
+}}
+
+.greeting {{
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
     background: linear-gradient(90deg, #ff6ec4, #7873f5, #42e695);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-top: 100px;
-">
-    {greeting}! Welcome to the Prime PL!
+    margin-top: 120px;
+}}
+</style>
+
+<div class="greeting">
+    <span class="emoji">{emoji}</span> {greeting_text}! WELCOME TO THE PRIME PL!
 </div>
 """, unsafe_allow_html=True)
 
