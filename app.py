@@ -16,10 +16,10 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 
 
-USERNAME = os.getenv("APP_USERNAME", "PrimePL")
-PASSWORD = os.getenv("APP_PASSWORD", "@1234")
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 4
 LOCK_TIME = 43200  # 12 hours
 
 # -----------------------------
@@ -43,7 +43,7 @@ if not st.session_state.login:
     st.markdown("""
     <style>
     .login-card {
-        background-color: white;
+        background :  linear-gradient(135deg, #00c6ff, #0072ff);
         padding: 25px;
         border-radius: 12px;
         box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
