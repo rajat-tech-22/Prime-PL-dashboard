@@ -42,31 +42,36 @@ if not st.session_state.login:
 
     st.markdown("""
     <style>
+    /* Center login card vertically + horizontally */
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 80vh;
+    }
     .login-card {
         background-color: white;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
-        max-width: 300px;
-        margin: auto;
-        margin-top: 120px;
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     .login-title {
         text-align: center;
         font-size: 22px;
         font-weight: bold;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
     }
     .login-message {
         text-align: center;
-        color: #1f4037;
         font-weight: bold;
-        font-size: 14px;
-        padding: 6px 8px;
-        background-color: #e0f2e9;
-        border-radius: 6px;
-        margin-bottom: 12px;
-        display: inline-block;
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #1f4037;
     }
     .stTextInput>div>div>input {
         height: 32px;
@@ -85,9 +90,13 @@ if not st.session_state.login:
     </style>
     """, unsafe_allow_html=True)
 
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    
+    # Login title
     st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    # ✅ Compact, centered message inside card
+    
+    # ✅ Message centered inside card
     st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
 
     # 🔒 Lock check
@@ -98,12 +107,13 @@ if not st.session_state.login:
             hours = int(remaining // 3600)
             minutes = int((remaining % 3600) // 60)
             st.error(f"Login disabled 🚫 Try again in {hours}h {minutes}m")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div></div>', unsafe_allow_html=True)
             st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
+    # Inputs
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
@@ -122,7 +132,7 @@ if not st.session_state.login:
             else:
                 st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div></div>', unsafe_allow_html=True)
     st.stop()
 #----------------------------
 # DASHBOARD
