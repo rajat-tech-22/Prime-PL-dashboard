@@ -24,39 +24,86 @@ PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 MAX_ATTEMPTS = 4
 LOCK_TIME = 43200  # 12 hours in seconds
 
+
 # -----------------------------
 # SESSION INIT
 # -----------------------------
 if "login" not in st.session_state:
     st.session_state.login = False
-
 if "attempts" not in st.session_state:
     st.session_state.attempts = 0
-
 if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE
+# LOGIN PAGE (Compact & Stylish)
 # -----------------------------
 if not st.session_state.login:
 
-    st.markdown('<h2 style="text-align:center;">🔐 Login</h2>', unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    .login-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
+        max-width: 300px;
+        margin: auto;
+        margin-top: 120px;
+    }
+    .login-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    .login-message {
+        text-align: center;
+        color: #1f4037;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 6px 8px;
+        background-color: #e0f2e9;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        display: inline-block;
+    }
+    .stTextInput>div>div>input {
+        height: 32px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 6px;
+        height: 36px;
+        font-size: 14px;
+        font-weight: bold;
+        background-color: #1f4037;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # 🔒 Check if login temporarily blocked
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
+
+    # 🔒 Check temporary login block
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
-
         if remaining > 0:
             hours = int(remaining // 3600)
             minutes = int((remaining % 3600) // 60)
             st.error(f"Login disabled 🚫 Try again in {hours}h {minutes}m")
-            st.stop()  # User cannot login, but app continues
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
+    # Input fields
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
@@ -69,20 +116,15 @@ if not st.session_state.login:
         else:
             st.session_state.attempts += 1
             remaining_attempts = MAX_ATTEMPTS - st.session_state.attempts
-
             if remaining_attempts <= 0:
                 st.session_state.lock_time = time.time()
                 st.error("Too many attempts 🚫 Login disabled for 12 hours")
             else:
                 st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
 
-    st.stop()  # Login box only, rest of app can run after login
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 
-# -----------------------------
-# DASHBOARD OR REST OF APP
-# -----------------------------
-st.title("🏠 Dashboard")
-st.success("Welcome to the app 🎉")
 #----------------------------
 # DASHBOARD
 # -----------------------------
