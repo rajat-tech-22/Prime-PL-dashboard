@@ -15,64 +15,12 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 
 
+
 USERNAME = os.getenv("APP_USERNAME", "PrimePL")
 PASSWORD = os.getenv("APP_PASSWORD", "@1234")
 
 MAX_ATTEMPTS = 3
 LOCK_TIME = 43200  # 12 hours
-
-# -----------------------------
-# 🎨 COMPACT PREMIUM UI
-# -----------------------------
-st.markdown("""
-<style>
-.stApp {
-    background: linear-gradient(135deg, #1f4037, #99f2c8);
-}
-
-/* ✅ Smaller Login Card */
-.login-card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
-    max-width: 300px;
-    margin: auto;
-    margin-top: 120px;
-}
-
-/* Title */
-.login-title {
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-/* Subtitle */
-.login-sub {
-    text-align: center;
-    color: gray;
-    font-size: 13px;
-    margin-bottom: 15px;
-}
-
-/* Input fields */
-.stTextInput>div>div>input {
-    height: 35px;
-}
-
-/* Button */
-.stButton>button {
-    width: 100%;
-    border-radius: 6px;
-    height: 38px;
-    font-size: 14px;
-    background-color: #1f4037;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # -----------------------------
 # SESSION INIT
@@ -87,13 +35,51 @@ if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE
+# LOGIN PAGE (🎨 UI ONLY HERE)
 # -----------------------------
 if not st.session_state.login:
 
+    # 🎨 CSS only for login
+    st.markdown("""
+    <style>
+    .login-card {
+        background-color: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
+        max-width: 300px;
+        margin: auto;
+        margin-top: 120px;
+    }
+
+    .login-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .login-sub {
+        text-align: center;
+        color: gray;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+
+    .stButton>button {
+        width: 100%;
+        border-radius: 6px;
+        height: 38px;
+        font-size: 14px;
+        background-color: #1f4037;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-title">🔐 Secure Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
     st.markdown('<div class="login-sub">Hello Prime, Welcome Back 👋</div>', unsafe_allow_html=True)
 
     u = st.text_input("Username")
@@ -134,9 +120,10 @@ if not st.session_state.login:
     st.stop()
 
 # -----------------------------
-# DASHBOARD
+# NORMAL APP (NO UI CHANGE)
 # -----------------------------
-st.success("🎉 Welcome to the app")
+st.title("🏠 Dashboard")
+st.success("Welcome to the app 🎉")
 
 if st.button("Logout"):
     st.session_state.login = False
