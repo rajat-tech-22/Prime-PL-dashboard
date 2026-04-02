@@ -18,8 +18,8 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 
 
-USERNAME = os.getenv("APP_USERNAME", "PrimePL")
-PASSWORD = os.getenv("APP_PASSWORD", "@1234")
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 MAX_ATTEMPTS = 3
 LOCK_TIME = 43200  # 12 hours
 
