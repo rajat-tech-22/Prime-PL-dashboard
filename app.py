@@ -18,10 +18,11 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 # -----------------------------
 
 
+
 USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
 PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-MAX_ATTEMPTS = 3
-LOCK_TIME = 43200  # 12 hours
+MAX_ATTEMPTS = 4
+LOCK_TIME = 43200  # 12 hours in seconds
 
 # -----------------------------
 # SESSION INIT
@@ -36,59 +37,13 @@ if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE (UI + Message inside card)
+# LOGIN PAGE
 # -----------------------------
 if not st.session_state.login:
 
-    # 🎨 CSS only for login
-    st.markdown("""
-    <style>
-    
+    st.markdown('<h2 style="text-align:center;">🔐 Login</h2>', unsafe_allow_html=True)
 
-
-    .login-title {
-        text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .login-message {
-        text-align: center;
-        color: #1f4037;
-        font-weight: bold;
-        font-size: 14px;
-        padding: 10px;
-        background-color: #e0f2e9;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-
-    .stButton>button {
-        width: 100%;
-        border-radius: 6px;
-        height: 38px;
-        font-size: 14px;
-        background-color: #1f4037;
-        color: white;
-    }
-
-    .stTextInput>div>div>input {
-        height: 35px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
-    st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    # ✅ Stylish message inside card, no extra box above
-    st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
-
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
-
-    # 🔒 Lock check
+    # 🔒 Check if login temporarily blocked
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
@@ -96,12 +51,14 @@ if not st.session_state.login:
         if remaining > 0:
             hours = int(remaining // 3600)
             minutes = int((remaining % 3600) // 60)
-            st.error(f"Account locked 🚫 Try again in {hours}h {minutes}m")
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.stop()
+            st.error(f"Login disabled 🚫 Try again in {hours}h {minutes}m")
+            st.stop()  # User cannot login, but app continues
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
+
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
 
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
@@ -115,13 +72,17 @@ if not st.session_state.login:
 
             if remaining_attempts <= 0:
                 st.session_state.lock_time = time.time()
-                st.error("Too many attempts 🚫 Locked for 12 hours")
+                st.error("Too many attempts 🚫 Login disabled for 12 hours")
             else:
                 st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+    st.stop()  # Login box only, rest of app can run after login
 
+# -----------------------------
+# DASHBOARD OR REST OF APP
+# -----------------------------
+st.title("🏠 Dashboard")
+st.success("Welcome to the app 🎉")
 #----------------------------
 # DASHBOARD
 # -----------------------------
