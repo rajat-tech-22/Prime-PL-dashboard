@@ -813,7 +813,7 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost =int(filtered["Cost"].sum())
+    cost =int(filtered["RCS Cost"].sum())
     total_disbursed = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
