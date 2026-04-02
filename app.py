@@ -3,7 +3,8 @@ import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 import plotly.express as px
-
+import os
+import time
 
 
 # -----------------------------
@@ -12,31 +13,75 @@ import plotly.express as px
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
-# -----------------------------
-# 🔐 SIMPLE LOGIN SYSTEM (FIXED)
-# -----------------------------
-USERNAME = "PrimePL"
-PASSWORD = "@1234"
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 
+MAX_ATTEMPTS = 3
+LOCK_TIME = 43200  # 🔒 12 hours
+
+# -----------------------------
+# SESSION INIT
+# -----------------------------
 if "login" not in st.session_state:
     st.session_state.login = False
 
+if "attempts" not in st.session_state:
+    st.session_state.attempts = 0
+
+if "lock_time" not in st.session_state:
+    st.session_state.lock_time = None
+
+# -----------------------------
+# LOGIN PAGE
+# -----------------------------
 if not st.session_state.login:
     st.title("🔐 Login")
 
-    u = st.text_input("Username", value="PrimePL")
+    u = st.text_input("Username")
     p = st.text_input("Password", type="password")
+
+    # 🔒 Check lock
+    if st.session_state.lock_time:
+        elapsed = time.time() - st.session_state.lock_time
+        remaining = LOCK_TIME - elapsed
+
+        if remaining > 0:
+            hours = int(remaining // 3600)
+            minutes = int((remaining % 3600) // 60)
+
+            st.error(f"Account locked 🚫 Try again in {hours}h {minutes}m")
+            st.stop()
+        else:
+            # Reset after lock expires
+            st.session_state.attempts = 0
+            st.session_state.lock_time = None
 
     if st.button("Login"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
+            st.session_state.attempts = 0
             st.success("Login Successful ✅")
             st.rerun()
         else:
-            st.error("Invalid Credentials ❌")
+            st.session_state.attempts += 1
+            remaining_attempts = MAX_ATTEMPTS - st.session_state.attempts
+
+            if remaining_attempts <= 0:
+                st.session_state.lock_time = time.time()
+                st.error("Too many attempts 🚫 Account locked for 12 hours")
+            else:
+                st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
 
     st.stop()
 
+# -----------------------------
+# AFTER LOGIN
+# -----------------------------
+st.success("Welcome to the app 🎉")
+
+if st.button("Logout"):
+    st.session_state.login = False
+    st.rerun()
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
