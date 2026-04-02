@@ -42,14 +42,7 @@ if not st.session_state.login:
 
     st.markdown("""
     <style>
-    /* Center login card vertically + horizontally */
-    .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        height: 80vh;
-    }
+    
     .login-card {
         background-color: white;
         padding: 20px;
