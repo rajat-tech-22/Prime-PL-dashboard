@@ -125,11 +125,22 @@ if not st.session_state.login:
 # NORMAL APP (NO UI CHANGE)
 # -----------------------------
 st.title("🏠 Dashboard")
-st.success("Welcome to the app 🎉")
 
-if st.button("Logout"):
-    st.session_state.login = False
-    st.rerun()
+# 🎨 Centered and colorful welcome message
+st.markdown("""
+<div style="
+    text-align: center; 
+    font-size: 24px; 
+    font-weight: bold; 
+    background: linear-gradient(90deg, #ff6ec4, #7873f5, #42e695);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: 100px;
+">
+    🎉 Welcome to the app!
+</div>
+""", unsafe_allow_html=True)
+
 # -----------------------------
 # Auto-fit Card Function
 # -----------------------------
