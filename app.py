@@ -35,7 +35,7 @@ if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE (UI + Message Box)
+# LOGIN PAGE (UI + Message inside card)
 # -----------------------------
 if not st.session_state.login:
 
@@ -59,15 +59,14 @@ if not st.session_state.login:
         margin-bottom: 10px;
     }
 
-    .login-sub {
+    .login-message {
         text-align: center;
         color: #1f4037;
         font-weight: bold;
         font-size: 14px;
         padding: 10px;
-        border: 2px solid #1f4037;
-        border-radius: 8px;
         background-color: #e0f2e9;
+        border-radius: 8px;
         margin-bottom: 20px;
     }
 
@@ -89,8 +88,8 @@ if not st.session_state.login:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
     st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    # ✅ Stylish bold message box
-    st.markdown('<div class="login-sub">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
+    # ✅ Stylish message inside card, no extra box above
+    st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
 
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
