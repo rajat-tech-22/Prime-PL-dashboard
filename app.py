@@ -977,12 +977,12 @@ if dashboard_type == "Prefr & PW Campaign Reports":
         # Manager Allocation
         if "Manager" in filtered.columns:
             st.subheader("🍩 Manager-wise Allocation")
-            df_m = filtered.groupby("Manager")["Total Allocated Lead"].sum().reset_index()
+            df_m = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
 
             total = df_m["Total Allocated Lead"].sum() or 1
-            df_m["label"] = df_m.apply(lambda r: f"{r['Manager']}<br>{r['Total Allocated Lead']} ({r['Total Allocated Lead']/total*100:.1f}%)", axis=1)
+            df_m["label"] = df_m.apply(lambda r: f"{r['Manager']}<br>{r['Total Lead']} ({r['Total Lead']/total*100:.1f}%)", axis=1)
 
-            fig2 = px.pie(df_m, names="Manager", values="Total Allocated Lead", hole=0.5)
+            fig2 = px.pie(df_m, names="Manager", values="Total Lead", hole=0.5)
             fig2.update_traces(text=df_m["label"], textfont=dict(family="Arial Black", size=14))
             st.plotly_chart(fig2, use_container_width=True)
 
