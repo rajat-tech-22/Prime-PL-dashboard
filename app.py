@@ -16,28 +16,50 @@ st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
 
 
 
-USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
+import streamlit as st
+import os
+import time
 
-MAX_ATTEMPTS = 4
+USERNAME = os.getenv("APP_USERNAME", "PrimePL")
+PASSWORD = os.getenv("APP_PASSWORD", "@1234")
+MAX_ATTEMPTS = 3
 LOCK_TIME = 43200  # 12 hours
 
 # -----------------------------
-# LOGIN PAGE (UI + Message inside card)
+# SESSION INIT
+# -----------------------------
+if "login" not in st.session_state:
+    st.session_state.login = False
+
+if "attempts" not in st.session_state:
+    st.session_state.attempts = 0
+
+if "lock_time" not in st.session_state:
+    st.session_state.lock_time = None
+
+# -----------------------------
+# LOGIN PAGE (Compact & Bold)
 # -----------------------------
 if not st.session_state.login:
 
-    # 🎨 CSS only for login
+    # 🎨 CSS for compact login
     st.markdown("""
     <style>
-    
-
+    .login-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
+        max-width: 280px;
+        margin: auto;
+        margin-top: 120px;
+    }
 
     .login-title {
         text-align: center;
         font-size: 22px;
         font-weight: bold;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .login-message {
@@ -45,23 +67,27 @@ if not st.session_state.login:
         color: #1f4037;
         font-weight: bold;
         font-size: 14px;
-        padding: 10px;
+        padding: 6px 8px;  /* small padding to match input width */
         background-color: #e0f2e9;
-        border-radius: 8px;
-        margin-bottom: 20px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        display: inline-block;  /* make width match content */
+    }
+
+    .stTextInput>div>div>input {
+        height: 32px;
+        font-weight: bold;
+        font-size: 14px;
     }
 
     .stButton>button {
         width: 100%;
         border-radius: 6px;
-        height: 38px;
+        height: 36px;
         font-size: 14px;
+        font-weight: bold;
         background-color: #1f4037;
         color: white;
-    }
-
-    .stTextInput>div>div>input {
-        height: 35px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -69,7 +95,7 @@ if not st.session_state.login:
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
     st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    # ✅ Stylish message inside card, no extra box above
+    # ✅ Message box same width as input
     st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
 
     u = st.text_input("Username")
@@ -108,7 +134,6 @@ if not st.session_state.login:
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-
 
 import streamlit as st
 from datetime import datetime, timedelta, timezone
