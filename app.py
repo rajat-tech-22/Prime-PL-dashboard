@@ -35,7 +35,7 @@ if "lock_time" not in st.session_state:
     st.session_state.lock_time = None
 
 # -----------------------------
-# LOGIN PAGE (🎨 UI ONLY HERE)
+# LOGIN PAGE (UI + Message Box)
 # -----------------------------
 if not st.session_state.login:
 
@@ -43,7 +43,7 @@ if not st.session_state.login:
     st.markdown("""
     <style>
     .login-card {
-        background :  linear-gradient(135deg, #00c6ff, #0072ff);
+        background-color: white;
         padding: 25px;
         border-radius: 12px;
         box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
@@ -56,14 +56,19 @@ if not st.session_state.login:
         text-align: center;
         font-size: 22px;
         font-weight: bold;
-        margin-bottom: 5px;
+        margin-bottom: 10px;
     }
 
     .login-sub {
         text-align: center;
-        color: gray;
-        font-size: 13px;
-        margin-bottom: 15px;
+        color: #1f4037;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px;
+        border: 2px solid #1f4037;
+        border-radius: 8px;
+        background-color: #e0f2e9;
+        margin-bottom: 20px;
     }
 
     .stButton>button {
@@ -74,13 +79,18 @@ if not st.session_state.login:
         background-color: #1f4037;
         color: white;
     }
+
+    .stTextInput>div>div>input {
+        height: 35px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
     st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">Hello Prime, Welcome Back 👋</div>', unsafe_allow_html=True)
+    # ✅ Stylish bold message box
+    st.markdown('<div class="login-sub">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
 
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
