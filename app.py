@@ -42,15 +42,8 @@ if not st.session_state.login:
     # 🎨 CSS only for login
     st.markdown("""
     <style>
-    .login-card {
-        background-color: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
-        max-width: 300px;
-        margin: auto;
-        margin-top: 120px;
-    }
+    
+
 
     .login-title {
         text-align: center;
