@@ -121,13 +121,28 @@ if not st.session_state.login:
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
+import streamlit as st
+from datetime import datetime
+
 # -----------------------------
-# NORMAL APP (NO UI CHANGE)
+# NORMAL APP (TIME-BASED GREETING)
 # -----------------------------
 st.title("🏠 Dashboard")
 
-# 🎨 Centered and colorful welcome message
-st.markdown("""
+# ⏰ Get current hour
+hour = datetime.now().hour
+
+if 5 <= hour < 12:
+    greeting = "Good Morning 🙏"
+elif 12 <= hour < 16:
+    greeting = "Good Afternoon 🙏"
+elif 16 <= hour < 20:
+    greeting = "Good Evening 🙏"
+else:
+    greeting = "Good Night 🙏"
+
+# 🎨 Centered, gradient, bold greeting
+st.markdown(f"""
 <div style="
     text-align: center; 
     font-size: 24px; 
@@ -137,7 +152,7 @@ st.markdown("""
     -webkit-text-fill-color: transparent;
     margin-top: 100px;
 ">
-    🎉 Welcome to the app!
+    {greeting}! Welcome to the Prime PL!
 </div>
 """, unsafe_allow_html=True)
 
