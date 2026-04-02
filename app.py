@@ -23,18 +23,6 @@ MAX_ATTEMPTS = 4
 LOCK_TIME = 43200  # 12 hours
 
 # -----------------------------
-# SESSION INIT
-# -----------------------------
-if "login" not in st.session_state:
-    st.session_state.login = False
-
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 0
-
-if "lock_time" not in st.session_state:
-    st.session_state.lock_time = None
-
-# -----------------------------
 # LOGIN PAGE (UI + Message inside card)
 # -----------------------------
 if not st.session_state.login:
@@ -120,6 +108,7 @@ if not st.session_state.login:
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
+
 
 import streamlit as st
 from datetime import datetime, timedelta, timezone
