@@ -122,7 +122,7 @@ if not st.session_state.login:
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-----------------------------
+#----------------------------
 # DASHBOARD
 # -----------------------------
 st.title("🏠 Dashboard")
