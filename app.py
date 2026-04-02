@@ -43,16 +43,7 @@ if not st.session_state.login:
     st.markdown("""
     <style>
     
-    .login-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
-        width: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+  
     .login-title {
         text-align: center;
         font-size: 22px;
