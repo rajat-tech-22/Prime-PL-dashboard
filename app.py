@@ -610,15 +610,21 @@ elif dashboard_type == "Single Manager":
         # Data Table
         # -----------------------------
         st.markdown("### 📄 Data")
-
+        
         df_display = f.dropna(how='all').copy()
-
+        
+        # Round off Disbursed AMT and Revenue columns
+        if "Disbursed AMT" in df_display.columns:
+            df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0)
+        
+        if "Revenue" in df_display.columns:
+            df_display["Revenue"] = df_display["Revenue"].round(0)
+        
         styled_df = df_display.style \
             .set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}) \
-            .set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}])
-
+            .set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]})
+        
         st.dataframe(styled_df, use_container_width=True, height=300)
-
         # -----------------------------
         # Download Button
         # -----------------------------
