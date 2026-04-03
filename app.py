@@ -606,40 +606,33 @@ elif dashboard_type == "Single Manager":
 
         st.plotly_chart(fig, use_container_width=True)
     
-        # -----------------------------
-        # Data Table at Bottom
-        # -----------------------------
-        st.markdown("### 📄 Data")
-        
-        # Drop rows where all values are NaN
-        df_display = f.dropna(how='all').copy()
-        
-        # Prepare a copy for display formatting (in lakhs)
-        df_table = df_display.copy()
-        if "Disbursed AMT" in df_table.columns:
-            df_table["Disbursed AMT"] = df_table["Disbursed AMT"].apply(lambda x: f"{x/100000:.2f}L")
-        if "Revenue" in df_table.columns:
-            df_table["Revenue"] = df_table["Revenue"].apply(lambda x: f"{x/100000:.2f}L")
-        
-        # Style the table
-        styled_df = df_table.style \
-            .set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}) \
-            .set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]})
-        
-        # Display the table
-        st.dataframe(styled_df, use_container_width=True, height=300)
+      # Data Table at Bottom
+    st.markdown("### 📄 Data")
     
-        # -----------------------------
-        # Download Button
-        # -----------------------------
-        # CSV will contain raw numeric values
-        st.download_button(
-            "Download CSV",
-            df_display.to_csv(index=False),
-            f"{selected_manager}.csv",
-            "text/csv"
-        )
-                
+    df_display = f.dropna(how='all').copy()
+    
+    # ✅ Round & convert to integer (no decimals)
+    df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0).astype(int)
+    df_display["Revenue"] = df_display["Revenue"].round(0).astype(int)
+    
+    # Optional: format with commas (Indian style feel)
+    df_display["Disbursed AMT"] = df_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
+    df_display["Revenue"] = df_display["Revenue"].apply(lambda x: f"{x:,.0f}")
+    
+    styled_df = df_display.style.set_properties(
+        **{'text-align': 'center', 'vertical-align': 'middle'}
+    ).set_table_styles([
+        {'selector': 'th', 'props': [('text-align', 'center')]}
+    ])
+    
+    st.dataframe(styled_df, use_container_width=True, height=300)
+    
+    st.download_button(
+        "Download CSV",
+        df_display.to_csv(index=False),
+        f"{selected_manager}.csv",
+        "text/csv"
+    )
 # -----------------------------
 # Comparison Dashboard (Improved Cascading Filters)
 # -----------------------------
