@@ -15,16 +15,17 @@ from datetime import datetime, timedelta, timezone
 # -----------------------------
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
+# -----------------------------
+# Login Page
+# -----------------------------
 
-# -----------------------------
-# USERS CONFIG (MULTI LOGIN)
-# -----------------------------
-USERS = {
-    "rishabh": {"password": "r123", "vertical": "Rishabh"},
-    "surya": {"password": "s123", "vertical": "Surya"},
-    "gulbeer": {"password": "g123", "vertical": "Gulbeer"},
-    "admin": {"password": "admin123", "vertical": "All"}
-}
+
+
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
+MAX_ATTEMPTS = 4
+LOCK_TIME = 43200  # 12 hours in seconds
+
 
 # -----------------------------
 # SESSION INIT
@@ -41,60 +42,84 @@ if "lock_time" not in st.session_state:
 # -----------------------------
 if not st.session_state.login:
 
-    st.title("🔐 Login")
+    st.markdown("""
+    <style>
+    
+  
+    .login-title {
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+    .login-message {
+        text-align: center;
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #1f4037;
+    }
+    .stTextInput>div>div>input {
+        height: 32px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .stButton>button {
+        width: 100%;
+        border-radius: 6px;
+        height: 36px;
+        font-size: 14px;
+        font-weight: bold;
+        background-color: #1f4037;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # Lock check
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    
+    # Login title
+    st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
+    
+    # ✅ Message centered inside card
+    st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
+
+    # 🔒 Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
-        if elapsed < LOCK_TIME:
-            st.error("🚫 Too many attempts. Try later.")
+        remaining = LOCK_TIME - elapsed
+        if remaining > 0:
+            hours = int(remaining // 3600)
+            minutes = int((remaining % 3600) // 60)
+            st.error(f"Login disabled 🚫 Try again in {hours}h {minutes}m")
+            st.markdown('</div></div>', unsafe_allow_html=True)
             st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
+    # Inputs
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if u in USERS and p == USERS[u]["password"]:
+        if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
-            st.session_state.user = u
-            st.session_state.vertical = USERS[u]["vertical"]
             st.session_state.attempts = 0
-
-            st.success(f"Welcome {u} ✅")
+            st.success(f"Welcome back, {u} ✅")
             st.rerun()
         else:
             st.session_state.attempts += 1
-            if st.session_state.attempts >= MAX_ATTEMPTS:
+            remaining_attempts = MAX_ATTEMPTS - st.session_state.attempts
+            if remaining_attempts <= 0:
                 st.session_state.lock_time = time.time()
-                st.error("🚫 Too many failed attempts. Locked!")
+                st.error("Too many attempts 🚫 Login disabled for 12 hours")
             else:
-                st.error(f"❌ Invalid Credentials. Attempts left: {MAX_ATTEMPTS - st.session_state.attempts}")
+                st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
 
+    st.markdown('</div></div>', unsafe_allow_html=True)
     st.stop()
-
-# -----------------------------
-# LOAD DATA
-# -----------------------------
-df = load_data()
-
-# -----------------------------
-# 🔒 APPLY VERTICAL RESTRICTION
-# -----------------------------
-user_vertical = st.session_state.get("vertical", "All")
-
-if user_vertical != "All":
-    df = df[df["Vertical"] == user_vertical]
-
-# -----------------------------
-# SHOW ACCESS INFO
-# -----------------------------
-if user_vertical == "All":
-    st.success("🔓 Admin Access - Full Data Visible")
-else:
-    st.info(f"🔒 Viewing only: {user_vertical}")
 #----------------------------
 # DASHBOARD
 # -----------------------------
