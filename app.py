@@ -1239,62 +1239,62 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     st.plotly_chart(fig, use_container_width=True)
 
    # -----------------------------
-# SUMMARY TABLE
-# -----------------------------
-st.subheader("📋 Campaign Summary Table")
-
-if not filtered.empty:
-
-    summary_df = filtered.copy()
-
-    # Create calculated fields safely
-    summary_df["CTR"] = summary_df.apply(
-        lambda r: round((r["RCS Unique Clicks"] / r["RCS Delivered"] * 100), 2)
-        if r["RCS Delivered"] else 0, axis=1
-    )
-
-    summary_df["CPC"] = summary_df.apply(
-        lambda r: round((r["Total Cost"] / r["RCS Unique Clicks"]), 2)
-        if r["RCS Unique Clicks"] else 0, axis=1
-    )
-
-    # Select required columns
-    columns_order = [
-        "Month",
-        "Campaign Name",
-        "IVR Data",
-        "Press 1",
-        "IVR Cost",
-        "CPC",
-        "Total Request",
-        "RCS Sent",
-        "RCS Delivered",
-        "RCS Read",
-        "RCS Unique Clicks",
-        "RCS Cost",
-        "Total Cost",
-        "CTR",
-        "Total Lead",
-        "Total DISB Count",
-        "Disbursed",
-        "Manager"
-    ]
-
-    # Keep only available columns (safe handling)
-    columns_available = [col for col in columns_order if col in summary_df.columns]
-
-    summary_df = summary_df[columns_available]
-
-    # Optional: format numbers
-    numeric_cols = summary_df.select_dtypes(include=['int64', 'float64']).columns
-    summary_df[numeric_cols] = summary_df[numeric_cols].fillna(0)
-
-    # Display table
-    st.dataframe(summary_df, use_container_width=True)
-
-else:
-    st.warning("No data available for summary")
-                    
+    # SUMMARY TABLE
+    # -----------------------------
+    st.subheader("📋 Campaign Summary Table")
+    
+    if not filtered.empty:
+    
+        summary_df = filtered.copy()
+    
+        # Create calculated fields safely
+        summary_df["CTR"] = summary_df.apply(
+            lambda r: round((r["RCS Unique Clicks"] / r["RCS Delivered"] * 100), 2)
+            if r["RCS Delivered"] else 0, axis=1
+        )
+    
+        summary_df["CPC"] = summary_df.apply(
+            lambda r: round((r["Total Cost"] / r["RCS Unique Clicks"]), 2)
+            if r["RCS Unique Clicks"] else 0, axis=1
+        )
+    
+        # Select required columns
+        columns_order = [
+            "Month",
+            "Campaign Name",
+            "IVR Data",
+            "Press 1",
+            "IVR Cost",
+            "CPC",
+            "Total Request",
+            "RCS Sent",
+            "RCS Delivered",
+            "RCS Read",
+            "RCS Unique Clicks",
+            "RCS Cost",
+            "Total Cost",
+            "CTR",
+            "Total Lead",
+            "Total DISB Count",
+            "Disbursed",
+            "Manager"
+        ]
+    
+        # Keep only available columns (safe handling)
+        columns_available = [col for col in columns_order if col in summary_df.columns]
+    
+        summary_df = summary_df[columns_available]
+    
+        # Optional: format numbers
+        numeric_cols = summary_df.select_dtypes(include=['int64', 'float64']).columns
+        summary_df[numeric_cols] = summary_df[numeric_cols].fillna(0)
+    
+        # Display table
+        st.dataframe(summary_df, use_container_width=True)
+    
+    else:
+        st.warning("No data available for summary")
+                        
     # -----------------------------
     # CONVERSION
     # -----------------------------
