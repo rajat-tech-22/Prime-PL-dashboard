@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.graph_objs as go
 from streamlit_autorefresh import st_autorefresh
 import plotly.express as px
+import plotly.express as px
+import plotly.graph_objects as go
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -853,8 +855,7 @@ elif dashboard_type == "Comparison":
         "Download CSV",
         df1_display.to_csv(index=False),
         f"{selected_manager1}_{selected_month1}.csv",
-        "text/csv"
-    )
+        "text/csv")
 
     st.markdown("### 📄 Data - Second Selection")
     df2_display = f2.dropna(how='all').copy()
@@ -865,8 +866,8 @@ elif dashboard_type == "Comparison":
         "Download CSV",
         df2_display.to_csv(index=False),
         f"{selected_manager2}_{selected_month2}.csv",
-        "text/csv"
-    )
+        "text/csv")
+    
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
@@ -1075,8 +1076,6 @@ elif dashboard_type == "Campaign Performance":
 """
 
     st.info(insight_text)
-import plotly.express as px
-import plotly.graph_objects as go
 
 
 # -----------------------------
@@ -1126,7 +1125,7 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost =int(filtered["RCS Cost"].sum())
+    cost =int(filtered["Total Cost"].sum())
     total_disbursed = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
@@ -1238,6 +1237,63 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     )
     
     st.plotly_chart(fig, use_container_width=True)
+
+   # -----------------------------
+# SUMMARY TABLE
+# -----------------------------
+st.subheader("📋 Campaign Summary Table")
+
+if not filtered.empty:
+
+    summary_df = filtered.copy()
+
+    # Create calculated fields safely
+    summary_df["CTR"] = summary_df.apply(
+        lambda r: round((r["RCS Unique Clicks"] / r["RCS Delivered"] * 100), 2)
+        if r["RCS Delivered"] else 0, axis=1
+    )
+
+    summary_df["CPC"] = summary_df.apply(
+        lambda r: round((r["Total Cost"] / r["RCS Unique Clicks"]), 2)
+        if r["RCS Unique Clicks"] else 0, axis=1
+    )
+
+    # Select required columns
+    columns_order = [
+        "Month",
+        "Campaign Name",
+        "IVR Data",
+        "Press 1",
+        "IVR Cost",
+        "CPC",
+        "Total Request",
+        "RCS Sent",
+        "RCS Delivered",
+        "RCS Read",
+        "RCS Unique Clicks",
+        "RCS Cost",
+        "Total Cost",
+        "CTR",
+        "Total Lead",
+        "Total DISB Count",
+        "Disbursed",
+        "Manager"
+    ]
+
+    # Keep only available columns (safe handling)
+    columns_available = [col for col in columns_order if col in summary_df.columns]
+
+    summary_df = summary_df[columns_available]
+
+    # Optional: format numbers
+    numeric_cols = summary_df.select_dtypes(include=['int64', 'float64']).columns
+    summary_df[numeric_cols] = summary_df[numeric_cols].fillna(0)
+
+    # Display table
+    st.dataframe(summary_df, use_container_width=True)
+
+else:
+    st.warning("No data available for summary")
                     
     # -----------------------------
     # CONVERSION
