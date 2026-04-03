@@ -606,33 +606,33 @@ elif dashboard_type == "Single Manager":
 
         st.plotly_chart(fig, use_container_width=True)
     
-      # Data Table at Bottom
-    st.markdown("### 📄 Data")
-    
-    df_display = f.dropna(how='all').copy()
-    
-    # ✅ Round & convert to integer (no decimals)
-    df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0).astype(int)
-    df_display["Revenue"] = df_display["Revenue"].round(0).astype(int)
-    
-    # Optional: format with commas (Indian style feel)
-    df_display["Disbursed AMT"] = df_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
-    df_display["Revenue"] = df_display["Revenue"].apply(lambda x: f"{x:,.0f}")
-    
-    styled_df = df_display.style.set_properties(
-        **{'text-align': 'center', 'vertical-align': 'middle'}
-    ).set_table_styles([
-        {'selector': 'th', 'props': [('text-align', 'center')]}
-    ])
-    
-    st.dataframe(styled_df, use_container_width=True, height=300)
-    
-    st.download_button(
-        "Download CSV",
-        df_display.to_csv(index=False),
-        f"{selected_manager}.csv",
-        "text/csv"
-    )
+        # Data Table at Bottom
+        st.markdown("### 📄 Data")
+        
+        df_display = f.dropna(how='all').copy()
+        
+        # ✅ Round & convert to integer (no decimals)
+        df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0).astype(int)
+        df_display["Revenue"] = df_display["Revenue"].round(0).astype(int)
+        
+        # Optional: format with commas (Indian style feel)
+        df_display["Disbursed AMT"] = df_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
+        df_display["Revenue"] = df_display["Revenue"].apply(lambda x: f"{x:,.0f}")
+        
+        styled_df = df_display.style.set_properties(
+            **{'text-align': 'center', 'vertical-align': 'middle'}
+        ).set_table_styles([
+            {'selector': 'th', 'props': [('text-align', 'center')]}
+        ])
+        
+        st.dataframe(styled_df, use_container_width=True, height=300)
+        
+        st.download_button(
+            "Download CSV",
+            df_display.to_csv(index=False),
+            f"{selected_manager}.csv",
+            "text/csv"
+        )
 # -----------------------------
 # Comparison Dashboard (Improved Cascading Filters)
 # -----------------------------
