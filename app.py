@@ -1227,9 +1227,10 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
-    # 📋 Enhanced Campaign Summary Table (No Blank Rows)
     # -----------------------------
-    st.subheader("📊 Enhanced Campaign Summary")
+    # 📋 Campaign Summary Table
+    # -----------------------------
+    st.subheader("📊 Campaign Summary")
     
     if not filtered.empty:
     
@@ -1237,10 +1238,10 @@ if dashboard_type == "Prefr & PW Campaign Reports":
         from st_aggrid import AgGrid, GridOptionsBuilder
     
         # -----------------------------
-        # Grouped summary: Month + Campaign
+        # Prepare summary table
         # -----------------------------
         summary_df = filtered.copy()
-        grouped_summary = summary_df.groupby(["Month", "Campaign Name"]).agg({
+        grouped_summary = summary_df.groupby(["Month", "Campaign Name", "Manager"]).agg({
             "IVR Data": "sum",
             "Press 1": "sum",
             "IVR Cost": "sum" if "IVR Cost" in summary_df.columns else 0,
@@ -1257,9 +1258,12 @@ if dashboard_type == "Prefr & PW Campaign Reports":
         }).reset_index()
     
         # -----------------------------
-        # Remove fully blank rows
+        # Remove rows where all numeric fields are zero
         # -----------------------------
-        grouped_summary = grouped_summary.dropna(how='all')
+        numeric_cols = ["IVR Data","Press 1","IVR Cost","Total Request","RCS Sent","RCS Delivered",
+                        "RCS Read","RCS Unique Clicks","RCS Cost","Total Cost","Total Lead",
+                        "Total DISB Count","Disbursed"]
+        grouped_summary = grouped_summary[~(grouped_summary[numeric_cols] == 0).all(axis=1)]
     
         # -----------------------------
         # Calculated fields
@@ -1272,26 +1276,17 @@ if dashboard_type == "Prefr & PW Campaign Reports":
         )
     
         # -----------------------------
-        # Conditional formatting
-        # -----------------------------
-        def highlight(row):
-            styles = []
-            for col in grouped_summary.columns:
-                if col == "CTR" and row[col] < 2:
-                    styles.append('background-color: yellow')
-                elif col == "CPC" and row[col] > 100:
-                    styles.append('background-color: red; color:white')
-                else:
-                    styles.append('')
-            return styles
-    
-        grouped_summary_styled = grouped_summary.style.apply(highlight, axis=1)
-    
-        # -----------------------------
-        # Display table with AgGrid
+        # Configure AgGrid
         # -----------------------------
         gb = GridOptionsBuilder.from_dataframe(grouped_summary)
         gb.configure_default_column(sortable=True, filter=True, resizable=True)
+    
+        # Conditional formatting
+        gb.configure_column("CTR", cellStyle=(
+            "function(params) {return params.value < 2 ? {'backgroundColor':'yellow'} : null;}"))
+        gb.configure_column("CPC", cellStyle=(
+            "function(params) {return params.value > 100 ? {'backgroundColor':'red','color':'white'} : null;}"))
+    
         gb.configure_grid_options(domLayout='normal')  # sticky header
         gb.configure_pagination(paginationAutoPageSize=True)
         gb.configure_selection(selection_mode="single", use_checkbox=True)
@@ -1323,7 +1318,6 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     
     else:
         st.warning("No data available for summary")
-           
                         
         
     # -----------------------------
