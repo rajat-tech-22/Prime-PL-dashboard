@@ -637,7 +637,7 @@ elif dashboard_type == "Single Manager":
             "Download CSV",
             df_display.to_csv(index=False),
             f"{selected_manager}_{selected_month}.csv",
-            "text/csv"
+            "text/csv")
 # -----------------------------
 # Comparison Dashboard (Improved Cascading Filters)
 # -----------------------------
