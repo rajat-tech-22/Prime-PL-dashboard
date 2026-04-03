@@ -613,11 +613,11 @@ elif dashboard_type == "Single Manager":
         
         # ✅ Round & convert to integer (no decimals)
         df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0).astype(int)
-        df_display["Revenue"] = df_display["Total_Revenue"].round(0).astype(int)
+        df_display["Total_Revenue"] = df_display["Total_Revenue"].round(0).astype(int)
         
         # Optional: format with commas (Indian style feel)
         df_display["Disbursed AMT"] = df_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
-        df_display["Revenue"] = df_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
+        df_display["Total_Revenue"] = df_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
         
         styled_df = df_display.style.set_properties(
             **{'text-align': 'center', 'vertical-align': 'middle'}
