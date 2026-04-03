@@ -1226,59 +1226,100 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     
     st.plotly_chart(fig, use_container_width=True)
 
-   # -----------------------------
-    # SUMMARY TABLE
     # -----------------------------
-    st.subheader("📋 Campaign Summary Table")
+    # 📋 Enhanced Campaign Summary Table (No Blank Rows)
+    # -----------------------------
+    st.subheader("📊 Enhanced Campaign Summary")
     
     if not filtered.empty:
     
+        import io
+        from st_aggrid import AgGrid, GridOptionsBuilder
+    
+        # -----------------------------
+        # Grouped summary: Month + Campaign
+        # -----------------------------
         summary_df = filtered.copy()
+        grouped_summary = summary_df.groupby(["Month", "Campaign Name"]).agg({
+            "IVR Data": "sum",
+            "Press 1": "sum",
+            "IVR Cost": "sum" if "IVR Cost" in summary_df.columns else 0,
+            "Total Request": "sum",
+            "RCS Sent": "sum",
+            "RCS Delivered": "sum",
+            "RCS Read": "sum",
+            "RCS Unique Clicks": "sum",
+            "RCS Cost": "sum" if "RCS Cost" in summary_df.columns else 0,
+            "Total Cost": "sum",
+            "Total Lead": "sum",
+            "Total DISB Count": "sum" if "Total DISB Count" in summary_df.columns else 0,
+            "Disbursed": "sum"
+        }).reset_index()
     
-        # Create calculated fields safely
-        summary_df["CTR"] = summary_df.apply(
-            lambda r: round((r["RCS Unique Clicks"] / r["RCS Delivered"] * 100), 2)
-            if r["RCS Delivered"] else 0, axis=1
+        # -----------------------------
+        # Remove fully blank rows
+        # -----------------------------
+        grouped_summary = grouped_summary.dropna(how='all')
+    
+        # -----------------------------
+        # Calculated fields
+        # -----------------------------
+        grouped_summary["CTR"] = grouped_summary.apply(
+            lambda r: round((r["RCS Unique Clicks"] / r["RCS Delivered"] * 100), 2) if r["RCS Delivered"] else 0, axis=1
+        )
+        grouped_summary["CPC"] = grouped_summary.apply(
+            lambda r: round((r["Total Cost"] / r["RCS Unique Clicks"]), 2) if r["RCS Unique Clicks"] else 0, axis=1
         )
     
-        summary_df["CPC"] = summary_df.apply(
-            lambda r: round((r["Total Cost"] / r["RCS Unique Clicks"]), 2)
-            if r["RCS Unique Clicks"] else 0, axis=1
+        # -----------------------------
+        # Conditional formatting
+        # -----------------------------
+        def highlight(row):
+            styles = []
+            for col in grouped_summary.columns:
+                if col == "CTR" and row[col] < 2:
+                    styles.append('background-color: yellow')
+                elif col == "CPC" and row[col] > 100:
+                    styles.append('background-color: red; color:white')
+                else:
+                    styles.append('')
+            return styles
+    
+        grouped_summary_styled = grouped_summary.style.apply(highlight, axis=1)
+    
+        # -----------------------------
+        # Display table with AgGrid
+        # -----------------------------
+        gb = GridOptionsBuilder.from_dataframe(grouped_summary)
+        gb.configure_default_column(sortable=True, filter=True, resizable=True)
+        gb.configure_grid_options(domLayout='normal')  # sticky header
+        gb.configure_pagination(paginationAutoPageSize=True)
+        gb.configure_selection(selection_mode="single", use_checkbox=True)
+    
+        AgGrid(
+            grouped_summary,
+            gridOptions=gb.build(),
+            height=450,
+            fit_columns_on_grid_load=True,
+            enable_enterprise_modules=True,
+            allow_unsafe_jscode=True,
+            theme="fresh"
         )
     
-        # Select required columns
-        columns_order = [
-            "Month",
-            "Campaign Name",
-            "IVR Data",
-            "Press 1",
-            "IVR Cost",
-            "CPC",
-            "Total Request",
-            "RCS Sent",
-            "RCS Delivered",
-            "RCS Read",
-            "RCS Unique Clicks",
-            "RCS Cost",
-            "Total Cost",
-            "CTR",
-            "Total Lead",
-            "Total DISB Count",
-            "Disbursed",
-            "Manager"
-        ]
+        # -----------------------------
+        # Excel download
+        # -----------------------------
+        excel_buffer = io.BytesIO()
+        grouped_summary.to_excel(excel_buffer, index=False, engine='openpyxl')
+        excel_buffer.seek(0)
     
-        # Keep only available columns (safe handling)
-        columns_available = [col for col in columns_order if col in summary_df.columns]
-    
-        summary_df = summary_df[columns_available]
-    
-        # Optional: format numbers
-        numeric_cols = summary_df.select_dtypes(include=['int64', 'float64']).columns
-        summary_df[numeric_cols] = summary_df[numeric_cols].fillna(0)
-    
-        # Display table
-        st.dataframe(summary_df, use_container_width=True)
+        st.download_button(
+            label="📥 Download Excel",
+            data=excel_buffer,
+            file_name=f"Campaign_Summary_{selected_month}_{selected_manager}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=f"excel_{selected_month}_{selected_manager}"
+        )
     
     else:
         st.warning("No data available for summary")
