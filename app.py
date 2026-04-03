@@ -851,15 +851,55 @@ elif dashboard_type == "Comparison":
     # -----------------------------
     # Data Tables at Bottom
     # -----------------------------
+    
     st.markdown("### 📄 Data - First Selection")
     df1_display = f1.dropna(how='all').copy()
-    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
-    st.download_button("Download CSV", df1_display.to_csv(index=False), "manager1.csv", "text/csv")
-
+    
+    # ✅ Round values
+    df1_display["Disbursed AMT"] = df1_display["Disbursed AMT"].round(0).astype(int)
+    df1_display["Total_Revenue"] = df1_display["Total_Revenue"].round(0).astype(int)
+    df1_display["AVG_Payout"] = df1_display["AVG_Payout"].round(0).astype(int)
+    # Optional formatting
+    df1_display["Disbursed AMT"] = df1_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
+    df1_display["Total_Revenue"] = df1_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
+    df1_display["AVG_Payout"] = df1_display["AVG_Payout"].apply(lambda x: f"{x:,.2f}")
+    st.dataframe(
+        df1_display.style.set_properties(**{'text-align': 'center'}),
+        use_container_width=True,
+        height=300
+    )
+    
+    st.download_button(
+        "Download CSV",
+        df1_display.to_csv(index=False),
+        "manager1.csv",
+        "text/csv"
+    )
+    
+    
     st.markdown("### 📄 Data - Second Selection")
     df2_display = f2.dropna(how='all').copy()
-    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
-    st.download_button("Download CSV", df2_display.to_csv(index=False), "manager2.csv", "text/csv")
+    
+    # ✅ Round values
+    df2_display["Disbursed AMT"] = df2_display["Disbursed AMT"].round(0).astype(int)
+    df2_display["Total_Revenue"] = df2_display["Total_Revenue"].round(0).astype(int)
+    df2_display["AVG_Payout"] = df2_display["AVG_Payout"].round(0).astype(int)
+    # Optional formatting
+    df2_display["Disbursed AMT"] = df2_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
+    df2_display["Total_Revenue"] = df2_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
+    df2_display["AVG_Payout"] = df2_display["AVG_Payout"].apply(lambda x: f"{x:,.2f}")
+    st.dataframe(
+        df2_display.style.set_properties(**{'text-align': 'center'}),
+        use_container_width=True,
+        height=300
+    )
+    
+    st.download_button(
+        "Download CSV",
+        df2_display.to_csv(index=False),
+        "manager2.csv",
+        "text/csv"
+    )
 
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
