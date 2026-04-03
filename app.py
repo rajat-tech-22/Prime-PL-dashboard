@@ -844,37 +844,18 @@ elif dashboard_type == "Comparison":
         st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
-    # Data Tables
+    # Data Tables at Bottom
     # -----------------------------
     st.markdown("### 📄 Data - First Selection")
     df1_display = f1.dropna(how='all').copy()
-    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}),
-                 use_container_width=True, height=300)
-
-     # -----------------------------
-        # Download Button
-        # -----------------------------
-        st.download_button(
-            "Download CSV",
-            df_display.to_csv(index=False),
-            f"{selected_manager}_{selected_month}.csv",
-            "text/csv"
-        )
+    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
+    st.download_button("Download CSV", df1_display.to_csv(index=False), "manager1.csv", "text/csv")
 
     st.markdown("### 📄 Data - Second Selection")
     df2_display = f2.dropna(how='all').copy()
-    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}),
-                 use_container_width=True, height=300)
+    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
+    st.download_button("Download CSV", df2_display.to_csv(index=False), "manager2.csv", "text/csv")
 
-        # -----------------------------
-        # Download Button
-        # -----------------------------
-        st.download_button(
-            "Download CSV",
-            df_display.to_csv(index=False),
-            f"{selected_manager}_{selected_month}.csv",
-            "text/csv"
-        )
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
