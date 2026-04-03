@@ -626,50 +626,88 @@ elif dashboard_type == "Single Manager":
             f"{selected_manager}_{selected_month}.csv",
             "text/csv"
         )
-
 # -----------------------------
-# Comparison Dashboard with Additional Graphs
+# Comparison Dashboard (Improved Cascading Filters)
 # -----------------------------
 elif dashboard_type == "Comparison":
+
     with st.sidebar.expander("Manager & Month Selection", expanded=True):
-        selected_manager1 = st.selectbox("First Manager", managers)
-        selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
 
-        selected_manager2 = st.selectbox("Second Manager", managers)
-        selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
+        # -----------------------------
+        # FIRST SELECTION
+        # -----------------------------
+        selected_month1 = st.selectbox("Month - First", months, index=latest_month_index, key="m1")
 
-    same_manager = selected_manager1 == selected_manager2
+        df_m1 = df[df["Disb Month"] == selected_month1]
+        managers1 = sorted(df_m1["Manager"].dropna().unique())
 
-    # Base filters
-    f1 = df[(df["Manager"] == selected_manager1) & (df["Disb Month"] == selected_month1)]
-    f2 = df[(df["Manager"] == selected_manager2) & (df["Disb Month"] == selected_month2)]
+        selected_manager1 = st.selectbox("First Manager", managers1, key="mgr1")
 
-    # Campaign filters
+        f1 = df_m1[df_m1["Manager"] == selected_manager1]
+
+        # -----------------------------
+        # SECOND SELECTION
+        # -----------------------------
+        selected_month2 = st.selectbox("Month - Second", months, index=latest_month_index, key="m2")
+
+        df_m2 = df[df["Disb Month"] == selected_month2]
+        managers2 = sorted(df_m2["Manager"].dropna().unique())
+
+        selected_manager2 = st.selectbox("Second Manager", managers2, key="mgr2")
+
+        f2 = df_m2[df_m2["Manager"] == selected_manager2]
+
+    # -----------------------------
+    # Campaign Filters (Cascading)
+    # -----------------------------
     with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
         camp1_list = sorted(f1["Campaign"].dropna().unique())
-        selected_camp1 = st.multiselect("Campaigns - Manager 1", camp1_list, default=camp1_list)
+        selected_camp1 = st.multiselect(
+            "Campaigns - Manager 1",
+            camp1_list,
+            default=camp1_list,
+            key="camp1"
+        )
+
     with st.sidebar.expander(f"{selected_manager2} Campaign Filter", expanded=True):
         camp2_list = sorted(f2["Campaign"].dropna().unique())
-        selected_camp2 = st.multiselect("Campaigns - Manager 2", camp2_list, default=camp2_list)
+        selected_camp2 = st.multiselect(
+            "Campaigns - Manager 2",
+            camp2_list,
+            default=camp2_list,
+            key="camp2"
+        )
 
     if selected_camp1:
         f1 = f1[f1["Campaign"].isin(selected_camp1)]
+
     if selected_camp2:
         f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
+    # -----------------------------
     # Header
-    st.header("⚖️ Manager / Month Comparison" if not same_manager else f"📅 Month Comparison - {selected_manager1}")
+    # -----------------------------
+    same_manager = selected_manager1 == selected_manager2
+
+    st.header("⚖️ Manager / Month Comparison" if not same_manager 
+              else f"📅 Month Comparison - {selected_manager1}")
+
     if f1.empty or f2.empty:
         st.warning("No data available for selected filters")
         st.stop()
 
+    # -----------------------------
     # Metrics
+    # -----------------------------
     d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
     d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
+
     label1 = f"{selected_manager1} ({selected_month1})"
     label2 = f"{selected_manager2} ({selected_month2})"
 
-    # Winner / Better Month
+    # -----------------------------
+    # Winner Logic
+    # -----------------------------
     if same_manager:
         better_month = selected_month1 if d1 > d2 else selected_month2
         st.success(f"📈 Better Month: {better_month} ({format_inr(max(d1, d2))})")
@@ -677,10 +715,18 @@ elif dashboard_type == "Comparison":
         winner = selected_manager1 if d1 > d2 else selected_manager2
         st.success(f"🏆 Winner: {winner} with {format_inr(max(d1, d2))}")
 
+    # -----------------------------
     # Metric Cards
+    # -----------------------------
     col1, col2 = st.columns(2)
-    card_metrics = [("Total Disbursed", "#636EFA"), ("Total Revenue", "#00CC96"),
-                    ("Avg Payout %", "#EF553B"), ("Transactions", "#FFA15A")]
+
+    card_metrics = [
+        ("Total Disbursed", "#636EFA"),
+        ("Total Revenue", "#00CC96"),
+        ("Avg Payout %", "#EF553B"),
+        ("Transactions", "#FFA15A")
+    ]
+
     values1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", txn1]
     values2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", txn2]
 
@@ -688,69 +734,139 @@ elif dashboard_type == "Comparison":
         st.subheader(label1)
         for (lbl, color), val in zip(card_metrics, values1):
             st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
+
     with col2:
         st.subheader(label2)
         for (lbl, color), val in zip(card_metrics, values2):
             st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
 
+    # -----------------------------
     # Comparison Chart
+    # -----------------------------
     comp_df = pd.DataFrame({
         "Metric": ["Disbursed", "Revenue", "Transactions"],
         label1: [d1 / 100000, r1 / 100000, txn1],
         label2: [d2 / 100000, r2 / 100000, txn2]
     })
+
     fig_comp = go.Figure()
-    fig_comp.add_trace(go.Bar(name=label1, x=comp_df["Metric"], y=comp_df[label1],
-                              text=[f"<b>{v:.2f}L</b>" if i<2 else f"<b>{int(v)}</b>" for i,v in enumerate(comp_df[label1])],
-                              textposition='outside', marker_color="#636EFA"))
-    fig_comp.add_trace(go.Bar(name=label2, x=comp_df["Metric"], y=comp_df[label2],
-                              text=[f"<b>{v:.2f}L</b>" if i<2 else f"<b>{int(v)}</b>" for i,v in enumerate(comp_df[label2])],
-                              textposition='outside', marker_color="#EF553B"))
-    fig_comp.update_layout(barmode='group', title="Comparison Overview", template="plotly_white", height=450)
+
+    fig_comp.add_trace(go.Bar(
+        name=label1,
+        x=comp_df["Metric"],
+        y=comp_df[label1],
+        text=[f"<b>{v:.2f}L</b>" if i < 2 else f"<b>{int(v)}</b>" for i, v in enumerate(comp_df[label1])],
+        textposition='outside',
+        marker_color="#636EFA"
+    ))
+
+    fig_comp.add_trace(go.Bar(
+        name=label2,
+        x=comp_df["Metric"],
+        y=comp_df[label2],
+        text=[f"<b>{v:.2f}L</b>" if i < 2 else f"<b>{int(v)}</b>" for i, v in enumerate(comp_df[label2])],
+        textposition='outside',
+        marker_color="#EF553B"
+    ))
+
+    fig_comp.update_layout(
+        barmode='group',
+        title="Comparison Overview",
+        template="plotly_white",
+        height=450
+    )
+
     st.plotly_chart(fig_comp, use_container_width=True)
 
+    # -----------------------------
     # Performance Difference
-    growth = ((d1 - d2)/d2*100) if d2 !=0 else 0
+    # -----------------------------
+    growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
+
     st.markdown("### 📈 Performance Difference")
     st.write(f"{label1} vs {label2}: {growth:.2f}% difference")
 
+    # -----------------------------
     # Insights Summary
+    # -----------------------------
     st.markdown("### 📝 Insights")
+
     st.markdown(f"""
-    <div style="background : linear-gradient(135deg, #ff416c, #ff4b2b); padding: 15px; border-radius: 10px; margin-bottom: 20px;
-                display: flex; justify-content: space-around; text-align: center;">
+    <div style="background : linear-gradient(135deg, #ff416c, #ff4b2b);
+                padding: 15px;
+                border-radius: 10px;
+                display: flex;
+                justify-content: space-around;
+                text-align: center;">
         <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
         <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Bank-wise, Caller-wise, Campaign-wise Graphs
-    for title, col_name, top_val1, top_val2 in [("Bank", "Bank", top_bank1, top_bank2),
-                                                ("Caller", "Caller", top_caller1, top_caller2),
-                                                ("Campaign", "Campaign", top_camp1, top_camp2)]:
+    # -----------------------------
+    # Detailed Comparison Charts
+    # -----------------------------
+    for title, col_name in [("Bank", "Bank"), ("Caller", "Caller"), ("Campaign", "Campaign")]:
         st.markdown(f"### 📊 {title}-wise Comparison")
+
         fig = go.Figure()
+
         summary1 = f1.groupby(col_name)["Disbursed AMT"].sum()
         summary2 = f2.groupby(col_name)["Disbursed AMT"].sum()
-        fig.add_trace(go.Bar(x=summary1.index, y=summary1.values/100000, 
-                             text=[f"<b>{v/100000:.2f}L</b>" for v in summary1.values], 
-                             textposition='auto', name=label1, marker_color="#636EFA"))
-        fig.add_trace(go.Bar(x=summary2.index, y=summary2.values/100000, 
-                             text=[f"<b>{v/100000:.2f}L</b>" for v in summary2.values], 
-                             textposition='auto', name=label2, marker_color="#EF553B"))
-        fig.update_layout(template="plotly_white", barmode='group', xaxis_tickangle=-30, height=400)
+
+        fig.add_trace(go.Bar(
+            x=summary1.index,
+            y=summary1.values / 100000,
+            text=[f"<b>{v/100000:.2f}L</b>" for v in summary1.values],
+            textposition='auto',
+            name=label1,
+            marker_color="#636EFA"
+        ))
+
+        fig.add_trace(go.Bar(
+            x=summary2.index,
+            y=summary2.values / 100000,
+            text=[f"<b>{v/100000:.2f}L</b>" for v in summary2.values],
+            textposition='auto',
+            name=label2,
+            marker_color="#EF553B"
+        ))
+
+        fig.update_layout(
+            template="plotly_white",
+            barmode='group',
+            xaxis_tickangle=-30,
+            height=400
+        )
+
         st.plotly_chart(fig, use_container_width=True)
 
-    # Data Tables at Bottom
+    # -----------------------------
+    # Data Tables
+    # -----------------------------
     st.markdown("### 📄 Data - First Selection")
     df1_display = f1.dropna(how='all').copy()
-    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
-    st.download_button("Download CSV", df1_display.to_csv(index=False), "manager1.csv", "text/csv")
+    st.dataframe(df1_display.style.set_properties(**{'text-align': 'center'}),
+                 use_container_width=True, height=300)
+
+    st.download_button(
+        "Download CSV",
+        df1_display.to_csv(index=False),
+        f"{selected_manager1}_{selected_month1}.csv",
+        "text/csv"
+    )
 
     st.markdown("### 📄 Data - Second Selection")
     df2_display = f2.dropna(how='all').copy()
-    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}), use_container_width=True, height=300)
-    st.download_button("Download CSV", df2_display.to_csv(index=False), "manager2.csv", "text/csv")
+    st.dataframe(df2_display.style.set_properties(**{'text-align': 'center'}),
+                 use_container_width=True, height=300)
+
+    st.download_button(
+        "Download CSV",
+        df2_display.to_csv(index=False),
+        f"{selected_manager2}_{selected_month2}.csv",
+        "text/csv"
+    )
 # -----------------------------
 # Campaign Performance Dashboard (ULTIMATE)
 # -----------------------------
