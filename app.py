@@ -611,29 +611,33 @@ elif dashboard_type == "Single Manager":
         # -----------------------------
         st.markdown("### 📄 Data")
         
+        # Drop rows where all values are NaN
         df_display = f.dropna(how='all').copy()
         
-        # Round off Disbursed AMT and Revenue columns
-        if "Disbursed AMT" in df_display.columns:
-            df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0)
+        # Prepare a copy for display formatting (in lakhs)
+        df_table = df_display.copy()
+        if "Disbursed AMT" in df_table.columns:
+            df_table["Disbursed AMT"] = df_table["Disbursed AMT"].apply(lambda x: f"{x/100000:.2f}L")
+        if "Revenue" in df_table.columns:
+            df_table["Revenue"] = df_table["Revenue"].apply(lambda x: f"{x/100000:.2f}L")
         
-        if "Revenue" in df_display.columns:
-            df_display["Revenue"] = df_display["Revenue"].round(0)
-        
-        styled_df = df_display.style \
+        # Style the table
+        styled_df = df_table.style \
             .set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}) \
             .set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]})
         
+        # Display the table
         st.dataframe(styled_df, use_container_width=True, height=300)
+        
         # -----------------------------
         # Download Button
         # -----------------------------
+        # CSV will contain the raw numbers, not formatted strings
         st.download_button(
             "Download CSV",
             df_display.to_csv(index=False),
             f"{selected_manager}_{selected_month}.csv",
             "text/csv"
-        )
 # -----------------------------
 # Comparison Dashboard (Improved Cascading Filters)
 # -----------------------------
