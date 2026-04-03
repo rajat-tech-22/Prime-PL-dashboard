@@ -316,32 +316,6 @@ def colored_metric(label, value, color="#2596be"):
         </div>
         """, unsafe_allow_html=True)
 
-# -----------------------------
-# ✅ DYNAMIC FILTER FUNCTION (ONLY ADD THIS)
-# -----------------------------
-def get_dynamic_filtered_df(df, selected_month=None, selected_vertical=None,
-                            selected_manager=None, selected_campaigns=None):
-
-    filtered_df = df.copy()
-
-    # Month
-    if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"] == selected_month]
-
-    # Vertical
-    if selected_vertical and selected_vertical != "All":
-        filtered_df = filtered_df[filtered_df["Vertical"] == selected_vertical]
-
-    # Manager
-    if selected_manager and selected_manager != "All":
-        filtered_df = filtered_df[filtered_df["Manager"] == selected_manager]
-
-    # Campaigns
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
-
-    return filtered_df
-
 
 # -----------------------------
 # SIDEBAR
@@ -366,43 +340,23 @@ latest_month_index = len(months)-1
 # -----------------------------
 # All Managers Dashboard
 # -----------------------------
-# -----------------------------
-# All Managers Dashboard (FIXED FILTER ONLY)
-# -----------------------------
 if dashboard_type == "All Managers":
-
     with st.sidebar.expander("Month & Vertical Filters", expanded=True):
-
-        # Month first
-        months = sorted(df["Disb Month"].dropna().unique())
-        selected_month = st.selectbox("Select Month", months, index=len(months)-1)
-
-        temp_df = df[df["Disb Month"] == selected_month]
-
-        # Vertical dynamic
-        verticals = ["All"] + sorted(temp_df["Vertical"].dropna().unique())
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
         selected_vertical = st.selectbox("Business Vertical", verticals)
 
-        temp_df = get_dynamic_filtered_df(df, selected_month, selected_vertical)
+    filtered_df = df.copy()
+    if selected_vertical != "All":
+        filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
+    if selected_month:
+        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
 
-    # Campaign dynamic
-    campaigns_available = sorted(temp_df["Campaign"].dropna().unique())
-
+    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
     with st.sidebar.expander("Campaign Filter", expanded=True):
-        selected_campaigns = st.multiselect(
-            "Select Campaigns",
-            campaigns_available,
-            default=campaigns_available
-        )
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    # FINAL FILTERED DF
-    filtered_df = get_dynamic_filtered_df(
-        df,
-        selected_month,
-        selected_vertical,
-        None,
-        selected_campaigns
-    )
     st.header("📊 Overview - Summary Cards")
     if filtered_df.empty:
         st.warning("No data available for selected filters")
@@ -531,38 +485,20 @@ if dashboard_type == "All Managers":
 # -----------------------------
 # Single Manager Dashboard
 # -----------------------------
-with st.sidebar.expander("Manager & Month Filters", expanded=True):
+elif dashboard_type == "Single Manager":
+    with st.sidebar.expander("Manager & Month Filters", expanded=True):
+        selected_manager = st.selectbox("Select Manager", managers)
+        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
 
-    # Month first
-    months = sorted(df["Disb Month"].dropna().unique())
-    selected_month = st.selectbox("Select Month", months, index=len(months)-1)
+    filtered_df = df[df["Manager"] == selected_manager]
+    if selected_month:
+        filtered_df = filtered_df[filtered_df["Disb Month"] == selected_month]
 
-    temp_df = df[df["Disb Month"] == selected_month]
-
-    # Manager dynamic
-    managers = sorted(temp_df["Manager"].dropna().unique())
-    selected_manager = st.selectbox("Select Manager", managers)
-
-    temp_df = get_dynamic_filtered_df(df, selected_month, None, selected_manager)
-
-# Campaign dynamic
-campaigns_available = sorted(temp_df["Campaign"].dropna().unique())
-
-with st.sidebar.expander("Campaign Filter", expanded=True):
-    selected_campaigns = st.multiselect(
-        "Select Campaigns",
-        campaigns_available,
-        default=campaigns_available
-    )
-
-# FINAL DF
-filtered_df = get_dynamic_filtered_df(
-    df,
-    selected_month,
-    None,
-    selected_manager,
-    selected_campaigns
-)
+    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+    with st.sidebar.expander("Campaign Filter", expanded=True):
+        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+    if selected_campaigns:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
     st.header(f"📈 Overview - {selected_manager}")
     f = filtered_df
@@ -633,37 +569,32 @@ filtered_df = get_dynamic_filtered_df(
 # -----------------------------
 # Comparison Dashboard with Additional Graphs
 # -----------------------------
-with st.sidebar.expander("Manager & Month Selection", expanded=True):
+elif dashboard_type == "Comparison":
+    with st.sidebar.expander("Manager & Month Selection", expanded=True):
+        selected_manager1 = st.selectbox("First Manager", managers)
+        selected_month1 = st.selectbox("Month for First Manager", months, index=latest_month_index)
 
-    # FIRST
-    months = sorted(df["Disb Month"].dropna().unique())
-    selected_month1 = st.selectbox("Month 1", months, index=len(months)-1)
+        selected_manager2 = st.selectbox("Second Manager", managers)
+        selected_month2 = st.selectbox("Month for Second Manager", months, index=latest_month_index)
 
-    temp1 = df[df["Disb Month"] == selected_month1]
-    managers1 = sorted(temp1["Manager"].dropna().unique())
-    selected_manager1 = st.selectbox("Manager 1", managers1)
+    same_manager = selected_manager1 == selected_manager2
 
-    f1_temp = get_dynamic_filtered_df(df, selected_month1, None, selected_manager1)
+    # Base filters
+    f1 = df[(df["Manager"] == selected_manager1) & (df["Disb Month"] == selected_month1)]
+    f2 = df[(df["Manager"] == selected_manager2) & (df["Disb Month"] == selected_month2)]
 
-    # SECOND
-    selected_month2 = st.selectbox("Month 2", months, index=len(months)-1)
+    # Campaign filters
+    with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
+        camp1_list = sorted(f1["Campaign"].dropna().unique())
+        selected_camp1 = st.multiselect("Campaigns - Manager 1", camp1_list, default=camp1_list)
+    with st.sidebar.expander(f"{selected_manager2} Campaign Filter", expanded=True):
+        camp2_list = sorted(f2["Campaign"].dropna().unique())
+        selected_camp2 = st.multiselect("Campaigns - Manager 2", camp2_list, default=camp2_list)
 
-    temp2 = df[df["Disb Month"] == selected_month2]
-    managers2 = sorted(temp2["Manager"].dropna().unique())
-    selected_manager2 = st.selectbox("Manager 2", managers2)
-
-    f2_temp = get_dynamic_filtered_df(df, selected_month2, None, selected_manager2)
-
-# Campaign filters
-camp1 = sorted(f1_temp["Campaign"].dropna().unique())
-camp2 = sorted(f2_temp["Campaign"].dropna().unique())
-
-selected_camp1 = st.sidebar.multiselect("Campaigns 1", camp1, default=camp1)
-selected_camp2 = st.sidebar.multiselect("Campaigns 2", camp2, default=camp2)
-
-# FINAL
-f1 = get_dynamic_filtered_df(df, selected_month1, None, selected_manager1, selected_camp1)
-f2 = get_dynamic_filtered_df(df, selected_month2, None, selected_manager2, selected_camp2)
+    if selected_camp1:
+        f1 = f1[f1["Campaign"].isin(selected_camp1)]
+    if selected_camp2:
+        f2 = f2[f2["Campaign"].isin(selected_camp2)]
 
     # Header
     st.header("⚖️ Manager / Month Comparison" if not same_manager else f"📅 Month Comparison - {selected_manager1}")
