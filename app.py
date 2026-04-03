@@ -1235,10 +1235,9 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     
         import io
         from st_aggrid import AgGrid, GridOptionsBuilder
-    
-        # -----------------------------
-        # Grouped summary: Month + Campaign
-        # -----------------------------
+    # -----------------------------
+    # Grouped summary: Month + Campaign
+    # -----------------------------
         summary_df = filtered.copy()
         grouped_summary = summary_df.groupby(["Month", "Campaign Name"]).agg({
             "IVR Data": "sum",
@@ -1323,7 +1322,9 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     
     else:
         st.warning("No data available for summary")
+       
                         
+        
     # -----------------------------
     # CONVERSION
     # -----------------------------
