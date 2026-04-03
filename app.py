@@ -486,29 +486,57 @@ if dashboard_type == "All Managers":
 # Single Manager Dashboard
 # -----------------------------
 elif dashboard_type == "Single Manager":
+
+    # -----------------------------
+    # Sidebar Filters (Cascading)
+    # -----------------------------
     with st.sidebar.expander("Manager & Month Filters", expanded=True):
-        selected_manager = st.selectbox("Select Manager", managers)
+
+        # Step 1: Month Selection
         selected_month = st.selectbox("Select Month", months, index=latest_month_index)
 
-    filtered_df = df[df["Manager"] == selected_manager]
-    if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"] == selected_month]
+        # Filter data by selected month
+        df_month = df[df["Disb Month"] == selected_month]
 
+        # Step 2: Manager based on Month
+        managers_filtered = sorted(df_month["Manager"].dropna().unique())
+        selected_manager = st.selectbox("Select Manager", managers_filtered)
+
+    # Filter by Manager + Month
+    filtered_df = df_month[df_month["Manager"] == selected_manager]
+
+    # Step 3: Campaign based on Manager + Month
     campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
+
     with st.sidebar.expander("Campaign Filter", expanded=True):
-        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
+        selected_campaigns = st.multiselect(
+            "Select Campaigns",
+            campaigns_available,
+            default=campaigns_available
+        )
+
     if selected_campaigns:
         filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
+    # -----------------------------
+    # Dashboard UI
+    # -----------------------------
     st.header(f"📈 Overview - {selected_manager}")
+
     f = filtered_df
+
     if f.empty:
         st.warning("No data available")
+
     else:
-        # Calculate metrics
+        # -----------------------------
+        # Metrics Calculation
+        # -----------------------------
         total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller = calc_metrics(f)
-        
+
+        # -----------------------------
         # Metric Cards
+        # -----------------------------
         cols = st.columns(4)
         card_data = [
             ("Total Disbursed", format_inr(total_disb), "#636EFA"),
@@ -516,11 +544,14 @@ elif dashboard_type == "Single Manager":
             ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
             ("Transactions", txn_count, "#EF553B")
         ]
+
         for col, data in zip(cols, card_data):
             label, value, color = data
             col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
 
+        # -----------------------------
         # Insight Summary
+        # -----------------------------
         st.markdown(f"""
         <div style="
             background : linear-gradient(135deg, #ff416c, #ff4b2b);
@@ -538,33 +569,63 @@ elif dashboard_type == "Single Manager":
         </div>
         """, unsafe_allow_html=True)
 
+        # -----------------------------
         # Charts
-        st.plotly_chart(plot_bar(f, "Bank", top_bank, selected_manager, "bank1"), use_container_width=True)
-        st.plotly_chart(plot_bar(f, "Caller", top_caller, selected_manager, "caller1"), use_container_width=True)
+        # -----------------------------
+        st.plotly_chart(
+            plot_bar(f, "Bank", top_bank, selected_manager, "bank1"),
+            use_container_width=True
+        )
 
+        st.plotly_chart(
+            plot_bar(f, "Caller", top_caller, selected_manager, "caller1"),
+            use_container_width=True
+        )
+
+        # -----------------------------
         # Campaign-wise Disbursed Chart
+        # -----------------------------
         summary = f.groupby("Campaign")["Disbursed AMT"].sum()
+
         fig = go.Figure(go.Bar(
             x=summary.index,
-            y=summary.values/100000,
+            y=summary.values / 100000,
             text=[f"<b>{v/100000:.2f}L</b>" for v in summary.values],
             textposition="auto",
             marker_color=base_colors,
         ))
+
         fig.update_layout(
             title="Campaign-wise Disbursed Amount",
             yaxis_title="Amount (L)",
             template="plotly_white",
             xaxis_tickangle=-30
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
-        # Data Table at Bottom
+        # -----------------------------
+        # Data Table
+        # -----------------------------
         st.markdown("### 📄 Data")
+
         df_display = f.dropna(how='all').copy()
-        styled_df = df_display.style.set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}])
+
+        styled_df = df_display.style \
+            .set_properties(**{'text-align': 'center', 'vertical-align': 'middle'}) \
+            .set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}])
+
         st.dataframe(styled_df, use_container_width=True, height=300)
-        st.download_button("Download CSV", df_display.to_csv(index=False), f"{selected_manager}.csv", "text/csv")
+
+        # -----------------------------
+        # Download Button
+        # -----------------------------
+        st.download_button(
+            "Download CSV",
+            df_display.to_csv(index=False),
+            f"{selected_manager}_{selected_month}.csv",
+            "text/csv"
+        )
 
 # -----------------------------
 # Comparison Dashboard with Additional Graphs
