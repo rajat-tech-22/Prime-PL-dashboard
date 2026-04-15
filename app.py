@@ -37,14 +37,69 @@ html, body, [class*="css"] {
 [data-testid="stSidebar"] * {
     color: #e2e8f0 !important;
 }
+
+/* ── Sidebar filter labels (section titles) ── */
 [data-testid="stSidebar"] .stRadio > label,
 [data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stMultiSelect label {
-    color: #94a3b8 !important;
+[data-testid="stSidebar"] .stMultiSelect label,
+[data-testid="stSidebar"] .stNumberInput label {
+    color: #cbd5e1 !important;
     font-size: 12px !important;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    font-weight: 600 !important;
 }
+
+/* ── Sidebar select/input box text — BLACK ── */
+[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stSelectbox input,
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stMultiSelect input,
+[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-baseweb="select"] div {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+/* ── Sidebar select box background white ── */
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    border: 1px solid #334155 !important;
+}
+
+/* ── Sidebar radio text ── */
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover p {
+    color: #ffffff !important;
+}
+
+/* ── Sidebar multiselect tags — BLACK text ── */
+[data-testid="stSidebar"] span[data-baseweb="tag"] {
+    background-color: #e0e7ff !important;
+}
+[data-testid="stSidebar"] span[data-baseweb="tag"] span {
+    color: #1e1b4b !important;
+    font-weight: 600 !important;
+}
+
+/* ── Expander header ── */
+[data-testid="stSidebar"] .streamlit-expanderHeader p {
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+}
+[data-testid="stSidebar"] details {
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    margin-bottom: 8px !important;
+}
+
 [data-testid="stSidebar"] h1, 
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
@@ -52,13 +107,13 @@ html, body, [class*="css"] {
 }
 [data-testid="stSidebar"] .stButton > button {
     background: #ef4444 !important;
-    color: Black !important;
+    color: white !important;
     border: none !important;
     border-radius: 8px !important;
     width: 100%;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: Black !important;
+    background: #dc2626 !important;
 }
 
 /* ── Main Background ── */
@@ -90,13 +145,13 @@ html, body, [class*="css"] {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: Black;
+    color: #94a3b8;
     margin-bottom: 8px;
 }
 .metric-value {
     font-size: 26px;
     font-weight: 700;
-    color: Black;
+    color: #0f172a;
     line-height: 1.1;
 }
 .metric-icon {
@@ -421,7 +476,7 @@ with st.sidebar:
     st.markdown("---")
     dashboard_type = st.radio(
         "Navigation",
-        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "🎯 Target Tracker"],
+        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "📡 Prefr & PW Reports", "🎯 Target Tracker"],
         label_visibility="collapsed"
     )
     st.markdown("---")
@@ -528,6 +583,26 @@ if dashboard_type == "🏠 Overview":
         bs.columns = ["Bank", "Disbursed AMT"]
         st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise Disbursed Amount"), use_container_width=True)
 
+        section_header("Manager Monthly Trend")
+        trend_df = df.copy()
+        if selected_vertical != "All":
+            trend_df = trend_df[trend_df["Vertical"] == selected_vertical]
+        trend = trend_df.groupby(["Disb Month", "Manager"])["Disbursed AMT"].sum().reset_index()
+        fig_trend = px.line(
+            trend, x="Disb Month", y="Disbursed AMT", color="Manager",
+            markers=True, title="Manager-wise Monthly Trend",
+            labels={"Disbursed AMT": "Disbursed (₹)", "Disb Month": "Month"},
+            color_discrete_sequence=COLORS,
+        )
+        fig_trend.update_layout(
+            template="plotly_white", height=450,
+            font=dict(family="Inter, sans-serif"),
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=-0.4),
+            plot_bgcolor="white",
+        )
+        fig_trend.update_traces(line=dict(width=2.5))
+        st.plotly_chart(fig_trend, use_container_width=True)
 
 
 # ══════════════════════════════════════════
@@ -822,211 +897,290 @@ elif dashboard_type == "📊 Campaign Performance":
         </div>""", unsafe_allow_html=True)
 
 
-# # ══════════════════════════════════════════
-# # 📡 PREFR & PW REPORTS
-# # ══════════════════════════════════════════
-# elif dashboard_type == "📡 Prefr & PW Reports":
-#     df2 = campaign_df.copy()
-#     st.title("Prefr & PW Campaign Reports")
+# ══════════════════════════════════════════
+# 📡 PREFR & PW REPORTS
+# ══════════════════════════════════════════
+elif dashboard_type == "📡 Prefr & PW Reports":
+    df2 = campaign_df.copy()
+    st.title("Prefr & PW Campaign Reports")
 
-#     all_months = ["All"] + sorted(df2["Month"].dropna().unique())
-#     sel_month = st.sidebar.selectbox("Month", all_months)
-#     fm = df2 if sel_month == "All" else df2[df2["Month"] == sel_month]
+    all_months = ["All"] + sorted(df2["Month"].dropna().unique())
+    sel_month = st.sidebar.selectbox("Month", all_months)
+    fm = df2 if sel_month == "All" else df2[df2["Month"] == sel_month]
 
-#     dates = ["All"] + sorted(fm["Date"].dropna().unique())
-#     sel_date = st.sidebar.selectbox("Date", dates)
-#     fd = fm if sel_date == "All" else fm[fm["Date"] == sel_date]
+    dates = ["All"] + sorted(fm["Date"].dropna().unique())
+    sel_date = st.sidebar.selectbox("Date", dates)
+    fd = fm if sel_date == "All" else fm[fm["Date"] == sel_date]
 
-#     cnames = ["All"] + sorted(fd["Campaign Name"].dropna().unique())
-#     sel_c = st.sidebar.selectbox("Campaign", cnames)
-#     fc = fd if sel_c == "All" else fd[fd["Campaign Name"] == sel_c]
+    cnames = ["All"] + sorted(fd["Campaign Name"].dropna().unique())
+    sel_c = st.sidebar.selectbox("Campaign", cnames)
+    fc = fd if sel_c == "All" else fd[fd["Campaign Name"] == sel_c]
 
-#     mgrs = ["All"] + (sorted(fc["Manager"].dropna().unique()) if "Manager" in fc.columns else [])
-#     sel_m = st.sidebar.selectbox("Manager", mgrs)
-#     filtered = fc if sel_m == "All" or "Manager" not in fc.columns else fc[fc["Manager"] == sel_m]
+    mgrs = ["All"] + (sorted(fc["Manager"].dropna().unique()) if "Manager" in fc.columns else [])
+    sel_m = st.sidebar.selectbox("Manager", mgrs)
+    filtered = fc if sel_m == "All" or "Manager" not in fc.columns else fc[fc["Manager"] == sel_m]
 
-#     total_ivr = int(filtered["IVR Data"].sum())
-#     press1 = int(filtered["Press 1"].sum())
-#     leads = int(filtered["Total Request"].sum())
-#     sent = int(filtered["RCS Sent"].sum())
-#     delivered = int(filtered["RCS Delivered"].sum())
-#     read = int(filtered["RCS Read"].sum())
-#     clicks = int(filtered["RCS Unique Clicks"].sum())
-#     cost = int(filtered["Total Cost"].sum())
-#     total_disbursed = int(filtered["Disbursed"].sum())
-#     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
+    total_ivr = int(filtered["IVR Data"].sum())
+    press1 = int(filtered["Press 1"].sum())
+    leads = int(filtered["Total Request"].sum())
+    sent = int(filtered["RCS Sent"].sum())
+    delivered = int(filtered["RCS Delivered"].sum())
+    read = int(filtered["RCS Read"].sum())
+    clicks = int(filtered["RCS Unique Clicks"].sum())
+    cost = int(filtered["Total Cost"].sum())
+    total_disbursed = int(filtered["Disbursed"].sum())
+    arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
-#     kpi_data = [
-#         ("IVR Data", f"{total_ivr:,}", "#6366f1", "#4f46e5"),
-#         ("Press 1", f"{press1:,}", "#ef4444", "#dc2626"),
-#         ("Total Request", f"{leads:,}", "#f59e0b", "#d97706"),
-#         ("RCS Sent", f"{sent:,}", "#10b981", "#059669"),
-#         ("RCS Read", f"{read:,}", "#3b82f6", "#2563eb"),
-#         ("Clicks", f"{clicks:,}", "#8b5cf6", "#7c3aed"),
-#         ("Total Cost", f"₹{cost:,}", "#ec4899", "#db2777"),
-#         ("CTR %", f"{arg_ctr:.2f}%", "#14b8a6", "#0d9488"),
-#         ("Total Disbursed", f"₹{total_disbursed:,}", "#6366f1", "#4f46e5"),
-#     ]
+    kpi_data = [
+        ("IVR Data", f"{total_ivr:,}", "#6366f1", "#4f46e5"),
+        ("Press 1", f"{press1:,}", "#ef4444", "#dc2626"),
+        ("Total Request", f"{leads:,}", "#f59e0b", "#d97706"),
+        ("RCS Sent", f"{sent:,}", "#10b981", "#059669"),
+        ("RCS Read", f"{read:,}", "#3b82f6", "#2563eb"),
+        ("Clicks", f"{clicks:,}", "#8b5cf6", "#7c3aed"),
+        ("Total Cost", f"₹{cost:,}", "#ec4899", "#db2777"),
+        ("CTR %", f"{arg_ctr:.2f}%", "#14b8a6", "#0d9488"),
+        ("Total Disbursed", f"₹{total_disbursed:,}", "#6366f1", "#4f46e5"),
+    ]
 
-#     st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
-#     for title, val, c1, c2 in kpi_data:
-#         st.markdown(f"""
-#         <div class="kpi-card" style="background:linear-gradient(135deg,{c1},{c2})">
-#             <div class="kpi-title">{title}</div>
-#             <div class="kpi-value">{val}</div>
-#         </div>""", unsafe_allow_html=True)
-#     st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
+    for title, val, c1, c2 in kpi_data:
+        st.markdown(f"""
+        <div class="kpi-card" style="background:linear-gradient(135deg,{c1},{c2})">
+            <div class="kpi-title">{title}</div>
+            <div class="kpi-value">{val}</div>
+        </div>""", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-#     section_header("Funnel Analysis")
-#     stages = ["IVR Data", "Press 1", "Total Request", "RCS Delivered", "RCS Read", "Clicks"]
-#     values = [total_ivr, press1, leads, delivered, read, clicks]
-#     max_v = max(values) if max(values) > 0 else 1
+    section_header("Funnel Analysis")
+    stages = ["IVR Data", "Press 1", "Total Request", "RCS Delivered", "RCS Read", "Clicks"]
+    values = [total_ivr, press1, leads, delivered, read, clicks]
+    max_v = max(values) if max(values) > 0 else 1
 
-#     fig_f = go.Figure(go.Funnel(
-#         y=stages, x=values,
-#         textinfo="value+percent previous",
-#         marker=dict(color=["#6366f1","#8b5cf6","#f59e0b","#10b981","#3b82f6","#ec4899"]),
-#         textfont=dict(size=12, family="Inter, sans-serif"),
-#         connector=dict(line=dict(color="#e2e8f0", width=2)),
-#     ))
-#     fig_f.update_layout(
-#         height=460, template="plotly_white", margin=dict(l=60, r=40, t=20, b=20),
-#         font=dict(family="Inter, sans-serif"),
-#         paper_bgcolor="white",
-#     )
-#     st.plotly_chart(fig_f, use_container_width=True)
+    fig_f = go.Figure(go.Funnel(
+        y=stages, x=values,
+        textinfo="value+percent previous",
+        marker=dict(color=["#6366f1","#8b5cf6","#f59e0b","#10b981","#3b82f6","#ec4899"]),
+        textfont=dict(size=12, family="Inter, sans-serif"),
+        connector=dict(line=dict(color="#e2e8f0", width=2)),
+    ))
+    fig_f.update_layout(
+        height=460, template="plotly_white", margin=dict(l=60, r=40, t=20, b=20),
+        font=dict(family="Inter, sans-serif"),
+        paper_bgcolor="white",
+    )
+    st.plotly_chart(fig_f, use_container_width=True)
 
-#     section_header("Conversion Metrics")
-#     press_r = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-#     del_r = round((delivered / sent * 100) if sent else 0, 2)
-#     read_r = round((read / delivered * 100) if delivered else 0, 2)
-#     cpl = round((cost / leads) if leads else 0, 2)
+    section_header("Conversion Metrics")
+    press_r = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
+    del_r = round((delivered / sent * 100) if sent else 0, 2)
+    read_r = round((read / delivered * 100) if delivered else 0, 2)
+    cpl = round((cost / leads) if leads else 0, 2)
 
-#     mc = st.columns(4)
-#     for col, (lbl, val, ico, clr) in zip(mc, [
-#         ("Press Rate", f"{press_r}%", "📲", "#6366f1"),
-#         ("Delivery Rate", f"{del_r}%", "📬", "#10b981"),
-#         ("Read Rate", f"{read_r}%", "📖", "#f59e0b"),
-#         ("Cost / Lead", f"₹{cpl}", "💸", "#ef4444"),
-#     ]):
-#         col.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
+    mc = st.columns(4)
+    for col, (lbl, val, ico, clr) in zip(mc, [
+        ("Press Rate", f"{press_r}%", "📲", "#6366f1"),
+        ("Delivery Rate", f"{del_r}%", "📬", "#10b981"),
+        ("Read Rate", f"{read_r}%", "📖", "#f59e0b"),
+        ("Cost / Lead", f"₹{cpl}", "💸", "#ef4444"),
+    ]):
+        col.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
 
-#     warnings = []
-#     if arg_ctr < 2: warnings.append("⚠️ CTR is below 2% — consider improving RCS content")
-#     if del_r < 70: warnings.append("⚠️ Delivery rate below 70% — check DND/number quality")
-#     if read_r < 50: warnings.append("⚠️ Low read rate — try better message timing or preview text")
-#     if cpl > 100: warnings.append("⚠️ Cost per lead is high — optimise campaign spend")
-#     for w in warnings:
-#         st.warning(w)
+    warnings = []
+    if arg_ctr < 2: warnings.append("⚠️ CTR is below 2% — consider improving RCS content")
+    if del_r < 70: warnings.append("⚠️ Delivery rate below 70% — check DND/number quality")
+    if read_r < 50: warnings.append("⚠️ Low read rate — try better message timing or preview text")
+    if cpl > 100: warnings.append("⚠️ Cost per lead is high — optimise campaign spend")
+    for w in warnings:
+        st.warning(w)
 
-#     if not filtered.empty:
-#         if "Campaign Name" in filtered.columns:
-#             section_header("Campaign-wise Leads")
-#             df_cl = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-#             fig1 = px.bar(df_cl, x="Campaign Name", y="Total Request", text="Total Request",
-#                           color_discrete_sequence=COLORS)
-#             fig1.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
-#             st.plotly_chart(fig1, use_container_width=True)
+    if not filtered.empty:
+        if "Campaign Name" in filtered.columns:
+            section_header("Campaign-wise Leads")
+            df_cl = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+            fig1 = px.bar(df_cl, x="Campaign Name", y="Total Request", text="Total Request",
+                          color_discrete_sequence=COLORS)
+            fig1.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
+            st.plotly_chart(fig1, use_container_width=True)
 
-#         if "Manager" in filtered.columns:
-#             section_header("Manager-wise Allocation")
-#             df_ml = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
-#             fig2 = px.pie(df_ml, names="Manager", values="Total Lead", hole=0.5, color_discrete_sequence=COLORS)
-#             fig2.update_layout(font=dict(family="Inter"), height=400)
-#             st.plotly_chart(fig2, use_container_width=True)
+        if "Manager" in filtered.columns:
+            section_header("Manager-wise Allocation")
+            df_ml = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
+            fig2 = px.pie(df_ml, names="Manager", values="Total Lead", hole=0.5, color_discrete_sequence=COLORS)
+            fig2.update_layout(font=dict(family="Inter"), height=400)
+            st.plotly_chart(fig2, use_container_width=True)
 
-#             section_header("Manager-wise Disbursed")
-#             df_md = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-#             fig3 = px.bar(df_md, x="Manager", y="Disbursed", text="Disbursed", color_discrete_sequence=COLORS)
-#             fig3.update_traces(texttemplate="₹%{text:,}")
-#             fig3.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
-#             st.plotly_chart(fig3, use_container_width=True)
+            section_header("Manager-wise Disbursed")
+            df_md = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+            fig3 = px.bar(df_md, x="Manager", y="Disbursed", text="Disbursed", color_discrete_sequence=COLORS)
+            fig3.update_traces(texttemplate="₹%{text:,}")
+            fig3.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
+            st.plotly_chart(fig3, use_container_width=True)
 
 
 # ══════════════════════════════════════════
-# 🎯 TARGET TRACKER  (NEW)
+# 🎯 TARGET TRACKER — Google Sheet se targets
 # ══════════════════════════════════════════
 elif dashboard_type == "🎯 Target Tracker":
-    st.title("Target Tracker")
-    st.markdown("Set monthly/weekly disbursement targets per manager and track progress.")
+    st.title("🎯 Target Tracker")
 
+    # ── Load targets from Google Sheet ──
+    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
+
+    @st.cache_data(ttl=120)
+    def load_targets():
+        try:
+            tdf = pd.read_csv(TARGET_SHEET_URL)
+            tdf.columns = tdf.columns.str.strip()
+            return tdf, None
+        except Exception as e:
+            return pd.DataFrame(), str(e)
+
+    target_raw, target_err = load_targets()
+
+    # ── Sidebar filters ──
     with st.sidebar.expander("🔧 Filter", expanded=True):
         sel_month = st.selectbox("Month", months, index=latest_month_index)
         period = st.radio("Period", ["Monthly", "Weekly"])
 
+    # ── Reload button ──
+    col_ref, col_info = st.columns([1, 5])
+    with col_ref:
+        if st.button("🔄 Reload Targets"):
+            st.cache_data.clear()
+            st.rerun()
+    with col_info:
+        if target_err:
+            st.error(f"Target sheet load failed: {target_err}")
+        elif target_raw.empty:
+            st.warning("Target sheet is empty or columns not found.")
+        else:
+            st.success(f"✅ Targets loaded from Google Sheet — {len(target_raw)} rows")
+
+    # ── Show raw target sheet for reference ──
+    if not target_raw.empty:
+        with st.expander("📋 View Raw Target Sheet", expanded=False):
+            st.dataframe(target_raw, use_container_width=True, height=250)
+
+    # ── Actual disbursed data ──
     filtered_mgr_df = df[df["Disb Month"] == sel_month]
     mgr_actual = filtered_mgr_df.groupby("Manager")["Disbursed AMT"].sum().reset_index()
     mgr_actual.columns = ["Manager", "Actual"]
 
-    st.markdown("#### Set Targets (in Lakhs)")
-    st.caption("Enter your disbursement target for each manager.")
+    # ── Match targets from sheet ──
+    # Expected sheet columns: Manager, Month, Target (in Lakhs)
+    # Try to auto-detect column names (case-insensitive)
+    def get_target_for_manager(mgr_name, month_name, tdf):
+        """Try to find target for manager+month. Falls back to manager-only, then 0."""
+        if tdf.empty:
+            return 0
 
-    if "targets" not in st.session_state:
-        st.session_state.targets = {}
+        cols = {c.lower().strip(): c for c in tdf.columns}
 
-    cols_input = st.columns(3)
-    for i, row in mgr_actual.iterrows():
+        mgr_col = cols.get("manager") or cols.get("name") or cols.get("manager name")
+        target_col = cols.get("target") or cols.get("target (l)") or cols.get("target_l") or cols.get("target (lakhs)") or cols.get("amount")
+        month_col = cols.get("month") or cols.get("disb month") or cols.get("month name")
+
+        if not mgr_col or not target_col:
+            return 0
+
+        # Filter by manager
+        mgr_rows = tdf[tdf[mgr_col].astype(str).str.strip().str.lower() == mgr_name.lower()]
+
+        # Try month match
+        if month_col and not mgr_rows.empty:
+            month_rows = mgr_rows[mgr_rows[month_col].astype(str).str.strip().str.lower() == month_name.lower()]
+            if not month_rows.empty:
+                val = month_rows.iloc[0][target_col]
+                try:
+                    return float(str(val).replace(",", "").replace("₹", "").strip())
+                except:
+                    return 0
+
+        # Fallback: first row for manager
+        if not mgr_rows.empty:
+            val = mgr_rows.iloc[0][target_col]
+            try:
+                return float(str(val).replace(",", "").replace("₹", "").strip())
+            except:
+                return 0
+
+        return 0
+
+    # ── Build targets dict ──
+    targets_dict = {}
+    for _, row in mgr_actual.iterrows():
         mgr = row["Manager"]
-        default_val = st.session_state.targets.get(mgr, 50)
-        with cols_input[i % 3]:
-            t = st.number_input(f"{mgr}", min_value=0, max_value=10000, value=default_val, step=5, key=f"tgt_{mgr}")
-            st.session_state.targets[mgr] = t
+        t_val = get_target_for_manager(mgr, sel_month, target_raw)
+        targets_dict[mgr] = t_val if t_val > 0 else 50  # default 50L if not found
 
+    # ── Show matched targets table ──
+    section_header("Targets from Sheet")
+    preview_data = []
+    for _, row in mgr_actual.iterrows():
+        mgr = row["Manager"]
+        t = get_target_for_manager(mgr, sel_month, target_raw)
+        source = "📊 Sheet" if t > 0 else "⚙️ Default (50L)"
+        preview_data.append({"Manager": mgr, "Target (L)": targets_dict[mgr], "Source": source})
+    st.dataframe(pd.DataFrame(preview_data), use_container_width=True, height=250)
+
+    # ── Progress Dashboard ──
     section_header("Progress Dashboard")
+
+    now_ist = datetime.now(timezone(timedelta(hours=5, minutes=30)))
 
     for _, row in mgr_actual.iterrows():
         mgr = row["Manager"]
         actual_l = row["Actual"] / 100000
-        target_l = st.session_state.targets.get(mgr, 50)
+        target_l = targets_dict.get(mgr, 50)
 
         if period == "Weekly":
-            now_ist = datetime.now(timezone(timedelta(hours=5, minutes=30)))
             day_of_month = now_ist.day
             week_num = (day_of_month - 1) // 7 + 1
             weeks_passed = min(week_num, 4)
-            weekly_target = target_l / 4
-            effective_target = weekly_target * weeks_passed
-            period_label = f"Week {week_num} Target (pro-rated)"
+            effective_target = (target_l / 4) * weeks_passed
+            period_label = f"Week {week_num} pro-rated target"
         else:
             effective_target = target_l
-            period_label = "Monthly Target"
+            period_label = "Monthly target"
 
         pct = min((actual_l / effective_target * 100) if effective_target else 0, 100)
         remaining = max(effective_target - actual_l, 0)
 
         if pct >= 100:
-            bar_color = "#10b981"
-            status = "✅ Target Achieved!"
+            bar_color = "#10b981"; status = "✅ Target Achieved!"
         elif pct >= 75:
-            bar_color = "#6366f1"
-            status = f"🔵 {pct:.1f}% — On track"
+            bar_color = "#6366f1"; status = f"🔵 {pct:.1f}% — On track"
         elif pct >= 50:
-            bar_color = "#f59e0b"
-            status = f"🟡 {pct:.1f}% — Needs push"
+            bar_color = "#f59e0b"; status = f"🟡 {pct:.1f}% — Needs push"
         else:
-            bar_color = "#ef4444"
-            status = f"🔴 {pct:.1f}% — Behind target"
+            bar_color = "#ef4444"; status = f"🔴 {pct:.1f}% — Behind target"
 
         st.markdown(f"""
         <div class="target-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <span style="font-weight:600;font-size:15px;color:#0f172a">{mgr}</span>
-                <span style="font-size:12px;color:#64748b">{period_label}: {effective_target:.1f}L</span>
+                <span style="font-weight:700;font-size:15px;color:#0f172a">{mgr}</span>
+                <span style="font-size:12px;color:#64748b;font-weight:500">{period_label}: <b>{effective_target:.1f}L</b></span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;margin-bottom:2px;">
-                <span>Achieved: <b style="color:#0f172a">{actual_l:.2f}L</b></span>
-                <span>Remaining: <b style="color:#ef4444">{remaining:.2f}L</b></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;margin-bottom:4px;">
+                <span>✅ Achieved: <b style="color:#0f172a">{actual_l:.2f}L</b></span>
+                <span>⏳ Remaining: <b style="color:#ef4444">{remaining:.2f}L</b></span>
+                <span>🎯 Full Target: <b style="color:#6366f1">{target_l:.1f}L</b></span>
             </div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width:{pct:.1f}%;background:{bar_color}"></div>
             </div>
-            <div style="font-size:12px;font-weight:600;color:{bar_color}">{status}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+                <div style="font-size:12px;font-weight:700;color:{bar_color}">{status}</div>
+                <div style="font-size:12px;font-weight:600;color:#94a3b8">{pct:.1f}% complete</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
+    # ── Team Summary ──
     section_header("Team Progress Overview")
     total_actual = mgr_actual["Actual"].sum() / 100000
-    total_target = sum(st.session_state.targets.get(m, 50) for m in mgr_actual["Manager"])
+    total_target = sum(targets_dict.get(m, 50) for m in mgr_actual["Manager"])
     team_pct = (total_actual / total_target * 100) if total_target else 0
 
     col_a, col_b, col_c = st.columns(3)
@@ -1036,7 +1190,7 @@ elif dashboard_type == "🎯 Target Tracker":
 
     section_header("Manager Target vs Actual (Bar)")
     target_df = mgr_actual.copy()
-    target_df["Target"] = target_df["Manager"].map(lambda m: st.session_state.targets.get(m, 50))
+    target_df["Target"] = target_df["Manager"].map(lambda m: targets_dict.get(m, 50))
     target_df["Actual_L"] = target_df["Actual"] / 100000
 
     fig_tgt = go.Figure()
