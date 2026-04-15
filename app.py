@@ -58,7 +58,7 @@ html, body, [class*="css"] {
     width: 100%;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    background: #dc2626 !important;
+    background: Black !important;
 }
 
 /* ── Main Background ── */
