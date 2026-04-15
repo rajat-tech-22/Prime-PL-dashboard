@@ -1,226 +1,396 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objs as go
+import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
-import plotly.express as px
-import plotly.express as px
-import plotly.graph_objects as go
 import os
 import time
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 
+# ─────────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────────
+st.set_page_config(
+    page_title="Prime PL Dashboard",
+    page_icon="💼",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+st_autorefresh(interval=60 * 1000, key="refresh")
 
-# -----------------------------
-# Page Config
-# -----------------------------
-st.set_page_config(page_title="Manager Dashboard", layout="wide")
-st_autorefresh(interval=60*1000, key="refresh")  # Auto-refresh every 60s
-# -----------------------------
-# Login Page
-# -----------------------------
+# ─────────────────────────────────────────
+# GLOBAL CSS — Modern Professional Theme
+# ─────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
 
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+[data-testid="stSidebar"] * {
+    color: #e2e8f0 !important;
+}
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stMultiSelect label {
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+[data-testid="stSidebar"] h1, 
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: #f8fafc !important;
+}
+[data-testid="stSidebar"] .stButton > button {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 100%;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: #dc2626 !important;
+}
 
+/* ── Main Background ── */
+.stApp {
+    background-color: #f8fafc;
+}
+
+/* ── Cards ── */
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+.metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+.metric-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
+}
+.metric-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+/* ── Section headers ── */
+.section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 28px 0 16px 0;
+    padding-left: 12px;
+    border-left: 4px solid #6366f1;
+}
+
+/* ── Insight strip ── */
+.insight-strip {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+    color: white;
+}
+.insight-item {
+    text-align: center;
+    font-size: 13px;
+}
+.insight-item b {
+    display: block;
+    font-size: 11px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+/* ── Target tracker card ── */
+.target-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+.progress-bar-bg {
+    background: #f1f5f9;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+    margin: 10px 0 6px 0;
+}
+.progress-bar-fill {
+    height: 12px;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+}
+
+/* ── KPI card (campaign) ── */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    color: white;
+}
+.kpi-title { font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 6px; }
+.kpi-value { font-size: 24px; font-weight: 700; }
+
+/* ── Table ── */
+.stDataFrame { border-radius: 12px !important; overflow: hidden; }
+thead tr th { background: #f8fafc !important; font-weight: 600 !important; }
+
+/* ── Expander ── */
+.streamlit-expanderHeader {
+    background: #f1f5f9 !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
+
+/* ── Page title ── */
+h1 { color: #0f172a !important; font-weight: 700 !important; }
+h2 { color: #1e293b !important; font-weight: 600 !important; }
+h3 { color: #334155 !important; font-weight: 600 !important; }
+
+/* ── Download button ── */
+.stDownloadButton > button {
+    background: #6366f1 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+.stDownloadButton > button:hover {
+    background: #4f46e5 !important;
+}
+
+/* ── Login ── */
+.login-box {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    max-width: 420px;
+    margin: 60px auto;
+}
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 6px;
+}
+.login-sub {
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 24px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────
+# AUTH CONSTANTS
+# ─────────────────────────────────────────
 USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
 PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 MAX_ATTEMPTS = 4
-LOCK_TIME = 43200  # 12 hours in seconds
+LOCK_TIME = 43200
 
+for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
+    if key not in st.session_state:
+        st.session_state[key] = val
 
-# -----------------------------
-# SESSION INIT
-# -----------------------------
-if "login" not in st.session_state:
-    st.session_state.login = False
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 0
-if "lock_time" not in st.session_state:
-    st.session_state.lock_time = None
-
-# -----------------------------
+# ─────────────────────────────────────────
 # LOGIN PAGE
-# -----------------------------
+# ─────────────────────────────────────────
 if not st.session_state.login:
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
 
-    st.markdown("""
-    <style>
-    
-  
-    .login-title {
-        text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-        margin-bottom: 12px;
-    }
-    .login-message {
-        text-align: center;
-        font-weight: bold;
-        font-size: 16px;
-        margin-bottom: 20px;
-        color: #1f4037;
-    }
-    .stTextInput>div>div>input {
-        height: 32px;
-        font-weight: bold;
-        font-size: 14px;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 6px;
-        height: 36px;
-        font-size: 14px;
-        font-weight: bold;
-        background-color: #1f4037;
-        color: white;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
-    
-    # Login title
-    st.markdown('<div class="login-title">🔐 Login</div>', unsafe_allow_html=True)
-    
-    # ✅ Message centered inside card
-    st.markdown('<div class="login-message">👋 Hello Prime, Welcome Back!</div>', unsafe_allow_html=True)
-
-    # 🔒 Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
         if remaining > 0:
-            hours = int(remaining // 3600)
-            minutes = int((remaining % 3600) // 60)
-            st.error(f"Login disabled 🚫 Try again in {hours}h {minutes}m")
-            st.markdown('</div></div>', unsafe_allow_html=True)
+            h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+            st.error(f"🔒 Account locked. Try again in {h}h {m}m")
             st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    # Inputs
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
+    u = st.text_input("Username", placeholder="Enter username")
+    p = st.text_input("Password", type="password", placeholder="Enter password")
 
-    if st.button("Login"):
+    if st.button("Sign In →", use_container_width=True):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.session_state.attempts = 0
-            st.success(f"Welcome back, {u} ✅")
+            st.success("Welcome back! ✅")
             st.rerun()
         else:
             st.session_state.attempts += 1
-            remaining_attempts = MAX_ATTEMPTS - st.session_state.attempts
-            if remaining_attempts <= 0:
+            left = MAX_ATTEMPTS - st.session_state.attempts
+            if left <= 0:
                 st.session_state.lock_time = time.time()
-                st.error("Too many attempts 🚫 Login disabled for 12 hours")
+                st.error("Too many attempts. Account locked for 12 hours.")
             else:
-                st.error(f"Invalid Credentials ❌ Attempts left: {remaining_attempts}")
+                st.error(f"Invalid credentials. {left} attempt(s) remaining.")
 
-    st.markdown('</div></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
-#----------------------------
-# DASHBOARD
-# -----------------------------
-st.title("🏠 Dashboard")
 
-# ⏰ Indian Standard Time (UTC+5:30)
-ist = timezone(timedelta(hours=5, minutes=30))
-now_ist = datetime.now(ist)
-hour = now_ist.hour
+# ─────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────
+def format_inr(n):
+    if not n or n == 0:
+        return "₹0"
+    s = str(int(n))
+    last3 = s[-3:]
+    rest = s[:-3]
+    parts = []
+    while len(rest) > 2:
+        parts.append(rest[-2:])
+        rest = rest[:-2]
+    if rest:
+        parts.append(rest)
+    parts.reverse()
+    return "₹" + ",".join(parts) + "," + last3 if parts else "₹" + last3
 
-# Determine greeting
-if 5 <= hour < 12:
-    emoji = "🙏"
-    greeting_text = "Good Morning"
-elif 12 <= hour < 16:
-    emoji = "🌞"
-    greeting_text = "Good Afternoon"
-elif 16 <= hour < 20:
-    emoji = "🌇"
-    greeting_text = "Good Evening"
-else:
-    emoji = "🌙"
-    greeting_text = "Good Night"
+COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6"]
+GOLD = "#f59e0b"
 
-# 🎨 Animated bouncing emoji with gradient text
-st.markdown(f"""
-<style>
-@keyframes bounce {{
-  0%, 20%, 50%, 80%, 100% {{ transform: translateY(0); }}
-  40% {{ transform: translateY(-12px); }}
-  60% {{ transform: translateY(-6px); }}
-}}
+def get_colors(index_list, top_val):
+    return [GOLD if v == top_val else COLORS[i % len(COLORS)] for i, v in enumerate(index_list)]
 
-.emoji {{
-  display: inline-block;
-  animation: bounce 2s infinite;
-}}
+def calc_metrics(f):
+    td = f["Disbursed AMT"].sum()
+    tr = f["Total_Revenue"].sum()
+    ap = (tr / td * 100) if td else 0
+    tc = len(f)
+    ad = td / tc if tc else 0
+    tb = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    tcamp = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    tcall = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    return td, tr, ap, tc, ad, tb, tcamp, tcall
 
-.greeting {{
-    text-align: center;
-    font-size: 28px;
-    font-weight: bold;
-    background: linear-gradient(90deg, #ff6ec4, #7873f5, #42e695);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-top: 120px;
-}}
-</style>
-
-<div class="greeting">
-    <span class="emoji">{emoji}</span> {greeting_text}! WELCOME TO THE PRIME PL!
-</div>
-""", unsafe_allow_html=True)
-
-# -----------------------------
-# Auto-fit Card Function
-# -----------------------------
-def colored_metric_auto_fit(label, value, color="#2596be"):
+def metric_card(label, value, icon="", color="#6366f1"):
     return f"""
-    <div style="
-        background :  linear-gradient(135deg, #fc4a1a, #f7b733);
-        padding: 10px;
-        border-radius: 12px;
-        border-left: 6px solid {color};
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-        text-align: center;
-        margin-bottom: 15px;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    ">
-        <div style="width: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
-            <span style="
-                font-size: 14px; 
-                font-weight: 700; 
-                text-transform: uppercase; 
-                color: #6c757d;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            ">{label}</span>
-            <span style="
-                font-weight: 800; 
-                color: #212529;
-                font-size: 2rem; 
-                display: inline-block;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            ">{value}</span>
-        </div>
-    </div>
-    """
+    <div class="metric-card">
+        <div class="metric-icon">{icon}</div>
+        <div class="metric-label">{label}</div>
+        <div class="metric-value" style="color:{color}">{value}</div>
+    </div>"""
 
+def section_header(title):
+    st.markdown(f'<div class="section-header">{title}</div>', unsafe_allow_html=True)
 
-# -----------------------------
-# LOAD MAIN DATA
-# -----------------------------
+def insight_strip(items: dict):
+    inner = "".join([
+        f'<div class="insight-item"><b>{k}</b>{v}</div>'
+        for k, v in items.items()
+    ])
+    st.markdown(f'<div class="insight-strip">{inner}</div>', unsafe_allow_html=True)
+
+def styled_bar(df_group, col, x_col, y_col, title, top_val=None, height=400):
+    colors = get_colors(df_group[x_col], top_val or df_group.loc[df_group[y_col].idxmax(), x_col])
+    fig = go.Figure(go.Bar(
+        x=df_group[x_col],
+        y=df_group[y_col] / 100000,
+        text=[f"<b>{v/100000:.2f}L</b>" for v in df_group[y_col]],
+        textposition="outside",
+        marker_color=colors,
+        marker_line_width=0,
+    ))
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=15, color="#0f172a")),
+        yaxis_title="Amount (Lakhs)",
+        template="plotly_white",
+        height=height,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(family="Inter, sans-serif", size=12),
+        margin=dict(t=50, b=60, l=40, r=20),
+        xaxis=dict(tickangle=-30),
+    )
+    fig.update_traces(cliponaxis=False)
+    return fig
+
+def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
+    """Generate a simple HTML-based PDF using reportlab-like approach via fpdf2."""
+    try:
+        from fpdf import FPDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 12, title, ln=True, align="C")
+        pdf.set_font("Helvetica", "", 8)
+        pdf.ln(4)
+        cols = list(df_display.columns)
+        col_w = min(190 // len(cols), 40)
+        pdf.set_fill_color(99, 102, 241)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 8)
+        for c in cols:
+            pdf.cell(col_w, 8, str(c)[:18], border=1, fill=True)
+        pdf.ln()
+        pdf.set_text_color(15, 23, 42)
+        pdf.set_font("Helvetica", "", 7)
+        for _, row in df_display.iterrows():
+            for c in cols:
+                pdf.cell(col_w, 7, str(row[c])[:18], border=1)
+            pdf.ln()
+        return pdf.output()
+    except Exception:
+        return b""
+
+# ─────────────────────────────────────────
+# DATA LOADING
+# ─────────────────────────────────────────
 @st.cache_data(ttl=60)
 def load_data():
     url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
@@ -228,9 +398,6 @@ def load_data():
     df.replace("null", None, inplace=True)
     return df
 
-# -----------------------------
-# LOAD CAMPAIGN DATA
-# -----------------------------
 @st.cache_data(ttl=60)
 def load_campaign_data():
     url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vROJC-HN52HXZboNKd2rNzYbTHzXtAsewd_hbht7MnQMvpNmVfE9H4fjQA0S06sFZGwPDCErXIPEhsy/pub?output=csv"
@@ -241,915 +408,463 @@ def load_campaign_data():
 df = load_data()
 campaign_df = load_campaign_data()
 
-# -----------------------------
-# Helper Functions
-# -----------------------------
-def format_inr(number):
-    if number is None or number == 0:
-        return "₹0"
-    s = str(int(number))
-    last3 = s[-3:]
-    rest = s[:-3]
-    parts = []
-    while len(rest) > 2:
-        parts.append(rest[-2:])
-        rest = rest[:-2]
-    if rest:
-        parts.append(rest)
-    parts.reverse()
-    return "₹" + ",".join(parts) + "," + last3
-
-base_colors = ["#636EFA","#EF553B","#00CC96","#AB63FA","#FFA15A","#19D3F3","#FF6692","#B6E880"]
-
-def get_colors(index_list, top_value):
-    colors = []
-    for i, val in enumerate(index_list):
-        if val == top_value:
-            colors.append("#FFD700")
-        else:
-            colors.append(base_colors[i % len(base_colors)])
-    return colors
-
-def calc_metrics(f):
-    total_disb = f["Disbursed AMT"].sum()
-    total_rev = f["Total_Revenue"].sum()
-    avg_payout = (total_rev/total_disb)*100 if total_disb else 0
-    txn_count = len(f)
-    avg_disb = total_disb/txn_count if txn_count else 0
-    top_bank = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_campaign = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    top_caller = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
-    return total_disb,total_rev,avg_payout,txn_count,avg_disb,top_bank,top_campaign,top_caller
-
-def plot_bar(f, col, top_value, manager_name, key_val):
-    summary = f.groupby(col)["Disbursed AMT"].sum()
-    colors = get_colors(summary.index, top_value)
-    fig = go.Figure(go.Bar(
-        x=summary.index,
-        y=summary.values/100000,
-        text=[f"{v/100000:.2f}L" for v in summary.values],
-        textposition="auto",
-        marker_color=colors,
-        name=manager_name
-    ))
-    fig.update_layout(
-        yaxis_title="Amount (L)",
-        template="plotly_white",
-        height=400,
-        title=f"{manager_name} - {col} Summary"
-    )
-    return fig
-
-# --- UPDATED MODERN CARD UI ---
-def colored_metric(label, value, color="#2596be"):
-    st.markdown(f"""
-        <div style="
-            background-color: #07f2c3;
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 6px solid {color};
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
-            text-align: left;
-            margin-bottom: 15px;
-        ">
-            <p style="color: #6c757d; font-size: 13px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;">{label}</p>
-            <h2 style="color: #212529; margin: 5px 0 0 0; font-size: 24px; font-weight: 800;">{value}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
-
-# -----------------------------
-# SIDEBAR
-# -----------------------------
-st.sidebar.title("📊 Dashboard")
-
-dashboard_type = st.sidebar.radio("Select Dashboard", [
-    "All Managers",
-    "Single Manager",
-    "Comparison",
-    "Campaign Performance",
-    "Prefr & PW Campaign Reports"
-])
-
-
-verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 months = sorted(df["Disb Month"].dropna().unique())
+verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
-latest_month_index = len(months)-1
+latest_month_index = len(months) - 1
+
+# ─────────────────────────────────────────
+# SIDEBAR NAVIGATION
+# ─────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## 💼 Prime PL")
+    st.markdown("---")
+    dashboard_type = st.radio(
+        "Navigation",
+        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "📡 Prefr & PW Reports", "🎯 Target Tracker"],
+        label_visibility="collapsed"
+    )
+    st.markdown("---")
+    if st.button("🚪 Logout"):
+        st.session_state.login = False
+        st.rerun()
+
+# ─────────────────────────────────────────
+# GREETING
+# ─────────────────────────────────────────
+ist = timezone(timedelta(hours=5, minutes=30))
+now_ist = datetime.now(ist)
+hour = now_ist.hour
+greet = "Good Morning 🌅" if 5 <= hour < 12 else "Good Afternoon ☀️" if hour < 16 else "Good Evening 🌇" if hour < 20 else "Good Night 🌙"
+
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; color: white;">
+    <div style="font-size: 22px; font-weight: 700;">{greet}, Welcome to Prime PL!</div>
+    <div style="font-size: 13px; opacity: 0.85; margin-top: 4px;">
+        {now_ist.strftime("%A, %d %B %Y  •  %I:%M %p")} IST
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 
-# -----------------------------
-# All Managers Dashboard
-# -----------------------------
-if dashboard_type == "All Managers":
-    with st.sidebar.expander("Month & Vertical Filters", expanded=True):
-        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
-        selected_vertical = st.selectbox("Business Vertical", verticals)
+# ══════════════════════════════════════════
+# 🏠 OVERVIEW
+# ══════════════════════════════════════════
+if dashboard_type == "🏠 Overview":
+    st.title("Overview — All Managers")
+
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        selected_month = st.selectbox("Month", months, index=latest_month_index)
+        selected_vertical = st.selectbox("Vertical", verticals)
 
     filtered_df = df.copy()
     if selected_vertical != "All":
-        filtered_df = filtered_df[filtered_df["Vertical"]==selected_vertical]
-    if selected_month:
-        filtered_df = filtered_df[filtered_df["Disb Month"]==selected_month]
+        filtered_df = filtered_df[filtered_df["Vertical"] == selected_vertical]
+    filtered_df = filtered_df[filtered_df["Disb Month"] == selected_month]
 
-    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
-    with st.sidebar.expander("Campaign Filter", expanded=True):
-        selected_campaigns = st.multiselect("Select Campaigns", campaigns_available, default=campaigns_available)
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
+    camps = sorted(filtered_df["Campaign"].dropna().unique())
+    with st.sidebar.expander("📌 Campaigns", expanded=False):
+        sel_camps = st.multiselect("Campaigns", camps, default=camps)
+    if sel_camps:
+        filtered_df = filtered_df[filtered_df["Campaign"].isin(sel_camps)]
 
-    st.header("📊 Overview - Summary Cards")
     if filtered_df.empty:
-        st.warning("No data available for selected filters")
+        st.warning("No data for selected filters.")
     else:
-        # Aggregate per manager
-        agg_df = filtered_df.groupby(['Vertical',"Manager"]).agg(
-            Total_Disbursed=("Disbursed AMT","sum"),
-            Total_Revenue=("Total_Revenue","sum"),
-            Transactions=("Manager","count"),
+        agg = filtered_df.groupby(["Vertical", "Manager"]).agg(
+            Total_Disbursed=("Disbursed AMT", "sum"),
+            Total_Revenue=("Total_Revenue", "sum"),
+            Transactions=("Manager", "count"),
         ).reset_index()
 
-        # Remove blank rows
-        agg_df.dropna(how='all', inplace=True)
+        td = agg["Total_Disbursed"].sum()
+        tr = agg["Total_Revenue"].sum()
+        tt = int(agg["Transactions"].sum())
+        ap = (tr / td * 100) if td else 0
 
-        # Metrics
-        total_disbursed = agg_df["Total_Disbursed"].sum()
-        total_revenue = agg_df["Total_Revenue"].sum()
-        total_txn = agg_df["Transactions"].sum()
-        avg_payout = (total_revenue / total_disbursed * 100) if total_disbursed else 0
-
-        # Display 4 main metric cards
-        cols = st.columns([1,1,1,1])
-        card_data = [
-            ("Total Disbursed", format_inr(total_disbursed), "#636EFA"),
-            ("Total Revenue", format_inr(total_revenue), "#00CC96"),
-            ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
-            ("Total Transactions", total_txn, "#EF553B")
+        cards = [
+            ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+            ("Total Revenue", format_inr(tr), "📈", "#10b981"),
+            ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
+            ("Transactions", f"{tt:,}", "🔁", "#ef4444"),
         ]
-        for col, data in zip(cols, card_data):
-            label, value, color = data
-            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+        cols = st.columns(4)
+        for col, (lbl, val, icon, clr) in zip(cols, cards):
+            col.markdown(metric_card(lbl, val, icon, clr), unsafe_allow_html=True)
 
-        # -----------------------------
-        # Insight Summary Section
-        # -----------------------------
-        top_bank = filtered_df.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
-        top_campaign = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
-        top_caller = filtered_df.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not filtered_df.empty else "N/A"
+        top_bank = filtered_df.groupby("Bank")["Disbursed AMT"].sum().idxmax()
+        top_campaign = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().idxmax()
+        top_caller = filtered_df.groupby("Caller")["Disbursed AMT"].sum().idxmax()
 
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #ff416c, #ff4b2b);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-        ">
-            <div><b>Top Bank:</b> {top_bank}</div>
-            <div><b>Top Campaign:</b> {top_campaign}</div>
-            <div><b>Top Caller:</b> {top_caller}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        insight_strip({
+            "🏦 Top Bank": top_bank,
+            "🚀 Top Campaign": top_campaign,
+            "🏆 Top Caller": top_caller,
+            "📅 Month": selected_month,
+        })
 
-        # -----------------------------
-        # Table below cards (centered & bold numeric)
-        # -----------------------------
-        agg_df_display = agg_df.copy()
-        agg_df_display["Total_Disbursed"] = agg_df_display["Total_Disbursed"].apply(format_inr)
-        agg_df_display["Total_Revenue"] = agg_df_display["Total_Revenue"].apply(format_inr)
+        section_header("Manager Summary Table")
+        disp = agg.copy()
+        disp["Total_Disbursed"] = disp["Total_Disbursed"].apply(format_inr)
+        disp["Total_Revenue"] = disp["Total_Revenue"].apply(format_inr)
+        st.dataframe(disp, use_container_width=True, height=300)
 
-        styled_df = agg_df_display.style.set_properties(**{
-            'text-align': 'center',
-            'vertical-align': 'middle'
-        }).format({
-            'Total_Disbursed': '   {}    ',
-            'Total_Revenue': '   {}    ',
-            'Transactions': '    {}    '
-        }).set_table_styles([{
-            'selector': 'th',
-            'props': [('text-align', 'center')]
-        }])
+        pdf_bytes = generate_pdf_bytes(disp, f"Overview - {selected_month}")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.download_button("⬇️ Download CSV", disp.to_csv(index=False), "overview.csv", "text/csv")
+        with c2:
+            if pdf_bytes:
+                st.download_button("📄 Export PDF", pdf_bytes, "overview.pdf", "application/pdf")
 
-        st.subheader("📄 Detailed Table")
-        st.dataframe(styled_df, use_container_width=True, height=300)
-        st.download_button("Download CSV", agg_df_display.to_csv(index=False), "all_managers.csv", "text/csv")
+        section_header("Campaign-wise Disbursed")
+        cs = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
+        cs.columns = ["Campaign", "Disbursed AMT"]
+        st.plotly_chart(styled_bar(cs, "Campaign", "Campaign", "Disbursed AMT", "Campaign-wise Disbursed Amount"), use_container_width=True)
 
-        # -----------------------------
-        # Campaign-wise Disbursed Chart (bold data labels)
-        # -----------------------------
-        campaign_summary = filtered_df.groupby("Campaign")["Disbursed AMT"].sum()
-        if not campaign_summary.empty:
-            top_campaign_val = campaign_summary.idxmax()
-            campaign_colors = get_colors(campaign_summary.index, top_campaign_val)
-            fig_campaign = go.Figure(go.Bar(
-                x=campaign_summary.index,
-                y=campaign_summary.values/100000,
-                text=[f"<b>{v/100000:.2f}L</b>" for v in campaign_summary.values],
-                textposition="auto",
-                marker_color=campaign_colors,
-                name="Campaigns"
-            ))
-            fig_campaign.update_layout(
-                yaxis_title="Amount (L)",
-                template="plotly_white",
-                height=400,
-                title="Campaign-wise Disbursed Amount",
-                xaxis_tickangle=-30
-            )
-            st.plotly_chart(fig_campaign, use_container_width=True)
+        section_header("Bank-wise Disbursed")
+        bs = filtered_df.groupby("Bank")["Disbursed AMT"].sum().reset_index()
+        bs.columns = ["Bank", "Disbursed AMT"]
+        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise Disbursed Amount"), use_container_width=True)
 
-        # -----------------------------
-        # Bank-wise Disbursed Chart (bold data labels)
-        # -----------------------------
-        bank_summary = filtered_df.groupby("Bank")["Disbursed AMT"].sum()
-        if not bank_summary.empty:
-            top_bank_val = bank_summary.idxmax()
-            bank_colors = get_colors(bank_summary.index, top_bank_val)
-            fig_bank = go.Figure(go.Bar(
-                x=bank_summary.index,
-                y=bank_summary.values/100000,
-                text=[f"<b>{v/100000:.2f}L</b>" for v in bank_summary.values],
-                textposition="auto",
-                marker_color=bank_colors,
-                name="Banks"
-            ))
-            fig_bank.update_layout(
-                yaxis_title="Amount (L)",
-                template="plotly_white",
-                height=400,
-                title="Bank-wise Disbursed Amount",
-                xaxis_tickangle=-30
-            )
-            st.plotly_chart(fig_bank, use_container_width=True)
-# -----------------------------
-# Single Manager Dashboard
-# -----------------------------
-elif dashboard_type == "Single Manager":
-
-    # -----------------------------
-    # Sidebar Filters (Cascading)
-    # -----------------------------
-    with st.sidebar.expander("Manager & Month Filters", expanded=True):
-
-        # Step 1: Month Selection
-        selected_month = st.selectbox("Select Month", months, index=latest_month_index)
-
-        # Filter data by selected month
-        df_month = df[df["Disb Month"] == selected_month]
-
-        # Step 2: Manager based on Month
-        managers_filtered = sorted(df_month["Manager"].dropna().unique())
-        selected_manager = st.selectbox("Select Manager", managers_filtered)
-
-    # Filter by Manager + Month
-    filtered_df = df_month[df_month["Manager"] == selected_manager]
-
-    # Step 3: Campaign based on Manager + Month
-    campaigns_available = sorted(filtered_df["Campaign"].dropna().unique())
-
-    with st.sidebar.expander("Campaign Filter", expanded=True):
-        selected_campaigns = st.multiselect(
-            "Select Campaigns",
-            campaigns_available,
-            default=campaigns_available
+        section_header("Manager Monthly Trend")
+        trend_df = df.copy()
+        if selected_vertical != "All":
+            trend_df = trend_df[trend_df["Vertical"] == selected_vertical]
+        trend = trend_df.groupby(["Disb Month", "Manager"])["Disbursed AMT"].sum().reset_index()
+        fig_trend = px.line(
+            trend, x="Disb Month", y="Disbursed AMT", color="Manager",
+            markers=True, title="Manager-wise Monthly Trend",
+            labels={"Disbursed AMT": "Disbursed (₹)", "Disb Month": "Month"},
+            color_discrete_sequence=COLORS,
         )
+        fig_trend.update_layout(
+            template="plotly_white", height=450,
+            font=dict(family="Inter, sans-serif"),
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=-0.4),
+            plot_bgcolor="white",
+        )
+        fig_trend.update_traces(line=dict(width=2.5))
+        st.plotly_chart(fig_trend, use_container_width=True)
 
-    if selected_campaigns:
-        filtered_df = filtered_df[filtered_df["Campaign"].isin(selected_campaigns)]
 
-    # -----------------------------
-    # Dashboard UI
-    # -----------------------------
-    st.header(f"📈 Overview - {selected_manager}")
+# ══════════════════════════════════════════
+# 👤 SINGLE MANAGER
+# ══════════════════════════════════════════
+elif dashboard_type == "👤 Single Manager":
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        sel_month = st.selectbox("Month", months, index=latest_month_index)
+        df_m = df[df["Disb Month"] == sel_month]
+        sel_mgr = st.selectbox("Manager", sorted(df_m["Manager"].dropna().unique()))
 
-    f = filtered_df
+    f = df_m[df_m["Manager"] == sel_mgr]
+    camps = sorted(f["Campaign"].dropna().unique())
+    with st.sidebar.expander("📌 Campaigns", expanded=False):
+        sel_camps = st.multiselect("Campaigns", camps, default=camps)
+    if sel_camps:
+        f = f[f["Campaign"].isin(sel_camps)]
+
+    st.title(f"Manager View — {sel_mgr}")
 
     if f.empty:
-        st.warning("No data available")
-
+        st.warning("No data available.")
     else:
-        # -----------------------------
-        # Metrics Calculation
-        # -----------------------------
-        total_disb, total_rev, avg_payout, txn_count, avg_disb, top_bank, top_campaign, top_caller = calc_metrics(f)
+        td, tr, ap, tc, ad, tb, tcamp, tcall = calc_metrics(f)
 
-        # -----------------------------
-        # Metric Cards
-        # -----------------------------
-        cols = st.columns(4)
-        card_data = [
-            ("Total Disbursed", format_inr(total_disb), "#636EFA"),
-            ("Total Revenue", format_inr(total_rev), "#00CC96"),
-            ("Avg Payout %", f"{avg_payout:.2f}%", "#FFA15A"),
-            ("Transactions", txn_count, "#EF553B")
+        cards = [
+            ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+            ("Total Revenue", format_inr(tr), "📈", "#10b981"),
+            ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
+            ("Transactions", f"{tc:,}", "🔁", "#ef4444"),
         ]
+        cols = st.columns(4)
+        for col, (lbl, val, icon, clr) in zip(cols, cards):
+            col.markdown(metric_card(lbl, val, icon, clr), unsafe_allow_html=True)
 
-        for col, data in zip(cols, card_data):
-            label, value, color = data
-            col.markdown(colored_metric_auto_fit(label, value, color), unsafe_allow_html=True)
+        insight_strip({
+            "🏦 Top Bank": tb,
+            "🚀 Top Campaign": tcamp,
+            "🏆 Top Caller": tcall,
+            "💵 Avg Disbursed": format_inr(ad),
+        })
 
-        # -----------------------------
-        # Insight Summary
-        # -----------------------------
-        st.markdown(f"""
-        <div style="
-            background : linear-gradient(135deg, #ff416c, #ff4b2b);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-        ">
-            <div><b>Top Bank:</b> {top_bank}</div>
-            <div><b>Top Campaign:</b> {top_campaign}</div>
-            <div><b>Top Caller:</b> {top_caller}</div>
-            <div><b>Avg Disbursed:</b> {format_inr(avg_disb)}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        section_header("Bank-wise Performance")
+        bs = f.groupby("Bank")["Disbursed AMT"].sum().reset_index()
+        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", f"{sel_mgr} — Bank Performance"), use_container_width=True)
 
-        # -----------------------------
-        # Charts
-        # -----------------------------
-        st.plotly_chart(
-            plot_bar(f, "Bank", top_bank, selected_manager, "bank1"),
-            use_container_width=True
-        )
+        section_header("Caller-wise Performance")
+        cs = f.groupby("Caller")["Disbursed AMT"].sum().reset_index()
+        st.plotly_chart(styled_bar(cs, "Caller", "Caller", "Disbursed AMT", f"{sel_mgr} — Caller Performance"), use_container_width=True)
 
-        st.plotly_chart(
-            plot_bar(f, "Caller", top_caller, selected_manager, "caller1"),
-            use_container_width=True
-        )
+        section_header("Campaign-wise Performance")
+        camp_s = f.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
+        st.plotly_chart(styled_bar(camp_s, "Campaign", "Campaign", "Disbursed AMT", f"{sel_mgr} — Campaign Performance"), use_container_width=True)
 
-        # -----------------------------
-        # Campaign-wise Disbursed Chart
-        # -----------------------------
-        summary = f.groupby("Campaign")["Disbursed AMT"].sum()
-
-        fig = go.Figure(go.Bar(
-            x=summary.index,
-            y=summary.values / 100000,
-            text=[f"<b>{v/100000:.2f}L</b>" for v in summary.values],
-            textposition="auto",
-            marker_color=base_colors,
+        section_header("Monthly Trend — This Manager")
+        mgr_trend = df[df["Manager"] == sel_mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
+        fig_t = go.Figure(go.Scatter(
+            x=mgr_trend["Disb Month"],
+            y=mgr_trend["Disbursed AMT"] / 100000,
+            mode="lines+markers",
+            line=dict(color="#6366f1", width=3),
+            marker=dict(size=8, color="#6366f1"),
+            fill="tozeroy",
+            fillcolor="rgba(99,102,241,0.08)",
+            name=sel_mgr,
         ))
-
-        fig.update_layout(
-            title="Campaign-wise Disbursed Amount",
-            yaxis_title="Amount (L)",
-            template="plotly_white",
-            xaxis_tickangle=-30
+        fig_t.update_layout(
+            template="plotly_white", height=380,
+            yaxis_title="Disbursed (Lakhs)",
+            font=dict(family="Inter, sans-serif"),
+            plot_bgcolor="white",
         )
+        st.plotly_chart(fig_t, use_container_width=True)
 
-        st.plotly_chart(fig, use_container_width=True)
-    
-        # Data Table at Bottom
-        st.markdown("### 📄 Data")
-        
-        df_display = f.dropna(how='all').copy()
-        
-        # ✅ Round & convert to integer (no decimals)
-        df_display["Disbursed AMT"] = df_display["Disbursed AMT"].round(0).astype(int)
-        df_display["Total_Revenue"] = df_display["Total_Revenue"].round(0).astype(int)
-        df_display["AVG_Payout"] = df_display["AVG_Payout"].round(0).astype(int)
-        # Optional: format with commas (Indian style feel)
-        df_display["Disbursed AMT"] = df_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
-        df_display["Total_Revenue"] = df_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
-        df_display["AVG_Payout"] = df_display["AVG_Payout"].apply(lambda x: f"{x:,.2f}")
-        styled_df = df_display.style.set_properties(
-            **{'text-align': 'center', 'vertical-align': 'middle'}
-        ).set_table_styles([
-            {'selector': 'th', 'props': [('text-align', 'center')]}
-        ])
-        
-        st.dataframe(styled_df, use_container_width=True, height=300)
-        
-        st.download_button(
-            "Download CSV",
-            df_display.to_csv(index=False),
-            f"{selected_manager}.csv",
-            "text/csv"
-        )
-# -----------------------------
-# Comparison Dashboard (Improved Cascading Filters)
-# -----------------------------
-elif dashboard_type == "Comparison":
+        section_header("Raw Data")
+        df_disp = f.dropna(how="all").copy()
+        df_disp["Disbursed AMT"] = df_disp["Disbursed AMT"].round(0).astype(int).apply(lambda x: f"{x:,.0f}")
+        df_disp["Total_Revenue"] = df_disp["Total_Revenue"].round(0).astype(int).apply(lambda x: f"{x:,.0f}")
+        df_disp["AVG_Payout"] = df_disp["AVG_Payout"].round(2).apply(lambda x: f"{x:.2f}")
+        st.dataframe(df_disp.style.set_properties(**{"text-align": "center"}), use_container_width=True, height=300)
 
-    with st.sidebar.expander("Manager & Month Selection", expanded=True):
+        pdf_bytes = generate_pdf_bytes(df_disp, f"{sel_mgr} — {sel_month}")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.download_button("⬇️ Download CSV", df_disp.to_csv(index=False), f"{sel_mgr}.csv", "text/csv")
+        with c2:
+            if pdf_bytes:
+                st.download_button("📄 Export PDF", pdf_bytes, f"{sel_mgr}.pdf", "application/pdf")
 
-        # -----------------------------
-        # FIRST SELECTION
-        # -----------------------------
-        selected_month1 = st.selectbox("Month - First", months, index=latest_month_index, key="m1")
 
-        df_m1 = df[df["Disb Month"] == selected_month1]
-        managers1 = sorted(df_m1["Manager"].dropna().unique())
+# ══════════════════════════════════════════
+# ⚖️ COMPARISON
+# ══════════════════════════════════════════
+elif dashboard_type == "⚖️ Comparison":
+    with st.sidebar.expander("🔧 First Selection", expanded=True):
+        m1 = st.selectbox("Month", months, index=latest_month_index, key="m1")
+        mgr1 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m1]["Manager"].dropna().unique()), key="mgr1")
+    f1 = df[(df["Disb Month"] == m1) & (df["Manager"] == mgr1)]
 
-        selected_manager1 = st.selectbox("First Manager", managers1, key="mgr1")
+    with st.sidebar.expander("🔧 Second Selection", expanded=True):
+        m2 = st.selectbox("Month", months, index=latest_month_index, key="m2")
+        mgr2 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m2]["Manager"].dropna().unique()), key="mgr2")
+    f2 = df[(df["Disb Month"] == m2) & (df["Manager"] == mgr2)]
 
-        f1 = df_m1[df_m1["Manager"] == selected_manager1]
+    with st.sidebar.expander("📌 Campaigns — 1", expanded=False):
+        c1_list = sorted(f1["Campaign"].dropna().unique())
+        sc1 = st.multiselect("Campaigns", c1_list, default=c1_list, key="c1")
+    with st.sidebar.expander("📌 Campaigns — 2", expanded=False):
+        c2_list = sorted(f2["Campaign"].dropna().unique())
+        sc2 = st.multiselect("Campaigns", c2_list, default=c2_list, key="c2")
 
-        # -----------------------------
-        # SECOND SELECTION
-        # -----------------------------
-        selected_month2 = st.selectbox("Month - Second", months, index=latest_month_index, key="m2")
+    if sc1: f1 = f1[f1["Campaign"].isin(sc1)]
+    if sc2: f2 = f2[f2["Campaign"].isin(sc2)]
 
-        df_m2 = df[df["Disb Month"] == selected_month2]
-        managers2 = sorted(df_m2["Manager"].dropna().unique())
-
-        selected_manager2 = st.selectbox("Second Manager", managers2, key="mgr2")
-
-        f2 = df_m2[df_m2["Manager"] == selected_manager2]
-
-    # -----------------------------
-    # Campaign Filters (Cascading)
-    # -----------------------------
-    with st.sidebar.expander(f"{selected_manager1} Campaign Filter", expanded=True):
-        camp1_list = sorted(f1["Campaign"].dropna().unique())
-        selected_camp1 = st.multiselect(
-            "Campaigns - Manager 1",
-            camp1_list,
-            default=camp1_list,
-            key="camp1"
-        )
-
-    with st.sidebar.expander(f"{selected_manager2} Campaign Filter", expanded=True):
-        camp2_list = sorted(f2["Campaign"].dropna().unique())
-        selected_camp2 = st.multiselect(
-            "Campaigns - Manager 2",
-            camp2_list,
-            default=camp2_list,
-            key="camp2"
-        )
-
-    if selected_camp1:
-        f1 = f1[f1["Campaign"].isin(selected_camp1)]
-
-    if selected_camp2:
-        f2 = f2[f2["Campaign"].isin(selected_camp2)]
-
-    # -----------------------------
-    # Header
-    # -----------------------------
-    same_manager = selected_manager1 == selected_manager2
-
-    st.header("⚖️ Manager / Month Comparison" if not same_manager 
-              else f"📅 Month Comparison - {selected_manager1}")
+    lbl1 = f"{mgr1} ({m1})"
+    lbl2 = f"{mgr2} ({m2})"
+    st.title("⚖️ Comparison")
 
     if f1.empty or f2.empty:
-        st.warning("No data available for selected filters")
+        st.warning("No data for one or both selections.")
         st.stop()
 
-    # -----------------------------
-    # Metrics
-    # -----------------------------
-    d1, r1, p1, txn1, avg1, top_bank1, top_camp1, top_caller1 = calc_metrics(f1)
-    d2, r2, p2, txn2, avg2, top_bank2, top_camp2, top_caller2 = calc_metrics(f2)
+    d1, r1, p1, t1, a1, tb1, tc1, tcall1 = calc_metrics(f1)
+    d2, r2, p2, t2, a2, tb2, tc2, tcall2 = calc_metrics(f2)
+    winner = lbl1 if d1 > d2 else lbl2
 
-    label1 = f"{selected_manager1} ({selected_month1})"
-    label2 = f"{selected_manager2} ({selected_month2})"
+    st.success(f"🏆 Winner: **{winner}** with {format_inr(max(d1, d2))}")
 
-    # -----------------------------
-    # Winner Logic
-    # -----------------------------
-    if same_manager:
-        better_month = selected_month1 if d1 > d2 else selected_month2
-        st.success(f"📈 Better Month: {better_month} ({format_inr(max(d1, d2))})")
-    else:
-        winner = selected_manager1 if d1 > d2 else selected_manager2
-        st.success(f"🏆 Winner: {winner} with {format_inr(max(d1, d2))}")
-
-    # -----------------------------
-    # Metric Cards
-    # -----------------------------
     col1, col2 = st.columns(2)
+    cards_meta = [("Total Disbursed", "#6366f1"), ("Total Revenue", "#10b981"), ("Avg Payout %", "#f59e0b"), ("Transactions", "#ef4444")]
+    vals1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", f"{t1:,}"]
+    vals2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", f"{t2:,}"]
 
-    card_metrics = [
-        ("Total Disbursed", "#636EFA"),
-        ("Total Revenue", "#00CC96"),
-        ("Avg Payout %", "#EF553B"),
-        ("Transactions", "#FFA15A")
-    ]
-
-    values1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", txn1]
-    values2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", txn2]
-
+    icons = ["💰", "📈", "📊", "🔁"]
     with col1:
-        st.subheader(label1)
-        for (lbl, color), val in zip(card_metrics, values1):
-            st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
-
+        st.subheader(lbl1)
+        for (lbl, clr), val, ico in zip(cards_meta, vals1, icons):
+            st.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
     with col2:
-        st.subheader(label2)
-        for (lbl, color), val in zip(card_metrics, values2):
-            st.markdown(colored_metric_auto_fit(lbl, val, color), unsafe_allow_html=True)
+        st.subheader(lbl2)
+        for (lbl, clr), val, ico in zip(cards_meta, vals2, icons):
+            st.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
 
-    # -----------------------------
-    # Comparison Chart
-    # -----------------------------
-    comp_df = pd.DataFrame({
-        "Metric": ["Disbursed", "Revenue", "Transactions"],
-        label1: [d1 / 100000, r1 / 100000, txn1],
-        label2: [d2 / 100000, r2 / 100000, txn2]
+    insight_strip({f"{lbl1} Bank": tb1, f"{lbl1} Campaign": tc1, f"{lbl2} Bank": tb2, f"{lbl2} Campaign": tc2})
+
+    section_header("Head-to-Head Comparison")
+    comp = pd.DataFrame({
+        "Metric": ["Disbursed (L)", "Revenue (L)", "Transactions"],
+        lbl1: [d1/100000, r1/100000, t1],
+        lbl2: [d2/100000, r2/100000, t2],
     })
+    fig_c = go.Figure()
+    for lbl, vals, clr in [(lbl1, comp[lbl1], "#6366f1"), (lbl2, comp[lbl2], "#ef4444")]:
+        fig_c.add_trace(go.Bar(name=lbl, x=comp["Metric"], y=vals,
+                               text=[f"<b>{v:.2f}</b>" for v in vals],
+                               textposition="outside", marker_color=clr))
+    fig_c.update_layout(barmode="group", template="plotly_white", height=420, font=dict(family="Inter"), plot_bgcolor="white")
+    st.plotly_chart(fig_c, use_container_width=True)
 
-    fig_comp = go.Figure()
+    growth = ((d1 - d2) / d2 * 100) if d2 else 0
+    st.info(f"📈 {lbl1} is **{abs(growth):.2f}%** {'higher' if growth >= 0 else 'lower'} than {lbl2}")
 
-    fig_comp.add_trace(go.Bar(
-        name=label1,
-        x=comp_df["Metric"],
-        y=comp_df[label1],
-        text=[f"<b>{v:.2f}L</b>" if i < 2 else f"<b>{int(v)}</b>" for i, v in enumerate(comp_df[label1])],
-        textposition='outside',
-        marker_color="#636EFA"
-    ))
-
-    fig_comp.add_trace(go.Bar(
-        name=label2,
-        x=comp_df["Metric"],
-        y=comp_df[label2],
-        text=[f"<b>{v:.2f}L</b>" if i < 2 else f"<b>{int(v)}</b>" for i, v in enumerate(comp_df[label2])],
-        textposition='outside',
-        marker_color="#EF553B"
-    ))
-
-    fig_comp.update_layout(
-        barmode='group',
-        title="Comparison Overview",
-        template="plotly_white",
-        height=450
-    )
-
-    st.plotly_chart(fig_comp, use_container_width=True)
-
-    # -----------------------------
-    # Performance Difference
-    # -----------------------------
-    growth = ((d1 - d2) / d2 * 100) if d2 != 0 else 0
-
-    st.markdown("### 📈 Performance Difference")
-    st.write(f"{label1} vs {label2}: {growth:.2f}% difference")
-
-    # -----------------------------
-    # Insights Summary
-    # -----------------------------
-    st.markdown("### 📝 Insights")
-
-    st.markdown(f"""
-    <div style="background : linear-gradient(135deg, #ff416c, #ff4b2b);
-                padding: 15px;
-                border-radius: 10px;
-                display: flex;
-                justify-content: space-around;
-                text-align: center;">
-        <div><b>{label1}:</b> Top Bank {top_bank1}, Top Campaign {top_camp1}, Top Caller {top_caller1}</div>
-        <div><b>{label2}:</b> Top Bank {top_bank2}, Top Campaign {top_camp2}, Top Caller {top_caller2}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # -----------------------------
-    # Detailed Comparison Charts
-    # -----------------------------
     for title, col_name in [("Bank", "Bank"), ("Caller", "Caller"), ("Campaign", "Campaign")]:
-        st.markdown(f"### 📊 {title}-wise Comparison")
-
+        section_header(f"{title}-wise Comparison")
         fig = go.Figure()
-
-        summary1 = f1.groupby(col_name)["Disbursed AMT"].sum()
-        summary2 = f2.groupby(col_name)["Disbursed AMT"].sum()
-
-        fig.add_trace(go.Bar(
-            x=summary1.index,
-            y=summary1.values / 100000,
-            text=[f"<b>{v/100000:.2f}L</b>" for v in summary1.values],
-            textposition='auto',
-            name=label1,
-            marker_color="#636EFA"
-        ))
-
-        fig.add_trace(go.Bar(
-            x=summary2.index,
-            y=summary2.values / 100000,
-            text=[f"<b>{v/100000:.2f}L</b>" for v in summary2.values],
-            textposition='auto',
-            name=label2,
-            marker_color="#EF553B"
-        ))
-
-        fig.update_layout(
-            template="plotly_white",
-            barmode='group',
-            xaxis_tickangle=-30,
-            height=400
-        )
-
+        for f_x, lbl, clr in [(f1, lbl1, "#6366f1"), (f2, lbl2, "#ef4444")]:
+            s = f_x.groupby(col_name)["Disbursed AMT"].sum()
+            fig.add_trace(go.Bar(x=s.index, y=s.values/100000,
+                                 text=[f"<b>{v/100000:.2f}L</b>" for v in s.values],
+                                 textposition="auto", name=lbl, marker_color=clr))
+        fig.update_layout(barmode="group", template="plotly_white", xaxis_tickangle=-30, height=400, font=dict(family="Inter"), plot_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True)
 
-    # -----------------------------
-    # Data Tables at Bottom
-    # -----------------------------
-    
-    st.markdown("### 📄 Data - First Selection")
-    df1_display = f1.dropna(how='all').copy()
-    
-    # ✅ Round values
-    df1_display["Disbursed AMT"] = df1_display["Disbursed AMT"].round(0).astype(int)
-    df1_display["Total_Revenue"] = df1_display["Total_Revenue"].round(0).astype(int)
-    df1_display["AVG_Payout"] = df1_display["AVG_Payout"].round(0).astype(int)
-    # Optional formatting
-    df1_display["Disbursed AMT"] = df1_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
-    df1_display["Total_Revenue"] = df1_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
-    df1_display["AVG_Payout"] = df1_display["AVG_Payout"].apply(lambda x: f"{x:,.2f}")
-    st.dataframe(
-        df1_display.style.set_properties(**{'text-align': 'center'}),
-        use_container_width=True,
-        height=300
-    )
-    
-    st.download_button(
-        "Download CSV",
-        df1_display.to_csv(index=False),
-        "manager1.csv",
-        "text/csv"
-    )
-    
-    
-    st.markdown("### 📄 Data - Second Selection")
-    df2_display = f2.dropna(how='all').copy()
-    
-    # ✅ Round values
-    df2_display["Disbursed AMT"] = df2_display["Disbursed AMT"].round(0).astype(int)
-    df2_display["Total_Revenue"] = df2_display["Total_Revenue"].round(0).astype(int)
-    df2_display["AVG_Payout"] = df2_display["AVG_Payout"].round(0).astype(int)
-    # Optional formatting
-    df2_display["Disbursed AMT"] = df2_display["Disbursed AMT"].apply(lambda x: f"{x:,.0f}")
-    df2_display["Total_Revenue"] = df2_display["Total_Revenue"].apply(lambda x: f"{x:,.0f}")
-    df2_display["AVG_Payout"] = df2_display["AVG_Payout"].apply(lambda x: f"{x:,.2f}")
-    st.dataframe(
-        df2_display.style.set_properties(**{'text-align': 'center'}),
-        use_container_width=True,
-        height=300
-    )
-    
-    st.download_button(
-        "Download CSV",
-        df2_display.to_csv(index=False),
-        "manager2.csv",
-        "text/csv"
-    )
+    section_header("Trend Line Comparison")
+    fig_tl = go.Figure()
+    for mgr, lbl, clr in [(mgr1, lbl1, "#6366f1"), (mgr2, lbl2, "#ef4444")]:
+        t_data = df[df["Manager"] == mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
+        fig_tl.add_trace(go.Scatter(x=t_data["Disb Month"], y=t_data["Disbursed AMT"]/100000,
+                                    mode="lines+markers", name=lbl, line=dict(width=2.5, color=clr), marker=dict(size=7)))
+    fig_tl.update_layout(template="plotly_white", height=400, yaxis_title="Disbursed (L)", hovermode="x unified",
+                          font=dict(family="Inter"), plot_bgcolor="white")
+    st.plotly_chart(fig_tl, use_container_width=True)
 
-# -----------------------------
-# Campaign Performance Dashboard (ULTIMATE)
-# -----------------------------
-elif dashboard_type == "Campaign Performance":
-    with st.sidebar.expander("Month & Campaign Filter", expanded=True):
-        camp_months = sorted(df["Disb Month"].dropna().unique())
+    for label_x, f_x, fname in [(f"Data — {lbl1}", f1, "mgr1.csv"), (f"Data — {lbl2}", f2, "mgr2.csv")]:
+        section_header(label_x)
+        dd = f_x.dropna(how="all").copy()
+        for c in ["Disbursed AMT", "Total_Revenue", "AVG_Payout"]:
+            if c in dd.columns:
+                dd[c] = dd[c].round(2)
+        st.dataframe(dd.style.set_properties(**{"text-align": "center"}), use_container_width=True, height=280)
+        st.download_button(f"⬇️ {fname}", dd.to_csv(index=False), fname, "text/csv")
 
-        selected_camp_month = st.selectbox(
-            "Select Month",
-            camp_months,
-            index=len(camp_months)-1
-        )
 
-        temp_df = df[df["Disb Month"] == selected_camp_month]
+# ══════════════════════════════════════════
+# 📊 CAMPAIGN PERFORMANCE
+# ══════════════════════════════════════════
+elif dashboard_type == "📊 Campaign Performance":
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        sel_month = st.selectbox("Month", sorted(df["Disb Month"].dropna().unique()), index=latest_month_index)
+        temp_df = df[df["Disb Month"] == sel_month]
         camp_list = sorted(temp_df["Campaign"].dropna().unique())
+        c1, c2 = st.columns(2)
+        if c1.button("All"): st.session_state.camp_sel = camp_list
+        if c2.button("Clear"): st.session_state.camp_sel = []
+        if "camp_sel" not in st.session_state: st.session_state.camp_sel = camp_list
+        sel_camps = st.multiselect("Campaigns", camp_list, default=st.session_state.camp_sel)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            select_all = st.button("Select All")
-        with col2:
-            clear_all = st.button("Clear All")
+    camp_f = df[df["Disb Month"] == sel_month]
+    if sel_camps: camp_f = camp_f[camp_f["Campaign"].isin(sel_camps)]
 
-        if "camp_selection" not in st.session_state:
-            st.session_state.camp_selection = camp_list
+    st.title("Campaign Performance")
 
-        if select_all:
-            st.session_state.camp_selection = camp_list
-        if clear_all:
-            st.session_state.camp_selection = []
+    if camp_f.empty:
+        st.warning("No data."); st.stop()
 
-        selected_camps = st.multiselect(
-            "Select Campaigns",
-            camp_list,
-            default=st.session_state.camp_selection
-        )
+    cp = camp_f.groupby("Campaign")["Disbursed AMT"].sum()
+    top_c = cp.idxmax()
+    st.success(f"🏆 Top Campaign: **{top_c}** — {format_inr(cp.max())}")
 
-    # Apply filters
-    camp_df = df[df["Disb Month"] == selected_camp_month]
-    if selected_camps:
-        camp_df = camp_df[camp_df["Campaign"].isin(selected_camps)]
+    td = camp_f["Disbursed AMT"].sum()
+    tr = camp_f["Total_Revenue"].sum()
+    ap = (tr / td * 100) if td else 0
+    low_c = cp.idxmin()
+    top_mgr = camp_f.groupby("Manager")["Disbursed AMT"].sum().idxmax()
 
-    st.header("📊 Campaign Performance Dashboard")
-
-    if camp_df.empty:
-        st.warning("No data available for selected filters")
-        st.stop()
-
-    # -----------------------------
-    # 🏆 Top Campaign
-    # -----------------------------
-    camp_perf = camp_df.groupby("Campaign")["Disbursed AMT"].sum()
-    top_campaign = camp_perf.idxmax()
-    top_value = camp_perf.max()
-
-    st.success(f"🏆 Top Campaign: {top_campaign} ({format_inr(top_value)})")
-
-    # -----------------------------
-    # 📄 Manager Table
-    # -----------------------------
-    camp_summary = camp_df.groupby("Manager").agg(
-        Total_Disbursed=("Disbursed AMT","sum"),
-        Total_Revenue=("Total_Revenue","sum"),
-        Transactions=("Manager","count")
-    ).reset_index()
-
-    camp_summary["Avg_Payout"] = (
-        camp_summary["Total_Revenue"] / camp_summary["Total_Disbursed"] * 100
-    ).round(2)
-
-    camp_summary["Total_Disbursed"] = camp_summary["Total_Disbursed"].apply(format_inr)
-    camp_summary["Total_Revenue"] = camp_summary["Total_Revenue"].apply(format_inr)
-
-    st.subheader("📄 Manager Performance Table")
-    st.dataframe(camp_summary, use_container_width=True, height=350)
-
-    st.download_button(
-        "Download CSV",
-        camp_summary.to_csv(index=False),
-        "campaign_performance.csv",
-        "text/csv"
-    )
-
-    # -----------------------------
-    # 📊 Campaign-wise Chart
-    # -----------------------------
-    colors = get_colors(camp_perf.index, top_campaign)
-
-    fig_camp = go.Figure(go.Bar(
-        x=camp_perf.index,
-        y=camp_perf.values/100000,
-        text=[f"{v/100000:.2f}L" for v in camp_perf.values],
-        textposition="outside",
-        marker_color=colors
-    ))
-
-    fig_camp.update_layout(
-        title="Campaign-wise Performance",
-        template="plotly_white",
-        height=450
-    )
-
-    fig_camp.update_traces(cliponaxis=False)
-    st.plotly_chart(fig_camp, use_container_width=True)
-
-    # -----------------------------
-    # 🏆 Best Manager per Campaign
-    # -----------------------------
-    st.markdown("### 🏆 Best Manager per Campaign")
-
-    best_mgr = camp_df.groupby(["Campaign","Manager"])["Disbursed AMT"].sum().reset_index()
-    best_mgr = best_mgr.loc[
-        best_mgr.groupby("Campaign")["Disbursed AMT"].idxmax()
+    cards_row = [
+        ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+        ("Total Revenue", format_inr(tr), "📈", "#10b981"),
+        ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
+        ("Best Manager", top_mgr, "🏆", "#8b5cf6"),
     ]
+    cols = st.columns(4)
+    for col, (lbl, val, ico, clr) in zip(cols, cards_row):
+        col.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
 
-    best_mgr["Disbursed AMT"] = best_mgr["Disbursed AMT"].apply(format_inr)
+    section_header("Campaign-wise Disbursed")
+    cp_df = cp.reset_index()
+    cp_df.columns = ["Campaign", "Disbursed AMT"]
+    st.plotly_chart(styled_bar(cp_df, "Campaign", "Campaign", "Disbursed AMT", "Campaign Performance"), use_container_width=True)
 
-    st.dataframe(best_mgr, use_container_width=True, height=300)
+    section_header("Manager Performance Table")
+    mgr_agg = camp_f.groupby("Manager").agg(
+        Total_Disbursed=("Disbursed AMT", "sum"),
+        Total_Revenue=("Total_Revenue", "sum"),
+        Transactions=("Manager", "count"),
+    ).reset_index()
+    mgr_agg["Avg_Payout%"] = (mgr_agg["Total_Revenue"] / mgr_agg["Total_Disbursed"] * 100).round(2)
+    mgr_disp = mgr_agg.copy()
+    mgr_disp["Total_Disbursed"] = mgr_disp["Total_Disbursed"].apply(format_inr)
+    mgr_disp["Total_Revenue"] = mgr_disp["Total_Revenue"].apply(format_inr)
+    st.dataframe(mgr_disp, use_container_width=True, height=320)
 
-    # -----------------------------
-    # 🚨 Underperforming Campaigns
-    # -----------------------------
-    st.markdown("### 🚨 Underperforming Campaigns")
+    pdf_bytes = generate_pdf_bytes(mgr_disp, f"Campaign Performance — {sel_month}")
+    c1, c2 = st.columns(2)
+    with c1: st.download_button("⬇️ Download CSV", mgr_disp.to_csv(index=False), "campaign_perf.csv", "text/csv")
+    with c2:
+        if pdf_bytes: st.download_button("📄 Export PDF", pdf_bytes, "campaign_perf.pdf", "application/pdf")
 
-    avg_perf = camp_perf.mean()
-    underperforming = camp_perf[camp_perf < avg_perf]
+    section_header("Best Manager per Campaign")
+    bm = camp_f.groupby(["Campaign", "Manager"])["Disbursed AMT"].sum().reset_index()
+    bm = bm.loc[bm.groupby("Campaign")["Disbursed AMT"].idxmax()]
+    bm["Disbursed AMT"] = bm["Disbursed AMT"].apply(format_inr)
+    st.dataframe(bm, use_container_width=True, height=280)
 
-    if underperforming.empty:
-        st.success("✅ No underperforming campaigns")
+    section_header("Underperforming Campaigns")
+    avg_p = cp.mean()
+    under = cp[cp < avg_p].reset_index()
+    under.columns = ["Campaign", "Disbursed AMT"]
+    if under.empty:
+        st.success("✅ All campaigns above average!")
     else:
-        under_df = underperforming.reset_index()
-        under_df.columns = ["Campaign","Disbursed AMT"]
-        under_df["Disbursed AMT"] = under_df["Disbursed AMT"].apply(format_inr)
+        under["Disbursed AMT"] = under["Disbursed AMT"].apply(format_inr)
+        st.warning(f"{len(under)} campaign(s) below average ({format_inr(avg_p)})")
+        st.dataframe(under, use_container_width=True)
 
-        st.warning(f"{len(under_df)} campaigns below average")
-        st.dataframe(under_df, use_container_width=True)
+    section_header("Bank-wise Disbursed")
+    bk = camp_f.groupby("Bank")["Disbursed AMT"].sum().reset_index()
+    bk.columns = ["Bank", "Disbursed AMT"]
+    st.plotly_chart(styled_bar(bk, "Bank", "Bank", "Disbursed AMT", "Bank-wise Performance"), use_container_width=True)
 
-    # -----------------------------
-    # 📊 Bank-wise Chart
-    # -----------------------------
-    bank_summary = camp_df.groupby("Bank")["Disbursed AMT"].sum()
-
-    if not bank_summary.empty:
-        top_bank = bank_summary.idxmax()
-        bank_colors = get_colors(bank_summary.index, top_bank)
-
-        fig_bank = go.Figure(go.Bar(
-            x=bank_summary.index,
-            y=bank_summary.values/100000,
-            text=[f"{v/100000:.2f}L" for v in bank_summary.values],
-            textposition="outside",
-            marker_color=bank_colors
-        ))
-
-        fig_bank.update_layout(
-            yaxis_title="Amount (L)",
-            template="plotly_white",
-            height=400,
-            title="Bank-wise Disbursed Amount"
-        )
-
-        fig_bank.update_traces(cliponaxis=False)
-        st.plotly_chart(fig_bank, use_container_width=True)
-
-    # -----------------------------
-    # 📈 Growth Analysis
-    # -----------------------------
-    current_month_index = camp_months.index(selected_camp_month)
-
-    if current_month_index > 0:
-        prev_month = camp_months[current_month_index - 1]
-
-        prev_df = df[df["Disb Month"] == prev_month]
-
-        curr_total = camp_df["Disbursed AMT"].sum()
-        prev_total = prev_df["Disbursed AMT"].sum()
-
-        growth = ((curr_total - prev_total) / prev_total * 100) if prev_total != 0 else 0
-
-        st.markdown("### 📈 Growth Analysis")
-        st.write(f"{selected_camp_month} vs {prev_month}: {growth:.2f}% change")
-
-    # -----------------------------
-    # 🤖 AI Insights
-    # -----------------------------
-    st.markdown("### 🤖 AI Insights")
-
-    total_disb = camp_df["Disbursed AMT"].sum()
-    total_rev = camp_df["Total_Revenue"].sum()
-    avg_payout = (total_rev / total_disb * 100) if total_disb else 0
-
-    low_campaign = camp_perf.idxmin()
-    low_value = camp_perf.min()
-
-    top_manager = camp_df.groupby("Manager")["Disbursed AMT"].sum().idxmax()
-
-    insight_text = f"""
-📊 Total Disbursed: {format_inr(total_disb)}  
-💰 Total Revenue: {format_inr(total_rev)}  
-📈 Avg Payout: {avg_payout:.2f}%  
-
-🏆 Top Campaign: {top_campaign} ({format_inr(top_value)})  
-📉 Lowest Campaign: {low_campaign} ({format_inr(low_value)})  
-
-👑 Best Manager Overall: {top_manager}  
-⚠️ {len(underperforming)} campaigns need attention  
-"""
-
-    st.info(insight_text)
+    camp_months = sorted(df["Disb Month"].dropna().unique())
+    if camp_months.index(sel_month) > 0:
+        prev = camp_months[camp_months.index(sel_month) - 1]
+        prev_t = df[df["Disb Month"] == prev]["Disbursed AMT"].sum()
+        growth = ((td - prev_t) / prev_t * 100) if prev_t else 0
+        section_header("MoM Growth")
+        g_col = "#10b981" if growth >= 0 else "#ef4444"
+        st.markdown(f"""
+        <div style="background:white;border-radius:12px;padding:16px 20px;border:1px solid #e2e8f0;text-align:center;">
+            <span style="font-size:32px;font-weight:700;color:{g_col}">{'▲' if growth >= 0 else '▼'} {abs(growth):.2f}%</span>
+            <div style="color:#64748b;font-size:13px;margin-top:4px">{sel_month} vs {prev}</div>
+        </div>""", unsafe_allow_html=True)
 
 
-# -----------------------------
-# 📊 CAMPAIGN FUNNEL ANALYSIS (NEW) with Dynamic Filters
-# -----------------------------
-if dashboard_type == "Prefr & PW Campaign Reports":
-
-    st.header("Prefr & PW Campaign Reports")
-
+# ══════════════════════════════════════════
+# 📡 PREFR & PW REPORTS
+# ══════════════════════════════════════════
+elif dashboard_type == "📡 Prefr & PW Reports":
     df2 = campaign_df.copy()
+    st.title("Prefr & PW Campaign Reports")
 
-    # Initialize filters
-    months = ["All"] + sorted(df2["Month"].dropna().unique())
-    selected_month = st.sidebar.selectbox("Select Month", months)
+    all_months = ["All"] + sorted(df2["Month"].dropna().unique())
+    sel_month = st.sidebar.selectbox("Month", all_months)
+    fm = df2 if sel_month == "All" else df2[df2["Month"] == sel_month]
 
-    # Filter month first
-    filtered_month = df2.copy()
-    if selected_month != "All":
-        filtered_month = filtered_month[filtered_month["Month"] == selected_month]
+    dates = ["All"] + sorted(fm["Date"].dropna().unique())
+    sel_date = st.sidebar.selectbox("Date", dates)
+    fd = fm if sel_date == "All" else fm[fm["Date"] == sel_date]
 
-    # Dynamic Dates
-    dates = ["All"] + sorted(filtered_month["Date"].dropna().unique())
-    selected_date = st.sidebar.selectbox("Select Date", dates)
-    filtered_date = filtered_month.copy()
-    if selected_date != "All":
-        filtered_date = filtered_date[filtered_date["Date"] == selected_date]
+    cnames = ["All"] + sorted(fd["Campaign Name"].dropna().unique())
+    sel_c = st.sidebar.selectbox("Campaign", cnames)
+    fc = fd if sel_c == "All" else fd[fd["Campaign Name"] == sel_c]
 
-    # Dynamic Campaigns
-    campaigns = ["All"] + sorted(filtered_date["Campaign Name"].dropna().unique())
-    selected_campaign = st.sidebar.selectbox("Select Campaign", campaigns)
-    filtered_campaign = filtered_date.copy()
-    if selected_campaign != "All":
-        filtered_campaign = filtered_campaign[filtered_campaign["Campaign Name"] == selected_campaign]
+    mgrs = ["All"] + (sorted(fc["Manager"].dropna().unique()) if "Manager" in fc.columns else [])
+    sel_m = st.sidebar.selectbox("Manager", mgrs)
+    filtered = fc if sel_m == "All" or "Manager" not in fc.columns else fc[fc["Manager"] == sel_m]
 
-    # Dynamic Managers
-    managers = ["All"] + sorted(filtered_campaign["Manager"].dropna().unique()) if "Manager" in filtered_campaign.columns else ["All"]
-    selected_manager = st.sidebar.selectbox("Select Manager", managers)
-    filtered = filtered_campaign.copy()
-    if selected_manager != "All" and "Manager" in filtered.columns:
-        filtered = filtered[filtered["Manager"] == selected_manager]
-
-    # Aggregate metrics
     total_ivr = int(filtered["IVR Data"].sum())
     press1 = int(filtered["Press 1"].sum())
     leads = int(filtered["Total Request"].sum())
@@ -1157,203 +872,204 @@ if dashboard_type == "Prefr & PW Campaign Reports":
     delivered = int(filtered["RCS Delivered"].sum())
     read = int(filtered["RCS Read"].sum())
     clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost =int(filtered["Total Cost"].sum())
+    cost = int(filtered["Total Cost"].sum())
     total_disbursed = int(filtered["Disbursed"].sum())
     arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
 
-    # -----------------------------
-    # Colorful KPI cards
-    # -----------------------------
-    kpi_html = f"""
-    <style>
-        .kpi-card {{
-            color: white;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            font-family: sans-serif;
-            flex:1;
-        }}
-        .kpi-title {{
-            font-size: 16px;
-            font-weight: bold;
-        }}
-        .kpi-value {{
-            font-size: 28px;
-            margin-top: 5px;
-        }}
-        .kpi-container {{
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-        }}
-    </style>
-    <div class="kpi-container">
-        <div class="kpi-card" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
-            <div class="kpi-title">Total IVR</div><div class="kpi-value">{total_ivr:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);">
-            <div class="kpi-title">Press 1</div><div class="kpi-value">{press1:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">Total Request</div><div class="kpi-value">{leads:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
-            <div class="kpi-title">RCS Sent</div><div class="kpi-value">{sent:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #fc4a1a, #f7b733);">
-            <div class="kpi-title">RCS Read</div><div class="kpi-value">{read:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #00c6ff, #0072ff);">
-            <div class="kpi-title">Clicks</div><div class="kpi-value">{clicks:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #8e2de2, #4a00e0);">
-            <div class="kpi-title">Total Cost</div><div class="kpi-value">₹{cost:,}</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
-            <div class="kpi-title">ARG CTR %</div><div class="kpi-value">{arg_ctr:.2f}%</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);">
-            <div class="kpi-title">Total Disbursed</div><div class="kpi-value">₹{total_disbursed:,}</div>
-        </div>
-    </div>
-    """
-    st.markdown(kpi_html, unsafe_allow_html=True)
-    # -----------------------------
-    # Funnel chart
-    # -----------------------------
-    st.subheader("📉 Funnel")
-    
-    stages = ["IVR","Press1","Total Request","Delivered","Read","Clicks"]
+    kpi_data = [
+        ("IVR Data", f"{total_ivr:,}", "#6366f1", "#4f46e5"),
+        ("Press 1", f"{press1:,}", "#ef4444", "#dc2626"),
+        ("Total Request", f"{leads:,}", "#f59e0b", "#d97706"),
+        ("RCS Sent", f"{sent:,}", "#10b981", "#059669"),
+        ("RCS Read", f"{read:,}", "#3b82f6", "#2563eb"),
+        ("Clicks", f"{clicks:,}", "#8b5cf6", "#7c3aed"),
+        ("Total Cost", f"₹{cost:,}", "#ec4899", "#db2777"),
+        ("CTR %", f"{arg_ctr:.2f}%", "#14b8a6", "#0d9488"),
+        ("Total Disbursed", f"₹{total_disbursed:,}", "#6366f1", "#4f46e5"),
+    ]
+
+    st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
+    for title, val, c1, c2 in kpi_data:
+        st.markdown(f"""
+        <div class="kpi-card" style="background:linear-gradient(135deg,{c1},{c2})">
+            <div class="kpi-title">{title}</div>
+            <div class="kpi-value">{val}</div>
+        </div>""", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    section_header("Funnel Analysis")
+    stages = ["IVR Data", "Press 1", "Total Request", "RCS Delivered", "RCS Read", "Clicks"]
     values = [total_ivr, press1, leads, delivered, read, clicks]
-    
-    funnel_colors = ["#6a11cb", "#ff416c", "#f7971e", "#11998e", "#fc4a1a", "#00c6ff"]
-    
-    # Safe max
-    max_val = max(values) if max(values) > 0 else 1
-    
-    text_positions = ["inside" if (v / max_val) > 0.05 else "outside" for v in values]
-    
-    fig = go.Figure(go.Funnel(
-        y=stages,
-        x=values,
+    max_v = max(values) if max(values) > 0 else 1
+
+    fig_f = go.Figure(go.Funnel(
+        y=stages, x=values,
         textinfo="value+percent previous",
-        textposition=text_positions,
-        marker=dict(color=funnel_colors),
-        orientation="h",
-        opacity=0.95,
-    
-        # Text inside funnel
-        textfont=dict(
-            size=12,
-            color="Black",
-            family="Arial Black"   # ✅ bold text
-        )
+        marker=dict(color=["#6366f1","#8b5cf6","#f59e0b","#10b981","#3b82f6","#ec4899"]),
+        textfont=dict(size=12, family="Inter, sans-serif"),
+        connector=dict(line=dict(color="#e2e8f0", width=2)),
     ))
-    
-    # ✅ Y-axis bold
-    fig.update_layout(
-        margin=dict(l=50, r=50, t=30, b=30),
-        height=450,
-        plot_bgcolor="white",
+    fig_f.update_layout(
+        height=460, template="plotly_white", margin=dict(l=60, r=40, t=20, b=20),
+        font=dict(family="Inter, sans-serif"),
         paper_bgcolor="white",
-        funnelmode="stack",
-    
-        yaxis=dict(
-            tickfont=dict(
-                family="Arial Black",  # ✅ bold Y labels
-                size=14,
-                color="black"
-            )
-        )
     )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_f, use_container_width=True)
 
-        
-    # -----------------------------
-    # CONVERSION
-    # -----------------------------
-    st.subheader("📊 Conversion")
-
-    press_rate = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-    delivery_rate = round((delivered / sent * 100) if sent else 0, 2)
-    read_rate = round((read / delivered * 100) if delivered else 0, 2)
+    section_header("Conversion Metrics")
+    press_r = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
+    del_r = round((delivered / sent * 100) if sent else 0, 2)
+    read_r = round((read / delivered * 100) if delivered else 0, 2)
     cpl = round((cost / leads) if leads else 0, 2)
 
-    c1,c2,c3,c4 = st.columns(4)
-    c1.metric("Press %", f"{press_rate}%")
-    c2.metric("Delivery %", f"{delivery_rate}%")
-    c3.metric("Read %", f"{read_rate}%")
-    c4.metric("Cost/Lead", f"₹{cpl}")
+    mc = st.columns(4)
+    for col, (lbl, val, ico, clr) in zip(mc, [
+        ("Press Rate", f"{press_r}%", "📲", "#6366f1"),
+        ("Delivery Rate", f"{del_r}%", "📬", "#10b981"),
+        ("Read Rate", f"{read_r}%", "📖", "#f59e0b"),
+        ("Cost / Lead", f"₹{cpl}", "💸", "#ef4444"),
+    ]):
+        col.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
 
-    # -----------------------------
-    # INSIGHTS
-    # -----------------------------
-    st.subheader("🤖 Insights")
+    warnings = []
+    if arg_ctr < 2: warnings.append("⚠️ CTR is below 2% — consider improving RCS content")
+    if del_r < 70: warnings.append("⚠️ Delivery rate below 70% — check DND/number quality")
+    if read_r < 50: warnings.append("⚠️ Low read rate — try better message timing or preview text")
+    if cpl > 100: warnings.append("⚠️ Cost per lead is high — optimise campaign spend")
+    for w in warnings:
+        st.warning(w)
 
-    if arg_ctr < 2:
-        st.warning("Low CTR")
-    if delivery_rate < 70:
-        st.warning("Delivery issue")
-    if read_rate < 50:
-        st.warning("Low read rate")
-    if cpl > 100:
-        st.warning("High cost per lead")
-
-    # -----------------------------
-    # CHARTS SECTION
-    # -----------------------------
     if not filtered.empty:
-
-        # Campaign-wise
         if "Campaign Name" in filtered.columns:
-            st.subheader("📊 Campaign-wise Leads")
-            df_c = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-
-            fig1 = px.bar(df_c, x="Campaign Name", y="Total Request", text="Total Request")
-            fig1.update_traces(textfont=dict(family="Arial Black", size=14))
-            fig1.update_layout(
-                xaxis=dict(tickfont=dict(family="Arial Black")),
-                yaxis=dict(tickfont=dict(family="Arial Black"))
-            )
+            section_header("Campaign-wise Leads")
+            df_cl = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
+            fig1 = px.bar(df_cl, x="Campaign Name", y="Total Request", text="Total Request",
+                          color_discrete_sequence=COLORS)
+            fig1.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
             st.plotly_chart(fig1, use_container_width=True)
 
-        # Manager Allocation
         if "Manager" in filtered.columns:
-            st.subheader("🍩 Manager-wise Allocation")
-            df_m = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
-
-            total = df_m["Total Lead"].sum() or 1
-            df_m["label"] = df_m.apply(lambda r: f"{r['Manager']}<br>{r['Total Lead']} ({r['Total Lead']/total*100:.1f}%)", axis=1)
-
-            fig2 = px.pie(df_m, names="Manager", values="Total Lead", hole=0.5)
-            fig2.update_traces(text=df_m["label"], textfont=dict(family="Arial Black", size=14))
+            section_header("Manager-wise Allocation")
+            df_ml = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
+            fig2 = px.pie(df_ml, names="Manager", values="Total Lead", hole=0.5, color_discrete_sequence=COLORS)
+            fig2.update_layout(font=dict(family="Inter"), height=400)
             st.plotly_chart(fig2, use_container_width=True)
 
-        # Disbursed
-        if "Manager" in filtered.columns:
-            st.subheader("💰 Manager-wise Disbursed")
-            df_d = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-
-            fig3 = px.bar(df_d, x="Manager", y="Disbursed", text="Disbursed")
-            fig3.update_traces(
-                texttemplate='₹%{text:,}',
-                textfont=dict(family="Arial Black", size=14)
-            )
-            fig3.update_layout(
-                xaxis=dict(tickfont=dict(family="Arial Black")),
-                yaxis=dict(tickfont=dict(family="Arial Black"))
-            )
+            section_header("Manager-wise Disbursed")
+            df_md = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
+            fig3 = px.bar(df_md, x="Manager", y="Disbursed", text="Disbursed", color_discrete_sequence=COLORS)
+            fig3.update_traces(texttemplate="₹%{text:,}")
+            fig3.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
             st.plotly_chart(fig3, use_container_width=True)
 
-    else:
-        st.warning("No data available")
 
-# Sidebar + Logout
-# -----------------------------
-st.sidebar.title("")
+# ══════════════════════════════════════════
+# 🎯 TARGET TRACKER  (NEW)
+# ══════════════════════════════════════════
+elif dashboard_type == "🎯 Target Tracker":
+    st.title("Target Tracker")
+    st.markdown("Set monthly/weekly disbursement targets per manager and track progress.")
 
-if st.sidebar.button("🚪 Logout"):
-    st.session_state.login = False
-    st.rerun()
+    with st.sidebar.expander("🔧 Filter", expanded=True):
+        sel_month = st.selectbox("Month", months, index=latest_month_index)
+        period = st.radio("Period", ["Monthly", "Weekly"])
+
+    filtered_mgr_df = df[df["Disb Month"] == sel_month]
+    mgr_actual = filtered_mgr_df.groupby("Manager")["Disbursed AMT"].sum().reset_index()
+    mgr_actual.columns = ["Manager", "Actual"]
+
+    st.markdown("#### Set Targets (in Lakhs)")
+    st.caption("Enter your disbursement target for each manager.")
+
+    if "targets" not in st.session_state:
+        st.session_state.targets = {}
+
+    cols_input = st.columns(3)
+    for i, row in mgr_actual.iterrows():
+        mgr = row["Manager"]
+        default_val = st.session_state.targets.get(mgr, 50)
+        with cols_input[i % 3]:
+            t = st.number_input(f"{mgr}", min_value=0, max_value=10000, value=default_val, step=5, key=f"tgt_{mgr}")
+            st.session_state.targets[mgr] = t
+
+    section_header("Progress Dashboard")
+
+    for _, row in mgr_actual.iterrows():
+        mgr = row["Manager"]
+        actual_l = row["Actual"] / 100000
+        target_l = st.session_state.targets.get(mgr, 50)
+
+        if period == "Weekly":
+            now_ist = datetime.now(timezone(timedelta(hours=5, minutes=30)))
+            day_of_month = now_ist.day
+            week_num = (day_of_month - 1) // 7 + 1
+            weeks_passed = min(week_num, 4)
+            weekly_target = target_l / 4
+            effective_target = weekly_target * weeks_passed
+            period_label = f"Week {week_num} Target (pro-rated)"
+        else:
+            effective_target = target_l
+            period_label = "Monthly Target"
+
+        pct = min((actual_l / effective_target * 100) if effective_target else 0, 100)
+        remaining = max(effective_target - actual_l, 0)
+
+        if pct >= 100:
+            bar_color = "#10b981"
+            status = "✅ Target Achieved!"
+        elif pct >= 75:
+            bar_color = "#6366f1"
+            status = f"🔵 {pct:.1f}% — On track"
+        elif pct >= 50:
+            bar_color = "#f59e0b"
+            status = f"🟡 {pct:.1f}% — Needs push"
+        else:
+            bar_color = "#ef4444"
+            status = f"🔴 {pct:.1f}% — Behind target"
+
+        st.markdown(f"""
+        <div class="target-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <span style="font-weight:600;font-size:15px;color:#0f172a">{mgr}</span>
+                <span style="font-size:12px;color:#64748b">{period_label}: {effective_target:.1f}L</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;margin-bottom:2px;">
+                <span>Achieved: <b style="color:#0f172a">{actual_l:.2f}L</b></span>
+                <span>Remaining: <b style="color:#ef4444">{remaining:.2f}L</b></span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width:{pct:.1f}%;background:{bar_color}"></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:{bar_color}">{status}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    section_header("Team Progress Overview")
+    total_actual = mgr_actual["Actual"].sum() / 100000
+    total_target = sum(st.session_state.targets.get(m, 50) for m in mgr_actual["Manager"])
+    team_pct = (total_actual / total_target * 100) if total_target else 0
+
+    col_a, col_b, col_c = st.columns(3)
+    col_a.markdown(metric_card("Team Disbursed", f"{total_actual:.1f}L", "💼", "#6366f1"), unsafe_allow_html=True)
+    col_b.markdown(metric_card("Team Target", f"{total_target:.1f}L", "🎯", "#f59e0b"), unsafe_allow_html=True)
+    col_c.markdown(metric_card("Achievement %", f"{team_pct:.1f}%", "📊", "#10b981" if team_pct >= 75 else "#ef4444"), unsafe_allow_html=True)
+
+    section_header("Manager Target vs Actual (Bar)")
+    target_df = mgr_actual.copy()
+    target_df["Target"] = target_df["Manager"].map(lambda m: st.session_state.targets.get(m, 50))
+    target_df["Actual_L"] = target_df["Actual"] / 100000
+
+    fig_tgt = go.Figure()
+    fig_tgt.add_trace(go.Bar(name="Target", x=target_df["Manager"], y=target_df["Target"],
+                              marker_color="#e2e8f0", text=[f"{v:.1f}L" for v in target_df["Target"]],
+                              textposition="outside"))
+    fig_tgt.add_trace(go.Bar(name="Actual", x=target_df["Manager"], y=target_df["Actual_L"],
+                              marker_color="#6366f1", text=[f"{v:.1f}L" for v in target_df["Actual_L"]],
+                              textposition="outside"))
+    fig_tgt.update_layout(
+        barmode="overlay", template="plotly_white", height=420,
+        font=dict(family="Inter", size=12), plot_bgcolor="white",
+        yaxis_title="Disbursed (Lakhs)",
+        legend=dict(orientation="h", y=-0.2),
+    )
+    st.plotly_chart(fig_tgt, use_container_width=True)
