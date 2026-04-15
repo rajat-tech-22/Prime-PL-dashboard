@@ -476,7 +476,7 @@ with st.sidebar:
     st.markdown("---")
     dashboard_type = st.radio(
         "Navigation",
-        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "📡 Prefr & PW Reports", "🎯 Target Tracker"],
+        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance","🎯 Target Tracker"],
         label_visibility="collapsed"
     )
     st.markdown("---")
