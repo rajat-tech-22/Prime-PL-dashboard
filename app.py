@@ -900,7 +900,7 @@ elif dashboard_type == "🎯 Target Tracker":
     # ── Sidebar filters ──
     with st.sidebar.expander("🔧 Filter", expanded=True):
         sel_month = st.selectbox("Month", months, index=latest_month_index)
-        period = st.radio("Period", ["Monthly", "Weekly"])
+        period = st.radio("Period", ["Monthly"])
 
     # ── Reload button ──
     col_ref, col_info = st.columns([1, 5])
