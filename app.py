@@ -90,13 +90,13 @@ html, body, [class*="css"] {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #94a3b8;
+    color: Black;
     margin-bottom: 8px;
 }
 .metric-value {
     font-size: 26px;
     font-weight: 700;
-    color: #0f172a;
+    color: Black;
     line-height: 1.1;
 }
 .metric-icon {
