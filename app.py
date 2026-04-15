@@ -528,26 +528,26 @@ if dashboard_type == "🏠 Overview":
         bs.columns = ["Bank", "Disbursed AMT"]
         st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise Disbursed Amount"), use_container_width=True)
 
-        section_header("Manager Monthly Trend")
-        trend_df = df.copy()
-        if selected_vertical != "All":
-            trend_df = trend_df[trend_df["Vertical"] == selected_vertical]
-        trend = trend_df.groupby(["Disb Month", "Manager"])["Disbursed AMT"].sum().reset_index()
-        fig_trend = px.line(
-            trend, x="Disb Month", y="Disbursed AMT", color="Manager",
-            markers=True, title="Manager-wise Monthly Trend",
-            labels={"Disbursed AMT": "Disbursed (₹)", "Disb Month": "Month"},
-            color_discrete_sequence=COLORS,
-        )
-        fig_trend.update_layout(
-            template="plotly_white", height=450,
-            font=dict(family="Inter, sans-serif"),
-            hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=-0.4),
-            plot_bgcolor="white",
-        )
-        fig_trend.update_traces(line=dict(width=2.5))
-        st.plotly_chart(fig_trend, use_container_width=True)
+        # section_header("Manager Monthly Trend")
+        # trend_df = df.copy()
+        # if selected_vertical != "All":
+        #     trend_df = trend_df[trend_df["Vertical"] == selected_vertical]
+        # trend = trend_df.groupby(["Disb Month", "Manager"])["Disbursed AMT"].sum().reset_index()
+        # fig_trend = px.line(
+        #     trend, x="Disb Month", y="Disbursed AMT", color="Manager",
+        #     markers=True, title="Manager-wise Monthly Trend",
+        #     labels={"Disbursed AMT": "Disbursed (₹)", "Disb Month": "Month"},
+        #     color_discrete_sequence=COLORS,
+        # )
+        # fig_trend.update_layout(
+        #     template="plotly_white", height=450,
+        #     font=dict(family="Inter, sans-serif"),
+        #     hovermode="x unified",
+        #     legend=dict(orientation="h", yanchor="bottom", y=-0.4),
+        #     plot_bgcolor="white",
+        # )
+        # fig_trend.update_traces(line=dict(width=2.5))
+        # st.plotly_chart(fig_trend, use_container_width=True)
 
 
 # ══════════════════════════════════════════
