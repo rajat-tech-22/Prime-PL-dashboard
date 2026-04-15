@@ -63,7 +63,7 @@ html, body, [class*="css"] {
 
 /* ── Main Background ── */
 .stApp {
-    background-color: #f8fafc;
+    background-color: Black;
 }
 
 /* ── Cards ── */
