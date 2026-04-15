@@ -1067,6 +1067,4 @@ elif dashboard_type == "🎯 Target Tracker":
     )
     st.plotly_chart(fig_tgt, use_container_width=True)
 
- if st.button("🚪 Logout"):
-        st.session_state.login = False
-        st.rerun()
+
