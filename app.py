@@ -616,237 +616,127 @@ if dashboard_type == "🏠 Overview":
         st.plotly_chart(fig_trend, use_container_width=True)
 
         # ══════════════════════════════════════════
-        # TEAM vs MONTH COMPARISON TABLE
+        # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON - USING DISB DATE)
         # ══════════════════════════════════════════
-        section_header("📋 Team & Month Comparison Table")
-
-        # ── Date filter ──
-        ist_now = datetime.now(timezone(timedelta(hours=5, minutes=30)))
-        filter_col1, filter_col2, filter_col3 = st.columns([1, 1, 3])
-        with filter_col1:
-            comp_date1 = st.date_input(
-                "From Date",
-                value=ist_now.date().replace(day=1),
-                key="comp_date1"
-            )
-        with filter_col2:
-            comp_date2 = st.date_input(
-                "To Date",
-                value=ist_now.date(),
-                key="comp_date2"
-            )
-        with filter_col3:
-            st.markdown(
-                f"<div style='padding-top:28px;font-size:13px;color:#64748b;'>"
-                f"📅 Showing data as of: <b>{comp_date2.strftime('%d %b %Y')}</b></div>",
-                unsafe_allow_html=True
-            )
-
-        if comparison_err:
-            st.error(f"Could not load comparison sheet: {comparison_err}")
-        elif comparison_raw.empty:
-            st.warning("Comparison sheet is empty.")
-        else:
-            # ── Parse the raw sheet ──
-            # Row 0: "TEAMS", "", "MAR'26", "", "", "APR'26", "", "", ""
-            # Row 1: "Vertical", "Manager", "Mar Target", "Achieved...", "% of target", "APR Target", "Achieved...", "% of target", "Comparison"
-            # Row 2+: data rows
-
-            raw = comparison_raw.copy()
-
-            # Build month headers from row 0
-            header_row0 = raw.iloc[0].fillna("").tolist()
-            header_row1 = raw.iloc[1].fillna("").tolist()
-
-            # Combine headers: fill forward month group names
-            combined_headers = []
-            current_month = ""
-            for i, (h0, h1) in enumerate(zip(header_row0, header_row1)):
-                h0 = str(h0).strip()
-                h1 = str(h1).strip()
-                if h0 and h0 not in ["TEAMS", ""]:
-                    current_month = h0
-                if h1 in ["Vertical", "Manager"]:
-                    combined_headers.append(h1)
-                elif h1 == "Comparison":
-                    combined_headers.append("Comparison")
-                elif h1:
-                    combined_headers.append(f"{current_month}|{h1}")
-                else:
-                    combined_headers.append(f"col_{i}")
-
-            # Data starts from row 2
-            data_rows = raw.iloc[2:].copy()
-            data_rows.columns = combined_headers
-
-            # Drop fully empty rows
-            data_rows = data_rows.dropna(how="all")
-            data_rows = data_rows[data_rows["Manager"].notna() & (data_rows["Manager"].astype(str).str.strip() != "")]
-
-            # Identify month columns dynamically
-            month_groups = {}
-            for col in combined_headers:
-                if "|" in col:
-                    m, sub = col.split("|", 1)
-                    if m not in month_groups:
-                        month_groups[m] = []
-                    month_groups[m].append(col)
-
-            month_keys = list(month_groups.keys())
-
-            # ── Clean numeric values ──
-            def clean_num(val):
-                if pd.isna(val): return 0
-                s = str(val).replace(",", "").replace("₹", "").replace("%", "").strip()
-                try: return float(s)
-                except: return 0
-
-            for col in combined_headers:
-                if col not in ["Vertical", "Manager", "Comparison"]:
-                    data_rows[col] = data_rows[col].apply(clean_num)
-
-            # ── Comparison value cleaner ──
-            def clean_comparison(val):
-                if pd.isna(val): return None
-                s = str(val).replace(",", "").replace("%", "").strip()
-                try: return float(s)
-                except: return None
-
-            data_rows["Comparison"] = data_rows["Comparison"].apply(clean_comparison)
-
-            # ── Identify total rows ──
-            def is_total_row(row):
-                mgr = str(row.get("Manager", "")).strip().lower()
-                return "total" in mgr or mgr == ""
-
-            # ── Build HTML table ──
-            # Determine sub-columns per month
-            def short_sub(sub):
-                sub = sub.strip()
-                mapping = {
-                    "Mar Target": "Target", "APR Target": "Target",
-                    "Achieved as on 15th Mar": "Achieved", "Achieved as on 15th APR": "Achieved",
-                    "% of target": "% Target",
-                }
-                return mapping.get(sub, sub)
-
-            # Build thead
-            th_months = ""
-            th_subs = "<th style='background:#1e293b;color:white;padding:10px 14px;text-align:left;position:sticky;left:0;z-index:2;font-size:13px;border-right:2px solid #334155;'>Vertical</th>"
-            th_subs += "<th style='background:#1e293b;color:white;padding:10px 14px;text-align:left;position:sticky;left:80px;z-index:2;font-size:13px;border-right:2px solid #334155;'>Manager</th>"
-
-            th_months += "<th colspan='1' style='background:#1e293b;color:transparent;border:none;'></th>"
-            th_months += "<th colspan='1' style='background:#1e293b;color:transparent;border:none;'></th>"
-
-            month_colors = ["#312e81", "#1e3a5f", "#064e3b", "#4c1d95"]
-            for mi, (m, cols_m) in enumerate(month_groups.items()):
-                mc = month_colors[mi % len(month_colors)]
-                subs = [c.split("|", 1)[1] for c in cols_m]
-                th_months += f"<th colspan='{len(subs)}' style='background:{mc};color:white;padding:10px 14px;text-align:center;font-size:13px;font-weight:700;border-right:2px solid rgba(255,255,255,0.15);letter-spacing:0.05em;'>{m}</th>"
-                for sub in subs:
-                    th_subs += f"<th style='background:#334155;color:#cbd5e1;padding:8px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;border-right:1px solid #475569;white-space:nowrap;'>{short_sub(sub)}</th>"
-
-            th_months += "<th colspan='1' style='background:#7c3aed;color:white;padding:10px 14px;text-align:center;font-size:13px;font-weight:700;'>Comparison</th>"
-            th_subs += "<th style='background:#334155;color:#cbd5e1;padding:8px 12px;text-align:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;'>MoM %</th>"
-
-            # Build tbody rows
-            tbody = ""
-            for _, row in data_rows.iterrows():
-                is_total = is_total_row(row)
-                row_bg = "#f0f4ff" if is_total else "white"
-                font_weight = "700" if is_total else "400"
-                border_top = "border-top:2px solid #6366f1;" if is_total else ""
-
-                tr = f"<tr style='background:{row_bg};{border_top}'>"
-
-                # Vertical
-                vertical_val = str(row.get("Vertical", "")).strip()
-                tr += f"<td style='padding:10px 14px;font-size:13px;font-weight:{font_weight};color:#374151;position:sticky;left:0;background:{row_bg};border-right:2px solid #e2e8f0;z-index:1;white-space:nowrap;'>{vertical_val}</td>"
-
-                # Manager
-                mgr_val = str(row.get("Manager", "")).strip()
-                tr += f"<td style='padding:10px 14px;font-size:13px;font-weight:{font_weight};color:#0f172a;position:sticky;left:80px;background:{row_bg};border-right:2px solid #e2e8f0;z-index:1;white-space:nowrap;'>{mgr_val}</td>"
-
-                # Month columns
-                for mi, (m, cols_m) in enumerate(month_groups.items()):
-                    for ci, col in enumerate(cols_m):
-                        val = row.get(col, 0)
-                        sub = col.split("|", 1)[1].strip().lower()
-                        is_last_col = (ci == len(cols_m) - 1)
-                        border_r = "border-right:2px solid #d1d5db;" if is_last_col else "border-right:1px solid #f1f5f9;"
-
-                        # Format value
-                        if "%" in sub or "target" in sub and "%" in sub:
-                            disp_val = f"{int(val)}%" if val else "0%"
-                        elif val == 0:
-                            disp_val = "—"
-                        else:
-                            disp_val = f"{int(val):,}"
-
-                        tr += f"<td style='padding:10px 12px;text-align:center;font-size:13px;font-weight:{font_weight};color:#1e293b;{border_r}'>{disp_val}</td>"
-
-                # Comparison column
-                comp_val = row.get("Comparison", None)
-                if comp_val is None or comp_val == 0:
-                    comp_display = "—"
-                    comp_color = "#374151"
-                    comp_bg = "transparent"
-                    comp_icon = ""
-                elif comp_val > 0:
-                    comp_display = f"+{int(comp_val)}%"
-                    comp_color = "#065f46"
-                    comp_bg = "#d1fae5"
-                    comp_icon = "▲ "
-                else:
-                    comp_display = f"{int(comp_val)}%"
-                    comp_color = "#991b1b"
-                    comp_bg = "#fee2e2"
-                    comp_icon = "▼ "
-
-                tr += f"""<td style='padding:10px 12px;text-align:center;font-size:13px;font-weight:700;'>
-                    <span style='background:{comp_bg};color:{comp_color};padding:3px 10px;border-radius:20px;font-size:12px;white-space:nowrap;'>
-                        {comp_icon}{comp_display}
-                    </span>
-                </td>"""
-
-                tr += "</tr>"
-                tbody += tr
-
-            # Full table HTML
-            table_html = f"""
-            <div style="overflow-x:auto;border-radius:16px;border:1px solid #e2e8f0;
-                        box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-top:8px;">
-                <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif;">
-                    <thead>
-                        <tr>{th_months}</tr>
-                        <tr>{th_subs}</tr>
-                    </thead>
-                    <tbody>{tbody}</tbody>
-                </table>
-            </div>
-            """
-
-            st.markdown(table_html, unsafe_allow_html=True)
-
-            # ── Legend ──
-            st.markdown("""
-            <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap;font-size:12px;color:#64748b;">
-                <span><span style='background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-weight:700;'>▲ Positive</span> MoM Growth</span>
-                <span><span style='background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-weight:700;'>▼ Negative</span> MoM Decline</span>
-                <span><span style='background:#f1f5f9;color:#374151;padding:2px 8px;border-radius:10px;font-weight:700;'>—</span> No Change / No Data</span>
-                <span style='background:#f0f4ff;padding:2px 8px;border-radius:4px;border:1px solid #c7d2fe;font-weight:600;color:#3730a3;'>Highlighted rows = Team Totals</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # CSV download
-            st.markdown("<div style='margin-top:12px;'>", unsafe_allow_html=True)
-            st.download_button(
-                "⬇️ Download Comparison CSV",
-                data_rows.to_csv(index=False),
-                "team_comparison.csv",
-                "text/csv"
-            )
-            st.markdown("</div>", unsafe_allow_html=True)
+        section_header("📊 Team vs Month Comparison (MTD)")
+        
+        # ── Ensure Disb Date is datetime ──
+        df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
+        
+        # ── Filters ──
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            month1 = st.selectbox("Month 1", months, index=max(0, len(months)-2))
+        
+        with col2:
+            month2 = st.selectbox("Month 2", months, index=len(months)-1)
+        
+        with col3:
+            till_date = st.date_input("Till Date")
+        
+        # ── Load target sheet ──
+        target_raw, _ = load_targets()
+        
+        # ── Get day for fair MTD comparison ──
+        till_day = till_date.day
+        
+        # ── Filter data (MTD logic using Disb Date) ──
+        df_m1 = df[
+            (df["Disb Month"] == month1) &
+            (df["Disb Date"].dt.day <= till_day)
+        ]
+        
+        df_m2 = df[
+            (df["Disb Month"] == month2) &
+            (df["Disb Date"].dt.day <= till_day)
+        ]
+        
+        # ── Aggregate Achieved ──
+        m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        m1.columns = ["Vertical", "Manager", "M1_Achieved"]
+        
+        m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        m2.columns = ["Vertical", "Manager", "M2_Achieved"]
+        
+        # ── Merge both months ──
+        comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
+        
+        # ── Target fetch function ──
+        def get_target(mgr, month):
+            try:
+                return get_target_for_manager(mgr, month, target_raw)
+            except:
+                return 0
+        
+        # ── Add targets ──
+        comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1))
+        comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2))
+        
+        # ── % Achievement ──
+        comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
+        comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
+        
+        # ── MoM Growth ──
+        comp["MoM %"] = (
+            (comp["M2_Achieved"] - comp["M1_Achieved"]) /
+            comp["M1_Achieved"].replace(0, 1)
+        ) * 100
+        comp["MoM %"] = comp["MoM %"].round(1)
+        
+        # ── Sort ──
+        comp = comp.sort_values("M2_Achieved", ascending=False)
+        
+        # ── Format for UI ──
+        disp = comp.copy()
+        
+        disp["M1_Target"] = disp["M1_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
+        disp["M2_Target"] = disp["M2_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
+        
+        disp["M1_Achieved"] = disp["M1_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
+        disp["M2_Achieved"] = disp["M2_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
+        
+        disp["M1_%"] = disp["M1_%"].apply(lambda x: f"{x:.0f}%")
+        disp["M2_%"] = disp["M2_%"].apply(lambda x: f"{x:.0f}%")
+        
+        disp["MoM %"] = disp["MoM %"].apply(lambda x: f"{x:+.1f}%")
+        
+        # ── Rename columns ──
+        disp = disp.rename(columns={
+            "M1_Target": f"{month1} Target",
+            "M1_Achieved": f"{month1} Achieved",
+            "M1_%": f"{month1} %",
+            "M2_Target": f"{month2} Target",
+            "M2_Achieved": f"{month2} Achieved",
+            "M2_%": f"{month2} %",
+        })
+        
+        # ── Color styling ──
+        def color_mom(val):
+            try:
+                v = float(val.replace("%",""))
+                if v > 0:
+                    return "color: #059669; font-weight: 700;"
+                elif v < 0:
+                    return "color: #dc2626; font-weight: 700;"
+            except:
+                return ""
+            return ""
+        
+        # ── Display ──
+        st.dataframe(
+            disp.style.applymap(color_mom, subset=["MoM %"]),
+            use_container_width=True,
+            height=420
+        )
+        
+        # ── Download ──
+        st.download_button(
+            "⬇️ Download Comparison CSV",
+            comp.to_csv(index=False),
+            "2_month_mtd_comparison.csv",
+            "text/csv"
+        )
 
 
 # ══════════════════════════════════════════
