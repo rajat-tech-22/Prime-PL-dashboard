@@ -621,7 +621,7 @@ if dashboard_type == "🏠 Overview":
     section_header("📊 Team vs Month Comparison (MTD)")
     
     # ── Ensure Disb Date is datetime ──
-    df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
+    df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
     
     # ── Filters ──
     col1, col2, col3 = st.columns(3)
@@ -644,12 +644,12 @@ if dashboard_type == "🏠 Overview":
     # ── Filter data (MTD logic using Disb Date) ──
     df_m1 = df[
         (df["Disb Month"] == month1) &
-        (df["Disb Date"].dt.day <= till_day)
+        (df["DISB DATE"].dt.day <= till_day)
     ]
     
     df_m2 = df[
         (df["Disb Month"] == month2) &
-        (df["Disb Date"].dt.day <= till_day)
+        (df["DISB DATE"].dt.day <= till_day)
     ]
     
     # ── Aggregate Achieved ──
