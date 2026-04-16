@@ -599,33 +599,24 @@ if dashboard_type == "🏠 Overview":
     # ══════════════════════════════════════════
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
     # ══════════════════════════════════════════
-   
-    # ═══════════════════════════════════════
-    # CONFIG
-    # ═══════════════════════════════════════
-    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
+    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVV1sjMs/pub?output=csv"
     
-    # ═══════════════════════════════════════
-    # LOAD TARGETS
-    # ═══════════════════════════════════════
     @st.cache_data
     def load_targets():
         df_t = pd.read_csv(TARGET_SHEET_URL)
         df_t.columns = df_t.columns.str.strip()
-        return df_t, None
+        return df_t
     
     
-    # ═══════════════════════════════════════
-    # HELPERS
-    # ═══════════════════════════════════════
-    def get_target_for_manager(mgr, month, target_df):
+    def get_target(manager, month, target_df):
         try:
-            row = target_df[target_df["Manager"].str.strip().str.lower() == str(mgr).strip().lower()]
-            if row.empty:
+            row = target_df[
+                target_df["Manager"].astype(str).str.strip().str.lower()
+                == str(manager).strip().lower()
+            ]
+            if row.empty or month not in row.columns:
                 return 0
-            if month in row.columns:
-                return float(row.iloc[0][month])
-            return 0
+            return float(row.iloc[0][month])
         except:
             return 0
     
@@ -635,27 +626,22 @@ if dashboard_type == "🏠 Overview":
     
     
     # ═══════════════════════════════════════
-    # MAIN SECTION
+    # MAIN
     # ═══════════════════════════════════════
-    section_header("📊 Team vs Month Comparison (MTD)")
+    section_header("📊 Team vs Month Comparison")
     
-    # ---- Fix column names ----
     df.columns = df.columns.str.strip()
     
-    # ---- DISB DATE FIX ----
+    # DATE FIX
     df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
     
-    # ---- Ensure Manager exists ----
-    if "Manager" not in df.columns:
-        st.error("❌ 'Manager' column not found in dataset. Check sheet headers.")
-        st.stop()
-    
-    # ---- Months list ----
+    # MONTH CREATE
     df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
+    
     months = sorted(df["Disb Month"].dropna().unique())
     
-    # ---- Filters ----
-    col1, col2, col3 = st.columns(3)
+    # FILTERS
+    col1, col2 = st.columns(2)
     
     with col1:
         month1 = st.selectbox("Month 1", months, index=max(0, len(months)-2))
@@ -663,172 +649,72 @@ if dashboard_type == "🏠 Overview":
     with col2:
         month2 = st.selectbox("Month 2", months, index=len(months)-1)
     
-    with col3:
-        till_date = st.date_input("Till Date")
+    # LOAD TARGET
+    target_df = load_targets()
     
-    # ---- Load targets ----
-    target_raw, _ = load_targets()
+    # STRICT MONTH FILTER (NO MTD BUG)
+    df_m1 = df[df["Disb Month"] == month1].copy()
+    df_m2 = df[df["Disb Month"] == month2].copy()
     
-    # ---- MTD logic ----
-    till_day = till_date.day
-    
-    df_m1 = df[(df["Disb Month"] == month1) & (df["DISB DATE"].dt.day <= till_day)]
-    df_m2 = df[(df["Disb Month"] == month2) & (df["DISB DATE"].dt.day <= till_day)]
-    
-    # ---- Aggregation ----
+    # AGGREGATION
     m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    m1.rename(columns={"Disbursed AMT": "M1_Achieved"}, inplace=True)
+    m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
     
     m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    m2.rename(columns={"Disbursed AMT": "M2_Achieved"}, inplace=True)
+    m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
     
-    # ---- Merge ----
+    # MERGE
     comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
     
-    # ---- Targets ----
-    comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target_for_manager(x, month1, target_raw))
-    comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target_for_manager(x, month2, target_raw))
+    # TARGETS
+    comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1, target_df))
+    comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2, target_df))
     
-    # ---- % ----
-    comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
-    comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
+    # ACH %
+    comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
+    comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
     
-    # ---- MoM ----
-    comp["MoM %"] = ((comp["M2_Achieved"] - comp["M1_Achieved"]) /
-                     comp["M1_Achieved"].replace(0, 1)) * 100
-    comp["MoM %"] = comp["MoM %"].round(1)
+    # COMPARISON
+    comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]
     
-    # ---- Sort ----
-    comp = comp.sort_values("M2_Achieved", ascending=False)
+    # SORT
+    comp = comp.sort_values("M2_Disb", ascending=False)
     
-    # ---- Display copy ----
+    # DISPLAY COPY
     disp = comp.copy()
     
     disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
+    disp[f"{month1} Disb"] = disp["M1_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp[f"{month1} Ach%"] = disp["M1_Ach%"].map(lambda x: f"{x:.1f}%")
+    
     disp[f"{month2} Target"] = disp["M2_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
+    disp[f"{month2} Disb"] = disp["M2_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp[f"{month2} Ach%"] = disp["M2_Ach%"].map(lambda x: f"{x:.1f}%")
     
-    disp[f"{month1} Achieved"] = disp["M1_Achieved"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
-    disp[f"{month2} Achieved"] = disp["M2_Achieved"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.2f}L")
     
-    disp[f"{month1} %"] = disp["M1_%"].map(lambda x: f"{x:.0f}%")
-    disp[f"{month2} %"] = disp["M2_%"].map(lambda x: f"{x:.0f}%")
+    # FINAL TABLE
+    final_cols = [
+        "Vertical",
+        "Manager",
+        f"{month1} Target",
+        f"{month1} Disb",
+        f"{month1} Ach%",
+        f"{month2} Target",
+        f"{month2} Disb",
+        f"{month2} Ach%",
+        "Disb Comparison"
+    ]
     
-    disp["MoM %"] = disp["MoM %"].map(lambda x: f"{x:+.1f}%")
+    st.dataframe(disp[final_cols], use_container_width=True, height=500)
     
-    # ---- Color fix (apply instead of applymap) ----
-    def color_mom(v):
-        try:
-            val = float(str(v).replace("%", ""))
-            if val > 0:
-                return "color: green; font-weight: bold;"
-            elif val < 0:
-                return "color: red; font-weight: bold;"
-        except:
-            return ""
-        return ""
-    
-    styled = disp.style.map(color_mom, subset=["MoM %"])
-    
-    # ---- UI ----
-    st.dataframe(styled, use_container_width=True, height=420)
-    
-    # ---- Download ----
+    # DOWNLOAD
     st.download_button(
-        "⬇️ Download Comparison CSV",
+        "⬇️ Download Report",
         comp.to_csv(index=False),
-        "2_month_mtd_comparison.csv",
+        "2_month_comparison.csv",
         "text/csv"
     )
-
-        
-
-# ══════════════════════════════════════════
-# 👤 SINGLE MANAGER
-# ══════════════════════════════════════════
-elif dashboard_type == "👤 Single Manager":
-    with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month = st.selectbox("Month", months, index=latest_month_index)
-        df_m = df[df["Disb Month"] == sel_month]
-        sel_mgr = st.selectbox("Manager", sorted(df_m["Manager"].dropna().unique()))
-
-    f = df_m[df_m["Manager"] == sel_mgr]
-    camps = sorted(f["Campaign"].dropna().unique())
-    with st.sidebar.expander("📌 Campaigns", expanded=False):
-        sel_camps = st.multiselect("Campaigns", camps, default=camps)
-    if sel_camps:
-        f = f[f["Campaign"].isin(sel_camps)]
-
-    st.title(f"Manager View — {sel_mgr}")
-
-    if f.empty:
-        st.warning("No data available.")
-    else:
-        td, tr, ap, tc, ad, tb, tcamp, tcall = calc_metrics(f)
-
-        cards = [
-            ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
-            ("Total Revenue", format_inr(tr), "📈", "#10b981"),
-            ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
-            ("Transactions", f"{tc:,}", "🔁", "#ef4444"),
-        ]
-        cols = st.columns(4)
-        for col, (lbl, val, icon, clr) in zip(cols, cards):
-            col.markdown(metric_card(lbl, val, icon, clr), unsafe_allow_html=True)
-
-        insight_strip({
-            "🏦 Top Bank": tb,
-            "🚀 Top Campaign": tcamp,
-            "🏆 Top Caller": tcall,
-            "💵 Avg Disbursed": format_inr(ad),
-        })
-
-        section_header("Bank-wise Performance")
-        bs = f.groupby("Bank")["Disbursed AMT"].sum().reset_index()
-        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", f"{sel_mgr} — Bank Performance"), use_container_width=True)
-
-        section_header("Caller-wise Performance")
-        cs = f.groupby("Caller")["Disbursed AMT"].sum().reset_index()
-        st.plotly_chart(styled_bar(cs, "Caller", "Caller", "Disbursed AMT", f"{sel_mgr} — Caller Performance"), use_container_width=True)
-
-        section_header("Campaign-wise Performance")
-        camp_s = f.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
-        st.plotly_chart(styled_bar(camp_s, "Campaign", "Campaign", "Disbursed AMT", f"{sel_mgr} — Campaign Performance"), use_container_width=True)
-
-        section_header("Monthly Trend — This Manager")
-        mgr_trend = df[df["Manager"] == sel_mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
-        fig_t = go.Figure(go.Scatter(
-            x=mgr_trend["Disb Month"],
-            y=mgr_trend["Disbursed AMT"] / 100000,
-            mode="lines+markers",
-            line=dict(color="#6366f1", width=3),
-            marker=dict(size=8, color="#6366f1"),
-            fill="tozeroy",
-            fillcolor="rgba(99,102,241,0.08)",
-            name=sel_mgr,
-        ))
-        fig_t.update_layout(
-            template="plotly_white", height=380,
-            yaxis_title="Disbursed (Lakhs)",
-            font=dict(family="Inter, sans-serif"),
-            plot_bgcolor="white",
-        )
-        st.plotly_chart(fig_t, use_container_width=True)
-
-        section_header("Raw Data")
-        df_disp = f.dropna(how="all").copy()
-        df_disp["Disbursed AMT"] = df_disp["Disbursed AMT"].round(0).astype(int).apply(lambda x: f"{x:,.0f}")
-        df_disp["Total_Revenue"] = df_disp["Total_Revenue"].round(0).astype(int).apply(lambda x: f"{x:,.0f}")
-        df_disp["AVG_Payout"] = df_disp["AVG_Payout"].round(2).apply(lambda x: f"{x:.2f}")
-        st.dataframe(df_disp.style.set_properties(**{"text-align": "center"}), use_container_width=True, height=300)
-
-        pdf_bytes = generate_pdf_bytes(df_disp, f"{sel_mgr} — {sel_month}")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.download_button("⬇️ Download CSV", df_disp.to_csv(index=False), f"{sel_mgr}.csv", "text/csv")
-        with c2:
-            if pdf_bytes:
-                st.download_button("📄 Export PDF", pdf_bytes, f"{sel_mgr}.pdf", "application/pdf")
-
 
 # ══════════════════════════════════════════
 # ⚖️ COMPARISON
