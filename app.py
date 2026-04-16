@@ -615,129 +615,130 @@ if dashboard_type == "🏠 Overview":
         fig_trend.update_traces(line=dict(width=2.5))
         st.plotly_chart(fig_trend, use_container_width=True)
 
-# ══════════════════════════════════════════
-# 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON - USING DISB DATE)
-# ══════════════════════════════════════════
-section_header("📊 Team vs Month Comparison (MTD)")
-
-# ── Ensure Disb Date is datetime ──
-df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
-
-# ── Filters ──
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    month1 = st.selectbox("Month 1", months, index=max(0, len(months)-2))
-
-with col2:
-    month2 = st.selectbox("Month 2", months, index=len(months)-1)
-
-with col3:
-    till_date = st.date_input("Till Date")
-
-# ── Load target sheet ──
-target_raw, _ = load_targets()
-
-# ── Get day for fair MTD comparison ──
-till_day = till_date.day
-
-# ── Filter data (MTD logic using Disb Date) ──
-df_m1 = df[
-    (df["Disb Month"] == month1) &
-    (df["Disb Date"].dt.day <= till_day)
-]
-
-df_m2 = df[
-    (df["Disb Month"] == month2) &
-    (df["Disb Date"].dt.day <= till_day)
-]
-
-# ── Aggregate Achieved ──
-m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-m1.columns = ["Vertical", "Manager", "M1_Achieved"]
-
-m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-m2.columns = ["Vertical", "Manager", "M2_Achieved"]
-
-# ── Merge both months ──
-comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
-
-# ── Target fetch function ──
-def get_target(mgr, month):
-    try:
-        return get_target_for_manager(mgr, month, target_raw)
-    except:
-        return 0
-
-# ── Add targets ──
-comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1))
-comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2))
-
-# ── % Achievement ──
-comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
-comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
-
-# ── MoM Growth ──
-comp["MoM %"] = (
-    (comp["M2_Achieved"] - comp["M1_Achieved"]) /
-    comp["M1_Achieved"].replace(0, 1)
-) * 100
-comp["MoM %"] = comp["MoM %"].round(1)
-
-# ── Sort ──
-comp = comp.sort_values("M2_Achieved", ascending=False)
-
-# ── Format for UI ──
-disp = comp.copy()
-
-disp["M1_Target"] = disp["M1_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
-disp["M2_Target"] = disp["M2_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
-
-disp["M1_Achieved"] = disp["M1_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
-disp["M2_Achieved"] = disp["M2_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
-
-disp["M1_%"] = disp["M1_%"].apply(lambda x: f"{x:.0f}%")
-disp["M2_%"] = disp["M2_%"].apply(lambda x: f"{x:.0f}%")
-
-disp["MoM %"] = disp["MoM %"].apply(lambda x: f"{x:+.1f}%")
-
-# ── Rename columns ──
-disp = disp.rename(columns={
-    "M1_Target": f"{month1} Target",
-    "M1_Achieved": f"{month1} Achieved",
-    "M1_%": f"{month1} %",
-    "M2_Target": f"{month2} Target",
-    "M2_Achieved": f"{month2} Achieved",
-    "M2_%": f"{month2} %",
-})
-
-# ── Color styling ──
-def color_mom(val):
-    try:
-        v = float(val.replace("%",""))
-        if v > 0:
-            return "color: #059669; font-weight: 700;"
-        elif v < 0:
-            return "color: #dc2626; font-weight: 700;"
-    except:
+    # ══════════════════════════════════════════
+    # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON - USING DISB DATE)
+    # ══════════════════════════════════════════
+    section_header("📊 Team vs Month Comparison (MTD)")
+    
+    # ── Ensure Disb Date is datetime ──
+    df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
+    
+    # ── Filters ──
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        month1 = st.selectbox("Month 1", months, index=max(0, len(months)-2))
+    
+    with col2:
+        month2 = st.selectbox("Month 2", months, index=len(months)-1)
+    
+    with col3:
+        till_date = st.date_input("Till Date")
+    
+    # ── Load target sheet ──
+    target_raw, _ = load_targets()
+    
+    # ── Get day for fair MTD comparison ──
+    till_day = till_date.day
+    
+    # ── Filter data (MTD logic using Disb Date) ──
+    df_m1 = df[
+        (df["Disb Month"] == month1) &
+        (df["Disb Date"].dt.day <= till_day)
+    ]
+    
+    df_m2 = df[
+        (df["Disb Month"] == month2) &
+        (df["Disb Date"].dt.day <= till_day)
+    ]
+    
+    # ── Aggregate Achieved ──
+    m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+    m1.columns = ["Vertical", "Manager", "M1_Achieved"]
+    
+    m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+    m2.columns = ["Vertical", "Manager", "M2_Achieved"]
+    
+    # ── Merge both months ──
+    comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
+    
+    # ── Target fetch function ──
+    def get_target(mgr, month):
+        try:
+            return get_target_for_manager(mgr, month, target_raw)
+        except:
+            return 0
+    
+    # ── Add targets ──
+    comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1))
+    comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2))
+    
+    # ── % Achievement ──
+    comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
+    comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
+    
+    # ── MoM Growth ──
+    comp["MoM %"] = (
+        (comp["M2_Achieved"] - comp["M1_Achieved"]) /
+        comp["M1_Achieved"].replace(0, 1)
+    ) * 100
+    comp["MoM %"] = comp["MoM %"].round(1)
+    
+    # ── Sort ──
+    comp = comp.sort_values("M2_Achieved", ascending=False)
+    
+    # ── Format for UI ──
+    disp = comp.copy()
+    
+    disp["M1_Target"] = disp["M1_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
+    disp["M2_Target"] = disp["M2_Target"].apply(lambda x: f"{x:.0f}L" if x else "—")
+    
+    disp["M1_Achieved"] = disp["M1_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp["M2_Achieved"] = disp["M2_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
+    
+    disp["M1_%"] = disp["M1_%"].apply(lambda x: f"{x:.0f}%")
+    disp["M2_%"] = disp["M2_%"].apply(lambda x: f"{x:.0f}%")
+    
+    disp["MoM %"] = disp["MoM %"].apply(lambda x: f"{x:+.1f}%")
+    
+    # ── Rename columns ──
+    disp = disp.rename(columns={
+        "M1_Target": f"{month1} Target",
+        "M1_Achieved": f"{month1} Achieved",
+        "M1_%": f"{month1} %",
+        "M2_Target": f"{month2} Target",
+        "M2_Achieved": f"{month2} Achieved",
+        "M2_%": f"{month2} %",
+    })
+    
+    # ── Color styling ──
+    def color_mom(val):
+        try:
+            v = float(val.replace("%",""))
+            if v > 0:
+                return "color: #059669; font-weight: 700;"
+            elif v < 0:
+                return "color: #dc2626; font-weight: 700;"
+        except:
+            return ""
         return ""
-    return ""
+    
+    # ── Display ──
+    st.dataframe(
+        disp.style.applymap(color_mom, subset=["MoM %"]),
+        use_container_width=True,
+        height=420
+    )
+    
+    # ── Download ──
+    st.download_button(
+        "⬇️ Download Comparison CSV",
+        comp.to_csv(index=False),
+        "2_month_mtd_comparison.csv",
+        "text/csv"
+    )
 
-# ── Display ──
-st.dataframe(
-    disp.style.applymap(color_mom, subset=["MoM %"]),
-    use_container_width=True,
-    height=420
-)
-
-# ── Download ──
-st.download_button(
-    "⬇️ Download Comparison CSV",
-    comp.to_csv(index=False),
-    "2_month_mtd_comparison.csv",
-    "text/csv"
-)
-
+        
 
 # ══════════════════════════════════════════
 # 👤 SINGLE MANAGER
