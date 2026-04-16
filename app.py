@@ -618,48 +618,62 @@ if dashboard_type == "🏠 Overview":
     # ══════════════════════════════════════════
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
     # ══════════════════════════════════════════
-  
-    section_header("📊 Team vs Month Comparison (MTD)")
-    
-    # ─────────────────────────────────────────
-    # 📥 LOAD DATA
-    # ─────────────────────────────────────────
-    
+   
+    # ═══════════════════════════════════════
+    # CONFIG
+    # ═══════════════════════════════════════
     TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
     
-    target_raw = pd.read_csv(TARGET_SHEET_URL)
-    target_raw.columns = target_raw.columns.str.strip()
+    # ═══════════════════════════════════════
+    # LOAD TARGETS
+    # ═══════════════════════════════════════
+    @st.cache_data
+    def load_targets():
+        df_t = pd.read_csv(TARGET_SHEET_URL)
+        df_t.columns = df_t.columns.str.strip()
+        return df_t, None
     
+    
+    # ═══════════════════════════════════════
+    # HELPERS
+    # ═══════════════════════════════════════
+    def get_target_for_manager(mgr, month, target_df):
+        try:
+            row = target_df[target_df["Manager"].str.strip().str.lower() == str(mgr).strip().lower()]
+            if row.empty:
+                return 0
+            if month in row.columns:
+                return float(row.iloc[0][month])
+            return 0
+        except:
+            return 0
+    
+    
+    def section_header(title):
+        st.markdown(f"## {title}")
+    
+    
+    # ═══════════════════════════════════════
+    # MAIN SECTION
+    # ═══════════════════════════════════════
+    section_header("📊 Team vs Month Comparison (MTD)")
+    
+    # ---- Fix column names ----
     df.columns = df.columns.str.strip()
     
-    # Fix Manager column in target
-    if "Manager" not in target_raw.columns:
-        for col in target_raw.columns:
-            if col.lower().strip() in ["manager", "manager name", "mgr"]:
-                target_raw.rename(columns={col: "Manager"}, inplace=True)
-    
-    # Fix Manager column in disbursed
-    if "Manager" not in df.columns:
-        for col in df.columns:
-            if col.lower().strip() in ["manager", "manager name", "mgr"]:
-                df.rename(columns={col: "Manager"}, inplace=True)
-    
-    # ─────────────────────────────────────────
-    # 📅 DATE CONVERSION (FIXED COLUMN NAME)
-    # ─────────────────────────────────────────
-    
+    # ---- DISB DATE FIX ----
     df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
-    df = df.dropna(subset=["DISB DATE"])
     
-    # Month column
-    df["Disb Month"] = df["DISB DATE"].dt.to_period("M").astype(str)
+    # ---- Ensure Manager exists ----
+    if "Manager" not in df.columns:
+        st.error("❌ 'Manager' column not found in dataset. Check sheet headers.")
+        st.stop()
     
-    # ─────────────────────────────────────────
-    # 🎛️ FILTERS
-    # ─────────────────────────────────────────
-    
+    # ---- Months list ----
+    df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
     months = sorted(df["Disb Month"].dropna().unique())
     
+    # ---- Filters ----
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -671,137 +685,73 @@ if dashboard_type == "🏠 Overview":
     with col3:
         till_date = st.date_input("Till Date")
     
-    till_date = pd.to_datetime(till_date)
+    # ---- Load targets ----
+    target_raw, _ = load_targets()
+    
+    # ---- MTD logic ----
     till_day = till_date.day
     
-    # ─────────────────────────────────────────
-    # 📊 FILTER DATA (MTD LOGIC)
-    # ─────────────────────────────────────────
+    df_m1 = df[(df["Disb Month"] == month1) & (df["DISB DATE"].dt.day <= till_day)]
+    df_m2 = df[(df["Disb Month"] == month2) & (df["DISB DATE"].dt.day <= till_day)]
     
-    df_m1 = df[
-        (df["Disb Month"] == month1) &
-        (df["DISB DATE"].dt.day <= till_day)
-    ]
-    
-    df_m2 = df[
-        (df["Disb Month"] == month2) &
-        (df["DISB DATE"].dt.day <= till_day)
-    ]
-    
-    # ─────────────────────────────────────────
-    # 📈 AGGREGATION
-    # ─────────────────────────────────────────
-    
+    # ---- Aggregation ----
     m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    m1.columns = ["Vertical", "Manager", "M1_Achieved"]
+    m1.rename(columns={"Disbursed AMT": "M1_Achieved"}, inplace=True)
     
     m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    m2.columns = ["Vertical", "Manager", "M2_Achieved"]
+    m2.rename(columns={"Disbursed AMT": "M2_Achieved"}, inplace=True)
     
+    # ---- Merge ----
     comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
     
-    # ─────────────────────────────────────────
-    # 🎯 TARGET FUNCTION
-    # ─────────────────────────────────────────
-    
-    def get_target_for_manager(manager, month, target_df):
-        try:
-            row = target_df[target_df["Manager"] == manager]
-    
-            if row.empty:
-                return 0
-    
-            for col in target_df.columns:
-                if str(month).lower() in str(col).lower():
-                    return float(row.iloc[0][col])
-    
-            return 0
-        except:
-            return 0
-    
-    # ─────────────────────────────────────────
-    # 🎯 TARGETS
-    # ─────────────────────────────────────────
-    
+    # ---- Targets ----
     comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target_for_manager(x, month1, target_raw))
     comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target_for_manager(x, month2, target_raw))
     
-    # ─────────────────────────────────────────
-    # 📊 % ACHIEVEMENT
-    # ─────────────────────────────────────────
+    # ---- % ----
+    comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
+    comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
     
-    comp["M1_%"] = (comp["M1_Achieved"] / comp["M1_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
-    comp["M2_%"] = (comp["M2_Achieved"] / comp["M2_Target"] * 100).replace([float('inf')], 0).fillna(0).round(1)
-    
-    # ─────────────────────────────────────────
-    # 📈 MOM GROWTH
-    # ─────────────────────────────────────────
-    
+    # ---- MoM ----
     comp["MoM %"] = ((comp["M2_Achieved"] - comp["M1_Achieved"]) /
-                    comp["M1_Achieved"].replace(0, 1)) * 100
-    
+                     comp["M1_Achieved"].replace(0, 1)) * 100
     comp["MoM %"] = comp["MoM %"].round(1)
     
-    # ─────────────────────────────────────────
-    # 📊 SORT
-    # ─────────────────────────────────────────
-    
+    # ---- Sort ----
     comp = comp.sort_values("M2_Achieved", ascending=False)
     
-    # ─────────────────────────────────────────
-    # 🧾 FORMAT FOR UI
-    # ─────────────────────────────────────────
-    
+    # ---- Display copy ----
     disp = comp.copy()
     
-    disp["M1_Target"] = disp["M1_Target"].apply(lambda x: f"{x:.0f}" if x else "—")
-    disp["M2_Target"] = disp["M2_Target"].apply(lambda x: f"{x:.0f}" if x else "—")
+    disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
+    disp[f"{month2} Target"] = disp["M2_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
     
-    disp["M1_Achieved"] = disp["M1_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
-    disp["M2_Achieved"] = disp["M2_Achieved"].apply(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp[f"{month1} Achieved"] = disp["M1_Achieved"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    disp[f"{month2} Achieved"] = disp["M2_Achieved"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
     
-    disp["M1_%"] = disp["M1_%"].apply(lambda x: f"{x:.0f}%")
-    disp["M2_%"] = disp["M2_%"].apply(lambda x: f"{x:.0f}%")
-    disp["MoM %"] = disp["MoM %"].apply(lambda x: f"{x:+.1f}%")
+    disp[f"{month1} %"] = disp["M1_%"].map(lambda x: f"{x:.0f}%")
+    disp[f"{month2} %"] = disp["M2_%"].map(lambda x: f"{x:.0f}%")
     
-    disp = disp.rename(columns={
-        "M1_Target": f"{month1} Target",
-        "M1_Achieved": f"{month1} Achieved",
-        "M1_%": f"{month1} %",
-        "M2_Target": f"{month2} Target",
-        "M2_Achieved": f"{month2} Achieved",
-        "M2_%": f"{month2} %",
-    })
+    disp["MoM %"] = disp["MoM %"].map(lambda x: f"{x:+.1f}%")
     
-    # ─────────────────────────────────────────
-    # 🎨 COLOR STYLE
-    # ─────────────────────────────────────────
-    
-    def color_mom(val):
+    # ---- Color fix (apply instead of applymap) ----
+    def color_mom(v):
         try:
-            v = float(val.replace("%",""))
-            if v > 0:
-                return "color: #059669; font-weight: 700;"
-            elif v < 0:
-                return "color: #dc2626; font-weight: 700;"
+            val = float(str(v).replace("%", ""))
+            if val > 0:
+                return "color: green; font-weight: bold;"
+            elif val < 0:
+                return "color: red; font-weight: bold;"
         except:
             return ""
         return ""
     
-    # ─────────────────────────────────────────
-    # 📊 DISPLAY
-    # ─────────────────────────────────────────
+    styled = disp.style.map(color_mom, subset=["MoM %"])
     
-    st.dataframe(
-        disp.style.applymap(color_mom, subset=["MoM %"]),
-        use_container_width=True,
-        height=420
-    )
+    # ---- UI ----
+    st.dataframe(styled, use_container_width=True, height=420)
     
-    # ─────────────────────────────────────────
-    # ⬇️ DOWNLOAD
-    # ─────────────────────────────────────────
-    
+    # ---- Download ----
     st.download_button(
         "⬇️ Download Comparison CSV",
         comp.to_csv(index=False),
