@@ -596,165 +596,165 @@ if dashboard_type == "🏠 Overview":
 
        
 
-    # ══════════════════════════════════════════
-    # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
-    # ══════════════════════════════════════════
+    # # ══════════════════════════════════════════
+    # # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
+    # # ══════════════════════════════════════════
    
     
     
-    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
+    # TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
     
-    # =========================
-    # LOAD TARGETS (FIXED)
-    # =========================
-    @st.cache_data
-    def load_targets():
-        df_t = pd.read_csv(TARGET_SHEET_URL)
-        df_t.columns = df_t.columns.str.strip()
+    # # =========================
+    # # LOAD TARGETS (FIXED)
+    # # =========================
+    # @st.cache_data
+    # def load_targets():
+    #     df_t = pd.read_csv(TARGET_SHEET_URL)
+    #     df_t.columns = df_t.columns.str.strip()
     
-        if "Manager" in df_t.columns:
-            df_t["Manager"] = df_t["Manager"].astype(str).str.strip().str.lower()
+    #     if "Manager" in df_t.columns:
+    #         df_t["Manager"] = df_t["Manager"].astype(str).str.strip().str.lower()
     
-        return df_t
-    
-    
-    # =========================
-    # TARGET FETCH (ROBUST)
-    # =========================
-    def get_target(Manager, Month, target_df):
-        try:
-            if target_df.empty:
-                return 0
-    
-            Manager = str(Manager).strip().lower()
-    
-            # manager match
-            row = target_df[target_df["Manager"] == Manager]
-    
-            if row.empty:
-                return 0
-    
-            # normalize column match (case/space safe)
-            cols = {c.strip().lower(): c for c in target_df.columns}
-    
-            month_key = month.strip().lower()
-    
-            if month_key not in cols:
-                return 0
-    
-            actual_col = cols[month_key]
-    
-            val = row.iloc[0][actual_col]
-    
-            if pd.isna(val):
-                return 0
-    
-            return float(val)
-    
-        except:
-            return 0
+    #     return df_t
     
     
-    # =========================
-    # MAIN
-    # =========================
-    st.title("📊 Team Month Comparison (Fixed Target Issue)")
+    # # =========================
+    # # TARGET FETCH (ROBUST)
+    # # =========================
+    # def get_target(Manager, Month, target_df):
+    #     try:
+    #         if target_df.empty:
+    #             return 0
     
-    df.columns = df.columns.str.strip()
+    #         Manager = str(Manager).strip().lower()
     
-    # DATE FIX
-    df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
-    df = df.dropna(subset=["DISB DATE"])
+    #         # manager match
+    #         row = target_df[target_df["Manager"] == Manager]
     
-    df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
+    #         if row.empty:
+    #             return 0
     
-    months = sorted(df["Disb Month"].unique())
+    #         # normalize column match (case/space safe)
+    #         cols = {c.strip().lower(): c for c in target_df.columns}
+    
+    #         month_key = month.strip().lower()
+    
+    #         if month_key not in cols:
+    #             return 0
+    
+    #         actual_col = cols[month_key]
+    
+    #         val = row.iloc[0][actual_col]
+    
+    #         if pd.isna(val):
+    #             return 0
+    
+    #         return float(val)
+    
+    #     except:
+    #         return 0
+    
+    
+    # # =========================
+    # # MAIN
+    # # =========================
+    # st.title("📊 Team Month Comparison (Fixed Target Issue)")
+    
+    # df.columns = df.columns.str.strip()
+    
+    # # DATE FIX
+    # df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
+    # df = df.dropna(subset=["DISB DATE"])
+    
+    # df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
+    
+    # months = sorted(df["Disb Month"].unique())
     
      
  
-    # =========================
-    # DATA FILTER
-    # =========================
-    df_m1 = df[df["Disb Month"] == month1]
-    df_m2 = df[df["Disb Month"] == month2]
+    # # =========================
+    # # DATA FILTER
+    # # =========================
+    # df_m1 = df[df["Disb Month"] == month1]
+    # df_m2 = df[df["Disb Month"] == month2]
     
-    # =========================
-    # GROUPING
-    # =========================
-    m1 = df_m1.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
-    m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
+    # # =========================
+    # # GROUPING
+    # # =========================
+    # m1 = df_m1.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
+    # m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
     
-    m2 = df_m2.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
-    m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
+    # m2 = df_m2.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
+    # m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
     
-    # =========================
-    # MERGE
-    # =========================
-    comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
+    # # =========================
+    # # MERGE
+    # # =========================
+    # comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
     
-    # =========================
-    # TARGET LOAD
-    # =========================
-    target_df = load_targets()
+    # # =========================
+    # # TARGET LOAD
+    # # =========================
+    # target_df = load_targets()
     
-    # DEBUG (optional)
-    # st.write(target_df.head())
+    # # DEBUG (optional)
+    # # st.write(target_df.head())
     
-    # =========================
-    # TARGET MAP
-    # =========================
-    comp["M1_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month1, target_df))
-    comp["M2_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month2, target_df))
+    # # =========================
+    # # TARGET MAP
+    # # =========================
+    # comp["M1_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month1, target_df))
+    # comp["M2_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month2, target_df))
     
-    # =========================
-    # ACH %
-    # =========================
-    comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
-    comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
+    # # =========================
+    # # ACH %
+    # # =========================
+    # comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
+    # comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
     
-    # =========================
-    # COMPARISON
-    # =========================
-    comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]/comp["M1_Disb"]
+    # # =========================
+    # # COMPARISON
+    # # =========================
+    # comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]/comp["M1_Disb"]
     
-    comp = comp.sort_values("M2_Disb", ascending=False)
+    # comp = comp.sort_values("M2_Disb", ascending=False)
     
-    # =========================
-    # DISPLAY
-    # =========================
-    disp = comp.copy()
+    # # =========================
+    # # DISPLAY
+    # # =========================
+    # disp = comp.copy()
     
-    disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
-    disp[f"{month1} Disb"] = disp["M1_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
-    disp[f"{month1} Ach%"] = disp["M1_Ach%"].map(lambda x: f"{x:.1f}%")
+    # disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
+    # disp[f"{month1} Disb"] = disp["M1_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    # disp[f"{month1} Ach%"] = disp["M1_Ach%"].map(lambda x: f"{x:.1f}%")
     
-    disp[f"{month2} Target"] = disp["M2_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
-    disp[f"{month2} Disb"] = disp["M2_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
-    disp[f"{month2} Ach%"] = disp["M2_Ach%"].map(lambda x: f"{x:.1f}%")
+    # disp[f"{month2} Target"] = disp["M2_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
+    # disp[f"{month2} Disb"] = disp["M2_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
+    # disp[f"{month2} Ach%"] = disp["M2_Ach%"].map(lambda x: f"{x:.1f}%")
     
-    disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.1f}%")
+    # disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.1f}%")
     
-    final_cols = [
-        "Vertical",
-        "Manager",
-        f"{month1} Target",
-        f"{month1} Disb",
-        f"{month1} Ach%",
-        f"{month2} Target",
-        f"{month2} Disb",
-        f"{month2} Ach%",
-        "Disb Comparison"
-    ]
+    # final_cols = [
+    #     "Vertical",
+    #     "Manager",
+    #     f"{month1} Target",
+    #     f"{month1} Disb",
+    #     f"{month1} Ach%",
+    #     f"{month2} Target",
+    #     f"{month2} Disb",
+    #     f"{month2} Ach%",
+    #     "Disb Comparison"
+    # ]
     
-    st.dataframe(disp[final_cols], use_container_width=True, height=500)
+    # st.dataframe(disp[final_cols], use_container_width=True, height=500)
     
-    # DOWNLOAD
-    st.download_button(
-        "⬇️ Download Report",
-        comp.to_csv(index=False),
-        "2_month_comparison.csv",
-        "text/csv"
-    )
+    # # DOWNLOAD
+    # st.download_button(
+    #     "⬇️ Download Report",
+    #     comp.to_csv(index=False),
+    #     "2_month_comparison.csv",
+    #     "text/csv"
+    # )
 # ══════════════════════════════════════════
 # ⚖️ COMPARISON
 # ══════════════════════════════════════════
