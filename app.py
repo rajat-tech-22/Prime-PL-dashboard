@@ -600,8 +600,7 @@ if dashboard_type == "🏠 Overview":
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
     # ══════════════════════════════════════════
    
-    import pandas as pd
-    import streamlit as st
+    
     
     TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
     
@@ -622,15 +621,15 @@ if dashboard_type == "🏠 Overview":
     # =========================
     # TARGET FETCH (ROBUST)
     # =========================
-    def get_target(manager, month, target_df):
+    def get_target(Manager, Month, target_df):
         try:
             if target_df.empty:
                 return 0
     
-            manager = str(manager).strip().lower()
+            Manager = str(Manager).strip().lower()
     
             # manager match
-            row = target_df[target_df["Manager"] == manager]
+            row = target_df[target_df["Manager"] == Manager]
     
             if row.empty:
                 return 0
@@ -711,8 +710,8 @@ if dashboard_type == "🏠 Overview":
     # =========================
     # TARGET MAP
     # =========================
-    comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1, target_df))
-    comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2, target_df))
+    comp["M1_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month1, target_df))
+    comp["M2_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month2, target_df))
     
     # =========================
     # ACH %
@@ -723,7 +722,7 @@ if dashboard_type == "🏠 Overview":
     # =========================
     # COMPARISON
     # =========================
-    comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]
+    comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]/comp["M1_Disb"]
     
     comp = comp.sort_values("M2_Disb", ascending=False)
     
@@ -740,7 +739,7 @@ if dashboard_type == "🏠 Overview":
     disp[f"{month2} Disb"] = disp["M2_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
     disp[f"{month2} Ach%"] = disp["M2_Ach%"].map(lambda x: f"{x:.1f}%")
     
-    disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.2f}L")
+    disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.1f}%")
     
     final_cols = [
         "Vertical",
