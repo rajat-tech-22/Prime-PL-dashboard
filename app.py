@@ -670,27 +670,7 @@ if dashboard_type == "🏠 Overview":
     
     months = sorted(df["Disb Month"].unique())
     
-      # ── Date filter ──
-        ist_now = datetime.now(timezone(timedelta(hours=5, minutes=30)))
-        filter_col1, filter_col2, filter_col3 = st.columns([1, 1, 3])
-        with filter_col1:
-            comp_date1 = st.date_input(
-                "From Date",
-                value=ist_now.date().replace(day=1),
-                key="comp_date1"
-            )
-        with filter_col2:
-            comp_date2 = st.date_input(
-                "To Date",
-                value=ist_now.date(),
-                key="comp_date2"
-            )
-        with filter_col3:
-            st.markdown(
-                f"<div style='padding-top:28px;font-size:13px;color:#64748b;'>"
-                f"📅 Showing data as of: <b>{comp_date2.strftime('%d %b %Y')}</b></div>",
-                unsafe_allow_html=True
-            )
+     
  
     # =========================
     # DATA FILTER
