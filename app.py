@@ -487,7 +487,7 @@ with st.sidebar:
     st.markdown("---")
     dashboard_type = st.radio(
         "Navigation",
-        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "📡 Prefr & PW Reports", "🎯 Target Tracker"],
+        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "🎯 Target Tracker"],
         label_visibility="collapsed"
     )
     st.markdown("---")
@@ -594,26 +594,7 @@ if dashboard_type == "🏠 Overview":
         bs.columns = ["Bank", "Disbursed AMT"]
         st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise Disbursed Amount"), use_container_width=True)
 
-        section_header("Manager Monthly Trend")
-        trend_df = df.copy()
-        if selected_vertical != "All":
-            trend_df = trend_df[trend_df["Vertical"] == selected_vertical]
-        trend = trend_df.groupby(["Disb Month", "Manager"])["Disbursed AMT"].sum().reset_index()
-        fig_trend = px.line(
-            trend, x="Disb Month", y="Disbursed AMT", color="Manager",
-            markers=True, title="Manager-wise Monthly Trend",
-            labels={"Disbursed AMT": "Disbursed (₹)", "Disb Month": "Month"},
-            color_discrete_sequence=COLORS,
-        )
-        fig_trend.update_layout(
-            template="plotly_white", height=450,
-            font=dict(family="Inter, sans-serif"),
-            hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=-0.4),
-            plot_bgcolor="white",
-        )
-        fig_trend.update_traces(line=dict(width=2.5))
-        st.plotly_chart(fig_trend, use_container_width=True)
+       
 
     # ══════════════════════════════════════════
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
@@ -1053,125 +1034,6 @@ elif dashboard_type == "📊 Campaign Performance":
         </div>""", unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════
-# 📡 PREFR & PW REPORTS
-# ══════════════════════════════════════════
-elif dashboard_type == "📡 Prefr & PW Reports":
-    df2 = campaign_df.copy()
-    st.title("Prefr & PW Campaign Reports")
-
-    all_months = ["All"] + sorted(df2["Month"].dropna().unique())
-    sel_month = st.sidebar.selectbox("Month", all_months)
-    fm = df2 if sel_month == "All" else df2[df2["Month"] == sel_month]
-
-    dates = ["All"] + sorted(fm["Date"].dropna().unique())
-    sel_date = st.sidebar.selectbox("Date", dates)
-    fd = fm if sel_date == "All" else fm[fm["Date"] == sel_date]
-
-    cnames = ["All"] + sorted(fd["Campaign Name"].dropna().unique())
-    sel_c = st.sidebar.selectbox("Campaign", cnames)
-    fc = fd if sel_c == "All" else fd[fd["Campaign Name"] == sel_c]
-
-    mgrs = ["All"] + (sorted(fc["Manager"].dropna().unique()) if "Manager" in fc.columns else [])
-    sel_m = st.sidebar.selectbox("Manager", mgrs)
-    filtered = fc if sel_m == "All" or "Manager" not in fc.columns else fc[fc["Manager"] == sel_m]
-
-    total_ivr = int(filtered["IVR Data"].sum())
-    press1 = int(filtered["Press 1"].sum())
-    leads = int(filtered["Total Request"].sum())
-    sent = int(filtered["RCS Sent"].sum())
-    delivered = int(filtered["RCS Delivered"].sum())
-    read = int(filtered["RCS Read"].sum())
-    clicks = int(filtered["RCS Unique Clicks"].sum())
-    cost = int(filtered["Total Cost"].sum())
-    total_disbursed = int(filtered["Disbursed"].sum())
-    arg_ctr = round((clicks / delivered * 100) if delivered else 0, 2)
-
-    kpi_data = [
-        ("IVR Data", f"{total_ivr:,}", "#6366f1", "#4f46e5"),
-        ("Press 1", f"{press1:,}", "#ef4444", "#dc2626"),
-        ("Total Request", f"{leads:,}", "#f59e0b", "#d97706"),
-        ("RCS Sent", f"{sent:,}", "#10b981", "#059669"),
-        ("RCS Read", f"{read:,}", "#3b82f6", "#2563eb"),
-        ("Clicks", f"{clicks:,}", "#8b5cf6", "#7c3aed"),
-        ("Total Cost", f"₹{cost:,}", "#ec4899", "#db2777"),
-        ("CTR %", f"{arg_ctr:.2f}%", "#14b8a6", "#0d9488"),
-        ("Total Disbursed", f"₹{total_disbursed:,}", "#6366f1", "#4f46e5"),
-    ]
-
-    st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
-    for title, val, c1, c2 in kpi_data:
-        st.markdown(f"""
-        <div class="kpi-card" style="background:linear-gradient(135deg,{c1},{c2})">
-            <div class="kpi-title">{title}</div>
-            <div class="kpi-value">{val}</div>
-        </div>""", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    section_header("Funnel Analysis")
-    stages = ["IVR Data", "Press 1", "Total Request", "RCS Delivered", "RCS Read", "Clicks"]
-    values = [total_ivr, press1, leads, delivered, read, clicks]
-    max_v = max(values) if max(values) > 0 else 1
-
-    fig_f = go.Figure(go.Funnel(
-        y=stages, x=values,
-        textinfo="value+percent previous",
-        marker=dict(color=["#6366f1","#8b5cf6","#f59e0b","#10b981","#3b82f6","#ec4899"]),
-        textfont=dict(size=12, family="Inter, sans-serif"),
-        connector=dict(line=dict(color="#e2e8f0", width=2)),
-    ))
-    fig_f.update_layout(
-        height=460, template="plotly_white", margin=dict(l=60, r=40, t=20, b=20),
-        font=dict(family="Inter, sans-serif"),
-        paper_bgcolor="white",
-    )
-    st.plotly_chart(fig_f, use_container_width=True)
-
-    section_header("Conversion Metrics")
-    press_r = round((press1 / total_ivr * 100) if total_ivr else 0, 2)
-    del_r = round((delivered / sent * 100) if sent else 0, 2)
-    read_r = round((read / delivered * 100) if delivered else 0, 2)
-    cpl = round((cost / leads) if leads else 0, 2)
-
-    mc = st.columns(4)
-    for col, (lbl, val, ico, clr) in zip(mc, [
-        ("Press Rate", f"{press_r}%", "📲", "#6366f1"),
-        ("Delivery Rate", f"{del_r}%", "📬", "#10b981"),
-        ("Read Rate", f"{read_r}%", "📖", "#f59e0b"),
-        ("Cost / Lead", f"₹{cpl}", "💸", "#ef4444"),
-    ]):
-        col.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
-
-    warnings = []
-    if arg_ctr < 2: warnings.append("⚠️ CTR is below 2% — consider improving RCS content")
-    if del_r < 70: warnings.append("⚠️ Delivery rate below 70% — check DND/number quality")
-    if read_r < 50: warnings.append("⚠️ Low read rate — try better message timing or preview text")
-    if cpl > 100: warnings.append("⚠️ Cost per lead is high — optimise campaign spend")
-    for w in warnings:
-        st.warning(w)
-
-    if not filtered.empty:
-        if "Campaign Name" in filtered.columns:
-            section_header("Campaign-wise Leads")
-            df_cl = filtered.groupby("Campaign Name")["Total Request"].sum().reset_index()
-            fig1 = px.bar(df_cl, x="Campaign Name", y="Total Request", text="Total Request",
-                          color_discrete_sequence=COLORS)
-            fig1.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
-            st.plotly_chart(fig1, use_container_width=True)
-
-        if "Manager" in filtered.columns:
-            section_header("Manager-wise Allocation")
-            df_ml = filtered.groupby("Manager")["Total Lead"].sum().reset_index()
-            fig2 = px.pie(df_ml, names="Manager", values="Total Lead", hole=0.5, color_discrete_sequence=COLORS)
-            fig2.update_layout(font=dict(family="Inter"), height=400)
-            st.plotly_chart(fig2, use_container_width=True)
-
-            section_header("Manager-wise Disbursed")
-            df_md = filtered.groupby("Manager")["Disbursed"].sum().reset_index()
-            fig3 = px.bar(df_md, x="Manager", y="Disbursed", text="Disbursed", color_discrete_sequence=COLORS)
-            fig3.update_traces(texttemplate="₹%{text:,}")
-            fig3.update_layout(template="plotly_white", font=dict(family="Inter"), height=380, plot_bgcolor="white")
-            st.plotly_chart(fig3, use_container_width=True)
 
 
 # ══════════════════════════════════════════
