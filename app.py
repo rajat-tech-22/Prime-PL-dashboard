@@ -600,62 +600,70 @@ if dashboard_type == "🏠 Overview":
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
     # ══════════════════════════════════════════
    
+    import pandas as pd
+    import streamlit as st
+    
     TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
     
     # =========================
-    # LOAD TARGETS
+    # LOAD TARGETS (FIXED)
     # =========================
     @st.cache_data
     def load_targets():
-        try:
-            df_t = pd.read_csv(TARGET_SHEET_URL)
-            df_t.columns = df_t.columns.str.strip()
-            return df_t
-        except Exception as e:
-            st.error(f"❌ Target sheet load error: {e}")
-            return pd.DataFrame()
+        df_t = pd.read_csv(TARGET_SHEET_URL)
+        df_t.columns = df_t.columns.str.strip()
+    
+        if "Manager" in df_t.columns:
+            df_t["Manager"] = df_t["Manager"].astype(str).str.strip().str.lower()
+    
+        return df_t
     
     
+    # =========================
+    # TARGET FETCH (ROBUST)
+    # =========================
     def get_target(manager, month, target_df):
-        if target_df.empty:
-            return 0
         try:
-            target_df["Manager"] = target_df["Manager"].astype(str).str.strip().str.lower()
+            if target_df.empty:
+                return 0
     
-            row = target_df[target_df["Manager"] == str(manager).strip().lower()]
+            manager = str(manager).strip().lower()
+    
+            # manager match
+            row = target_df[target_df["Manager"] == manager]
+    
             if row.empty:
                 return 0
     
-            if month not in target_df.columns:
+            # normalize column match (case/space safe)
+            cols = {c.strip().lower(): c for c in target_df.columns}
+    
+            month_key = month.strip().lower()
+    
+            if month_key not in cols:
                 return 0
     
-            return float(row.iloc[0][month])
+            actual_col = cols[month_key]
+    
+            val = row.iloc[0][actual_col]
+    
+            if pd.isna(val):
+                return 0
+    
+            return float(val)
+    
         except:
             return 0
     
     
     # =========================
-    # MAIN APP
+    # MAIN
     # =========================
-    st.title("📊 Team Month Comparison")
+    st.title("📊 Team Month Comparison (Fixed Target Issue)")
     
-    # ---- SAFE CHECK ----
-    if "df" not in globals():
-        st.error("❌ df not found. Please load your main dataset first.")
-        st.stop()
-    
-    df = df.copy()
     df.columns = df.columns.str.strip()
     
-    # ---- COLUMN CHECK ----
-    required_cols = ["Vertical", "Manager", "DISB DATE", "Disbursed AMT"]
-    
-    missing = [c for c in required_cols if c not in df.columns]
-    if missing:
-        st.error(f"❌ Missing columns: {missing}")
-        st.stop()
-    
-    # ---- DATE FIX ----
+    # DATE FIX
     df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
     df = df.dropna(subset=["DISB DATE"])
     
@@ -663,7 +671,7 @@ if dashboard_type == "🏠 Overview":
     
     months = sorted(df["Disb Month"].unique())
     
-    # ---- FILTERS ----
+    # FILTERS
     col1, col2 = st.columns(2)
     
     with col1:
@@ -673,7 +681,7 @@ if dashboard_type == "🏠 Overview":
         month2 = st.selectbox("Month 2", months, index=len(months)-1)
     
     # =========================
-    # FILTER DATA
+    # DATA FILTER
     # =========================
     df_m1 = df[df["Disb Month"] == month1]
     df_m2 = df[df["Disb Month"] == month2]
@@ -693,15 +701,21 @@ if dashboard_type == "🏠 Overview":
     comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
     
     # =========================
-    # TARGETS
+    # TARGET LOAD
     # =========================
     target_df = load_targets()
     
+    # DEBUG (optional)
+    # st.write(target_df.head())
+    
+    # =========================
+    # TARGET MAP
+    # =========================
     comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1, target_df))
     comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2, target_df))
     
     # =========================
-    # % ACH
+    # ACH %
     # =========================
     comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
     comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
@@ -740,7 +754,15 @@ if dashboard_type == "🏠 Overview":
         "Disb Comparison"
     ]
     
-    st.dataframe(disp[final_cols], use_container_width=True)
+    st.dataframe(disp[final_cols], use_container_width=True, height=500)
+    
+    # DOWNLOAD
+    st.download_button(
+        "⬇️ Download Report",
+        comp.to_csv(index=False),
+        "2_month_comparison.csv",
+        "text/csv"
+    )
 # ══════════════════════════════════════════
 # ⚖️ COMPARISON
 # ══════════════════════════════════════════
