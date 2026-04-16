@@ -599,48 +599,71 @@ if dashboard_type == "🏠 Overview":
     # ══════════════════════════════════════════
     # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
     # ══════════════════════════════════════════
-    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVV1sjMs/pub?output=csv"
+   
+    TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
     
+    # =========================
+    # LOAD TARGETS
+    # =========================
     @st.cache_data
     def load_targets():
-        df_t = pd.read_csv(TARGET_SHEET_URL)
-        df_t.columns = df_t.columns.str.strip()
-        return df_t
+        try:
+            df_t = pd.read_csv(TARGET_SHEET_URL)
+            df_t.columns = df_t.columns.str.strip()
+            return df_t
+        except Exception as e:
+            st.error(f"❌ Target sheet load error: {e}")
+            return pd.DataFrame()
     
     
     def get_target(manager, month, target_df):
+        if target_df.empty:
+            return 0
         try:
-            row = target_df[
-                target_df["Manager"].astype(str).str.strip().str.lower()
-                == str(manager).strip().lower()
-            ]
-            if row.empty or month not in row.columns:
+            target_df["Manager"] = target_df["Manager"].astype(str).str.strip().str.lower()
+    
+            row = target_df[target_df["Manager"] == str(manager).strip().lower()]
+            if row.empty:
                 return 0
+    
+            if month not in target_df.columns:
+                return 0
+    
             return float(row.iloc[0][month])
         except:
             return 0
     
     
-    def section_header(title):
-        st.markdown(f"## {title}")
+    # =========================
+    # MAIN APP
+    # =========================
+    st.title("📊 Team Month Comparison")
     
+    # ---- SAFE CHECK ----
+    if "df" not in globals():
+        st.error("❌ df not found. Please load your main dataset first.")
+        st.stop()
     
-    # ═══════════════════════════════════════
-    # MAIN
-    # ═══════════════════════════════════════
-    section_header("📊 Team vs Month Comparison")
-    
+    df = df.copy()
     df.columns = df.columns.str.strip()
     
-    # DATE FIX
-    df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
+    # ---- COLUMN CHECK ----
+    required_cols = ["Vertical", "Manager", "DISB DATE", "Disbursed AMT"]
     
-    # MONTH CREATE
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        st.error(f"❌ Missing columns: {missing}")
+        st.stop()
+    
+    # ---- DATE FIX ----
+    df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
+    df = df.dropna(subset=["DISB DATE"])
+    
     df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
     
-    months = sorted(df["Disb Month"].dropna().unique())
+    months = sorted(df["Disb Month"].unique())
     
-    # FILTERS
+    # ---- FILTERS ----
     col1, col2 = st.columns(2)
     
     with col1:
@@ -649,38 +672,50 @@ if dashboard_type == "🏠 Overview":
     with col2:
         month2 = st.selectbox("Month 2", months, index=len(months)-1)
     
-    # LOAD TARGET
-    target_df = load_targets()
+    # =========================
+    # FILTER DATA
+    # =========================
+    df_m1 = df[df["Disb Month"] == month1]
+    df_m2 = df[df["Disb Month"] == month2]
     
-    # STRICT MONTH FILTER (NO MTD BUG)
-    df_m1 = df[df["Disb Month"] == month1].copy()
-    df_m2 = df[df["Disb Month"] == month2].copy()
-    
-    # AGGREGATION
-    m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+    # =========================
+    # GROUPING
+    # =========================
+    m1 = df_m1.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
     m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
     
-    m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+    m2 = df_m2.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
     m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
     
+    # =========================
     # MERGE
+    # =========================
     comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
     
+    # =========================
     # TARGETS
+    # =========================
+    target_df = load_targets()
+    
     comp["M1_Target"] = comp["Manager"].apply(lambda x: get_target(x, month1, target_df))
     comp["M2_Target"] = comp["Manager"].apply(lambda x: get_target(x, month2, target_df))
     
-    # ACH %
+    # =========================
+    # % ACH
+    # =========================
     comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
     comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
     
+    # =========================
     # COMPARISON
+    # =========================
     comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]
     
-    # SORT
     comp = comp.sort_values("M2_Disb", ascending=False)
     
-    # DISPLAY COPY
+    # =========================
+    # DISPLAY
+    # =========================
     disp = comp.copy()
     
     disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
@@ -693,7 +728,6 @@ if dashboard_type == "🏠 Overview":
     
     disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.2f}L")
     
-    # FINAL TABLE
     final_cols = [
         "Vertical",
         "Manager",
@@ -706,16 +740,7 @@ if dashboard_type == "🏠 Overview":
         "Disb Comparison"
     ]
     
-    st.dataframe(disp[final_cols], use_container_width=True, height=500)
-    
-    # DOWNLOAD
-    st.download_button(
-        "⬇️ Download Report",
-        comp.to_csv(index=False),
-        "2_month_comparison.csv",
-        "text/csv"
-    )
-
+    st.dataframe(disp[final_cols], use_container_width=True)
 # ══════════════════════════════════════════
 # ⚖️ COMPARISON
 # ══════════════════════════════════════════
