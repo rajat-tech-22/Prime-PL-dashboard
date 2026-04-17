@@ -1006,19 +1006,19 @@ elif dashboard_type == "📅 Team vs Month":
         month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
 
-    # ── Reload button ──
-    col_ref2, col_info2 = st.columns([1, 5])
-    with col_ref2:
-        if st.button("🔄 Reload Data"):
-            st.cache_data.clear()
-            st.rerun()
-    with col_info2:
-        if target_err:
-            st.error(f"Target sheet error: {target_err}")
-        elif target_raw.empty:
-            st.warning("Target sheet empty.")
-        else:
-            st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
+    # # ── Reload button ──
+    # col_ref2, col_info2 = st.columns([1, 5])
+    # with col_ref2:
+    #     if st.button("🔄 Reload Data"):
+    #         st.cache_data.clear()
+    #         st.rerun()
+    # with col_info2:
+    #     if target_err:
+    #         st.error(f"Target sheet error: {target_err}")
+    #     elif target_raw.empty:
+    #         st.warning("Target sheet empty.")
+    #     else:
+    #         st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
 
     # ── Raw target preview ──
     if not target_raw.empty:
