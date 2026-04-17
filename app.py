@@ -994,113 +994,114 @@ elif dashboard_type == "🎯 Target Tracker":
     st.plotly_chart(fig_tgt, use_container_width=True)
 
 
-    # ══════════════════════════════════════════
-    # 📅 TEAM vs MONTH COMPARISON
-    # ══════════════════════════════════════════
-    elif dashboard_type == "📅 Team vs Month":
-        st.title("📅 Team vs Month Comparison")
-    
-        # ── Ensure datetime ──
-        df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
-    
-        # ── Sidebar Filters ──
-        with st.sidebar.expander("🔧 Filters", expanded=True):
-            month1 = st.selectbox("Month 1", months, index=max(0, latest_month_index - 1), key="tvm_m1")
-            month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
-            sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
-    
-            # ✅ NEW: Till Date Filter
-            max_date = df["Disb Date"].max()
-            till_date = st.date_input("Till Disbursement Date", value=max_date)
-    
-        st.caption(f"📌 Data considered till: {till_date.strftime('%d %b %Y')}")
-    
-        # ── Filter disbursed data ──
-        disb_df = df.copy()
-    
-        # ✅ Apply Till Date filter
-        disb_df = disb_df[disb_df["Disb Date"] <= pd.to_datetime(till_date)]
-    
-        if sel_vertical_tvm != "All":
-            disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
-    
-        df_m1 = disb_df[disb_df["Disb Month"] == month1]
-        df_m2 = disb_df[disb_df["Disb Month"] == month2]
-    
-        # ── Group actual disbursed ──
-        agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
-        agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
-    
-        agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
-        agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
-    
-        # ── Merge months ──
-        comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
-    
-        if comp.empty:
-            st.warning("No data found for the selected months/vertical.")
-            st.stop()
-    
-        # ── Map targets (in Lakhs) ──
-        comp["M1_Target_L"] = comp["Manager"].apply(
-            lambda m: get_target_for_manager(m, month1, target_raw)
-        )
-        comp["M2_Target_L"] = comp["Manager"].apply(
-            lambda m: get_target_for_manager(m, month2, target_raw)
-        )
-    
-        # ── Convert actual to Lakhs ──
-        comp["M1_Disb_L"] = (comp["M1_Disb"] / 100000).round(2)
-        comp["M2_Disb_L"] = (comp["M2_Disb"] / 100000).round(2)
-    
-        # ── Achievement % ──
-        comp["M1_Ach%"] = comp.apply(
-            lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0.0, axis=1
-        )
-        comp["M2_Ach%"] = comp.apply(
-            lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0.0, axis=1
-        )
-    
-        # ── MoM Comparison % ──
-        comp["MoM%"] = comp.apply(
-            lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
-            if r["M1_Disb_L"] > 0 else 0.0, axis=1
-        )
-    
-        comp = comp.sort_values(["Vertical","M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
-    
-        # ── Summary Metric Cards ──
-        section_header("Team Summary")
-        total_m1d = comp["M1_Disb_L"].sum()
-        total_m2d = comp["M2_Disb_L"].sum()
-        total_m1t = comp["M1_Target_L"].sum()
-        total_m2t = comp["M2_Target_L"].sum()
-    
-        team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0.0
-        team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
-        team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
-    
-        c1, c2, c3, c4 = st.columns(4)
-        c1.markdown(metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
-        c2.markdown(metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
-        c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
-                                "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
-        c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
-                                "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
-    
-        # ── MoM strip ──
-        mom_color_strip = "#10b981" if team_mom >= 0 else "#ef4444"
-        mom_arrow = "▲" if team_mom >= 0 else "▼"
-    
-        st.markdown(f"""
-        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:12px;
-                    padding:16px 24px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;">
-            <div style="color:#94a3b8;font-size:13px;font-weight:600">
-                MoM Team Change: <span style="color:{mom_color_strip};font-size:20px;font-weight:700">
-                {mom_arrow} {abs(team_mom):.1f}%</span>
-            </div>
-            <div style="color:#64748b;font-size:12px">{month1} → {month2}</div>
+# ══════════════════════════════════════════
+# 📅 TEAM vs MONTH COMPARISON
+# ══════════════════════════════════════════
+elif dashboard_type == "📅 Team vs Month":
+    st.title("📅 Team vs Month Comparison")
+
+    # ── Ensure datetime ──
+    df["Disb Date"] = pd.to_datetime(df["Disb Date"], errors="coerce")
+
+    # ── Sidebar Filters ──
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        month1 = st.selectbox("Month 1", months, index=max(0, latest_month_index - 1), key="tvm_m1")
+        month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
+        sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
+
+        # ✅ NEW: Till Date Filter
+        max_date = df["Disb Date"].max()
+        till_date = st.date_input("Till Disbursement Date", value=max_date)
+
+    st.caption(f"📌 Data considered till: {till_date.strftime('%d %b %Y')}")
+
+    # ── Filter disbursed data ──
+    disb_df = df.copy()
+
+    # ✅ Apply Till Date filter
+    disb_df = disb_df[disb_df["Disb Date"] <= pd.to_datetime(till_date)]
+
+    if sel_vertical_tvm != "All":
+        disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
+
+    df_m1 = disb_df[disb_df["Disb Month"] == month1]
+    df_m2 = disb_df[disb_df["Disb Month"] == month2]
+
+    # ── Group actual disbursed ──
+    agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
+    agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
+
+    agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
+    agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
+
+    # ── Merge months ──
+    comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
+
+    if comp.empty:
+        st.warning("No data found for the selected months/vertical.")
+        st.stop()
+
+    # ── Map targets (in Lakhs) ──
+    comp["M1_Target_L"] = comp["Manager"].apply(
+        lambda m: get_target_for_manager(m, month1, target_raw)
+    )
+    comp["M2_Target_L"] = comp["Manager"].apply(
+        lambda m: get_target_for_manager(m, month2, target_raw)
+    )
+
+    # ── Convert actual to Lakhs ──
+    comp["M1_Disb_L"] = (comp["M1_Disb"] / 100000).round(2)
+    comp["M2_Disb_L"] = (comp["M2_Disb"] / 100000).round(2)
+
+    # ── Achievement % ──
+    comp["M1_Ach%"] = comp.apply(
+        lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0.0, axis=1
+    )
+    comp["M2_Ach%"] = comp.apply(
+        lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0.0, axis=1
+    )
+
+    # ── MoM Comparison % ──
+    comp["MoM%"] = comp.apply(
+        lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
+        if r["M1_Disb_L"] > 0 else 0.0, axis=1
+    )
+
+    comp = comp.sort_values(["Vertical","M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
+
+    # ── Summary Metric Cards ──
+    section_header("Team Summary")
+    total_m1d = comp["M1_Disb_L"].sum()
+    total_m2d = comp["M2_Disb_L"].sum()
+    total_m1t = comp["M1_Target_L"].sum()
+    total_m2t = comp["M2_Target_L"].sum()
+
+    team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0.0
+    team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
+    team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown(metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
+    c2.markdown(metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
+    c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
+                            "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+    c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
+                            "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+
+    # ── MoM strip ──
+    mom_color_strip = "#10b981" if team_mom >= 0 else "#ef4444"
+    mom_arrow = "▲" if team_mom >= 0 else "▼"
+
+    st.markdown(f"""
+    <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:12px;
+                padding:16px 24px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;">
+        <div style="color:#94a3b8;font-size:13px;font-weight:600">
+            MoM Team Change: <span style="color:{mom_color_strip};font-size:20px;font-weight:700">
+            {mom_arrow} {abs(team_mom):.1f}%</span>
         </div>
-        """, unsafe_allow_html=True)
+        <div style="color:#64748b;font-size:12px">{month1} → {month2}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     
        
