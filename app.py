@@ -1206,11 +1206,11 @@ elif dashboard_type == "📅 Team vs Month":
             value=False,
             key="tvm_use_date"
         )
-
+ 
     if st.sidebar.button("🔄 Reload Data"):
         st.cache_data.clear()
         st.rerun()
-
+ 
     # Status bar
     if target_err:
         st.error(f"⚠️ Target sheet load failed: {target_err}")
@@ -1220,12 +1220,12 @@ elif dashboard_type == "📅 Team vs Month":
         st.success(
             f"✅ Data loaded — Disb Sheet: {len(df)} rows | Target Sheet: {len(target_raw)} rows"
         )
-
+ 
     # ── Filter actual disbursed data ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
-
+ 
     # Apply DISB DATE filter if checkbox is on
     if use_date_filter and _has_date_col:
         disb_df = disb_df[
@@ -1239,10 +1239,9 @@ elif dashboard_type == "📅 Team vs Month":
         )
     elif use_date_filter and not _has_date_col:
         st.warning("⚠️ DISB DATE column not found in data. Date filter skipped.")
-
+ 
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
-
     # Group by Vertical + Manager
     agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
