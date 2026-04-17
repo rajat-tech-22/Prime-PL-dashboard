@@ -1206,11 +1206,11 @@ elif dashboard_type == "📅 Team vs Month":
             value=False,
             key="tvm_use_date"
         )
- 
+
     if st.sidebar.button("🔄 Reload Data"):
         st.cache_data.clear()
         st.rerun()
- 
+
     # Status bar
     if target_err:
         st.error(f"⚠️ Target sheet load failed: {target_err}")
@@ -1220,12 +1220,12 @@ elif dashboard_type == "📅 Team vs Month":
         st.success(
             f"✅ Data loaded — Disb Sheet: {len(df)} rows | Target Sheet: {len(target_raw)} rows"
         )
- 
+
     # ── Filter actual disbursed data ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
- 
+
     # Apply DISB DATE filter if checkbox is on
     if use_date_filter and _has_date_col:
         disb_df = disb_df[
@@ -1239,9 +1239,10 @@ elif dashboard_type == "📅 Team vs Month":
         )
     elif use_date_filter and not _has_date_col:
         st.warning("⚠️ DISB DATE column not found in data. Date filter skipped.")
- 
+
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
+
     # Group by Vertical + Manager
     agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
@@ -1356,129 +1357,139 @@ elif dashboard_type == "📅 Team vs Month":
             f'font-size:12px;padding:3px 8px;border-radius:5px">{val:.1f}%</span>'
         )
 
-    # ── Main HTML Comparison Table ──
+    # ── Main Comparison Table ──
     section_header(f"Manager-wise: {month1} vs {month2}")
+
+    def mom_badge(val):
+        if val > 0:
+            return f'<span style="background:#d1fae5;color:#065f46;font-weight:700;font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">▲ {val:.1f}%</span>'
+        elif val < 0:
+            return f'<span style="background:#fee2e2;color:#991b1b;font-weight:700;font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">▼ {abs(val):.1f}%</span>'
+        else:
+            return f'<span style="color:#94a3b8;font-size:12px">0.0%</span>'
+
+    def ach_color(val):
+        if val >= 90: return "#065f46"
+        elif val >= 70: return "#b45309"
+        else: return "#991b1b"
+
+    def ach_bg(val):
+        if val >= 90: return "#d1fae5"
+        elif val >= 70: return "#fef3c7"
+        else: return "#fee2e2"
 
     rows_html = ""
     for i, row in comp.iterrows():
         bg = "#f8fafc" if i % 2 == 0 else "#ffffff"
-        m1t_str = (
-            f"{row['M1_Target_L']:.1f}L"
-            if row["M1_Target_L"] > 0
-            else '<span style="color:#94a3b8">—</span>'
-        )
-        m2t_str = (
-            f"{row['M2_Target_L']:.1f}L"
-            if row["M2_Target_L"] > 0
-            else '<span style="color:#94a3b8">—</span>'
-        )
+        m1t_display = f"{row['M1_Target_L']:.1f}L" if row['M1_Target_L'] > 0 else "—"
+        m2t_display = f"{row['M2_Target_L']:.1f}L" if row['M2_Target_L'] > 0 else "—"
 
         rows_html += f"""
-        <tr style="background:{bg};border-bottom:1px solid #e2e8f0">
-            <td style="padding:10px 14px;font-size:13px;color:#64748b;font-weight:500">
-                {row['Vertical']}
+        <tr style="background:{bg};border-bottom:1px solid #f1f5f9">
+            <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">{row['Vertical']}</td>
+            <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">{row['Manager']}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#6366f1;font-weight:500">{m1t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;text-align:right">
+                <span style="background:{ach_bg(row['M1_Ach%'])};color:{ach_color(row['M1_Ach%'])};
+                             font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
+                    {row['M1_Ach%']:.1f}%
+                </span>
             </td>
-            <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0f172a">
-                {row['Manager']}
+            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#8b5cf6;font-weight:500">{m2t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M2_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;text-align:right">
+                <span style="background:{ach_bg(row['M2_Ach%'])};color:{ach_color(row['M2_Ach%'])};
+                             font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
+                    {row['M2_Ach%']:.1f}%
+                </span>
             </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
-                {m1t_str}
-            </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
-                {row['M1_Disb_L']:.2f}L
-            </td>
-            <td style="padding:10px 14px;text-align:right">
-                {ach_badge(row['M1_Ach_Pct'])}
-            </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
-                {m2t_str}
-            </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
-                {row['M2_Disb_L']:.2f}L
-            </td>
-            <td style="padding:10px 14px;text-align:right">
-                {ach_badge(row['M2_Ach_Pct'])}
-            </td>
-            <td style="padding:10px 14px;text-align:right">
-                {mom_badge(row['MoM_Pct'])}
-            </td>
+            <td style="padding:11px 14px;text-align:right">{mom_badge(row['MoM%'])}</td>
         </tr>"""
 
-    # Totals footer
-    m1t_total = f"{total_m1t:.1f}L" if total_m1t > 0 else "—"
-    m2t_total = f"{total_m2t:.1f}L" if total_m2t > 0 else "—"
+    # Totals row
     rows_html += f"""
-    <tr style="background:#f1f5f9;border-top:2px solid #cbd5e1">
-        <td colspan="2" style="padding:12px 14px;font-size:13px;font-weight:700;color:#0f172a">
-            🏁 Team Total
+    <tr style="background:#1e293b;border-top:2px solid #334155">
+        <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">
+            🏢 TOTAL
         </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
-            {m1t_total}
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#818cf8;font-weight:600">
+            {total_m1t:.1f}L
         </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
             {total_m1d:.2f}L
         </td>
-        <td style="padding:12px 14px;text-align:right">
-            {ach_badge(team_m1_ach)}
+        <td style="padding:13px 14px;text-align:right">
+            <span style="background:{ach_bg(team_m1_ach)};color:{ach_color(team_m1_ach)};
+                         font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
+                {team_m1_ach:.1f}%
+            </span>
         </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
-            {m2t_total}
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#a78bfa;font-weight:600">
+            {total_m2t:.1f}L
         </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
             {total_m2d:.2f}L
         </td>
-        <td style="padding:12px 14px;text-align:right">
-            {ach_badge(team_m2_ach)}
+        <td style="padding:13px 14px;text-align:right">
+            <span style="background:{ach_bg(team_m2_ach)};color:{ach_color(team_m2_ach)};
+                         font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
+                {team_m2_ach:.1f}%
+            </span>
         </td>
-        <td style="padding:12px 14px;text-align:right">
-            {mom_badge(team_mom)}
-        </td>
+        <td style="padding:13px 14px;text-align:right">{mom_badge(team_mom)}</td>
     </tr>"""
 
     table_html = f"""
     <div style="border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;
-                box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:24px;overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;
-                      min-width:780px">
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:20px">
+        <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif">
             <thead>
                 <tr style="background:#0f172a">
-                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">Vertical</th>
-                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">Manager</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Target</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Disb</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Ach%</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Target</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Disb</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Ach%</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">MoM %</th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        Vertical
+                    </th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        Manager
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month1} Target
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month1} Disb
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month1} Ach%
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month2} Target
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month2} Disb
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        {month2} Ach%
+                    </th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
+                        MoM %
+                    </th>
                 </tr>
             </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
+            <tbody>{rows_html}</tbody>
         </table>
     </div>
     """
     st.markdown(table_html, unsafe_allow_html=True)
-
+    
     # ── Bar Chart: Month1 vs Month2 Disbursed ──
     section_header("Disbursed Comparison — Bar Chart")
     fig_bar = go.Figure()
