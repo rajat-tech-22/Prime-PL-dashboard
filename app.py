@@ -1002,8 +1002,8 @@ elif dashboard_type == "📅 Team vs Month":
 
     # ── Sidebar Filters ──
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        month1 = st.selectbox("LAST MONTH DATE", DISB DATE, index=max(0, latest_month_index - 1), key="tvm_m1")
-        month2 = st.selectbox("CURRENT MONTH DATE", DISB DATE1, index=latest_month_index, key="tvm_m2")
+        month1 = st.selectbox("Month 1", months, index=max(0, latest_month_index - 1), key="tvm_m1")
+        month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
 
     # ── Reload button ──
@@ -1030,8 +1030,8 @@ elif dashboard_type == "📅 Team vs Month":
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
 
-    df_m1 = disb_df[disb_df["DISB DATE"] == DISB DATE]
-    df_m2 = disb_df[disb_df["DISB DATE"] == DISB DATE1]
+    df_m1 = disb_df[disb_df["Disb Month"] == month1]
+    df_m2 = disb_df[disb_df["Disb Month"] == month2]
 
     # ── Group actual disbursed ──
     agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
@@ -1049,10 +1049,10 @@ elif dashboard_type == "📅 Team vs Month":
 
     # ── Map targets (in Lakhs) ──
     comp["M1_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, DISB DATE1, target_raw)
+        lambda m: get_target_for_manager(m, month1, target_raw)
     )
     comp["M2_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, DISB DATE1, target_raw)
+        lambda m: get_target_for_manager(m, month2, target_raw)
     )
 
     # ── Convert actual to Lakhs ──
