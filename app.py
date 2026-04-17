@@ -1120,416 +1120,416 @@ elif dashboard_type == "🎯 Target Tracker":
     )
     st.plotly_chart(fig_tgt, use_container_width=True)
 
-
-# ══════════════════════════════════════════
-# 📅 TEAM vs MONTH COMPARISON
-# ══════════════════════════════════════════
-elif dashboard_type == "📅 Team vs Month":
-    st.title("📅 Team vs Month — Manager Comparison")
-
-    # ── Sidebar Filters ──
-    with st.sidebar.expander("🔧 Filters", expanded=True):
-        month1 = st.selectbox(
-            "Month 1 (Base)", months,
-            index=max(0, latest_month_index - 1),
-            key="tvm_m1"
-        )
-        month2 = st.selectbox(
-            "Month 2 (Compare)", months,
-            index=latest_month_index,
-            key="tvm_m2"
-        )
-        sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
-
-    if st.sidebar.button("🔄 Reload Data"):
-        st.cache_data.clear()
-        st.rerun()
-
-    # Status bar
-    if target_err:
-        st.error(f"⚠️ Target sheet load failed: {target_err}")
-    elif target_raw.empty:
-        st.warning("⚠️ Target sheet is empty.")
-    else:
-        st.success(
-            f"✅ Data loaded — Disb Sheet: {len(df)} rows | Target Sheet: {len(target_raw)} rows"
-        )
-
-    # ── Filter actual disbursed data ──
-    disb_df = df.copy()
-    if sel_vertical_tvm != "All":
-        disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
-
-    df_m1 = disb_df[disb_df["Disb Month"] == month1]
-    df_m2 = disb_df[disb_df["Disb Month"] == month2]
-
-    # Group by Vertical + Manager
-    agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
-
-    agg_m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
-    agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
-
-    # Outer join — include managers appearing in either month
-    comp = pd.merge(agg_m1, agg_m2, on=["Vertical", "Manager"], how="outer").fillna(0)
-
-    if comp.empty:
-        st.warning("No data available for selected filters.")
-        st.stop()
-
-    # ── Map targets ──
-    comp["M1_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, month1, target_raw)
-    )
-    comp["M2_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, month2, target_raw)
-    )
-
-    # Convert to Lakhs
-    comp["M1_Disb_L"] = comp["M1_Disb"] / 100000
-    comp["M2_Disb_L"] = comp["M2_Disb"] / 100000
-
-    # Achievement %
-    comp["M1_Ach_Pct"] = comp.apply(
-        lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1)
-        if r["M1_Target_L"] > 0 else 0.0, axis=1
-    )
-    comp["M2_Ach_Pct"] = comp.apply(
-        lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1)
-        if r["M2_Target_L"] > 0 else 0.0, axis=1
-    )
-
-    # MoM %
-    comp["MoM_Pct"] = comp.apply(
-        lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
-        if r["M1_Disb_L"] > 0 else 0.0, axis=1
-    )
-
-    comp = comp.sort_values(
-        ["Vertical", "M2_Disb_L"], ascending=[True, False]
-    ).reset_index(drop=True)
-
-    # ── Summary Metric Cards ──
-    section_header("Team Summary")
-    total_m1d = comp["M1_Disb_L"].sum()
-    total_m2d = comp["M2_Disb_L"].sum()
-    total_m1t = comp["M1_Target_L"].sum()
-    total_m2t = comp["M2_Target_L"].sum()
-    team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0.0
-    team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
-    team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
-
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.markdown(
-        metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"),
-        unsafe_allow_html=True
-    )
-    c2.markdown(
-        metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"),
-        unsafe_allow_html=True
-    )
-    c3.markdown(
-        metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
-                    "#10b981" if team_m1_ach >= 75 else "#ef4444"),
-        unsafe_allow_html=True
-    )
-    c4.markdown(
-        metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
-                    "#10b981" if team_m2_ach >= 75 else "#ef4444"),
-        unsafe_allow_html=True
-    )
-    c5.markdown(
-        metric_card(
-            "MoM Growth",
-            f"{'▲' if team_mom >= 0 else '▼'} {abs(team_mom):.1f}%",
-            "📅",
-            "#10b981" if team_mom >= 0 else "#ef4444"
-        ),
-        unsafe_allow_html=True
-    )
-
-    # ── HTML Table Helper Functions ──
-    def mom_badge(val):
-        if val > 0:
-            return (
-                f'<span style="background:#d1fae5;color:#065f46;font-weight:600;'
-                f'font-size:12px;padding:3px 9px;border-radius:5px">▲ {val:.1f}%</span>'
+    
+    # ══════════════════════════════════════════
+    # 📅 TEAM vs MONTH COMPARISON
+    # ══════════════════════════════════════════
+    elif dashboard_type == "📅 Team vs Month":
+        st.title("📅 Team vs Month — Manager Comparison")
+    
+        # ── Sidebar Filters ──
+        with st.sidebar.expander("🔧 Filters", expanded=True):
+            month1 = st.selectbox(
+                "Month 1 (Base)", months,
+                index=max(0, latest_month_index - 1),
+                key="tvm_m1"
             )
-        elif val < 0:
-            return (
-                f'<span style="background:#fee2e2;color:#991b1b;font-weight:600;'
-                f'font-size:12px;padding:3px 9px;border-radius:5px">▼ {abs(val):.1f}%</span>'
+            month2 = st.selectbox(
+                "Month 2 (Compare)", months,
+                index=latest_month_index,
+                key="tvm_m2"
             )
+            sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
+    
+        if st.sidebar.button("🔄 Reload Data"):
+            st.cache_data.clear()
+            st.rerun()
+    
+        # Status bar
+        if target_err:
+            st.error(f"⚠️ Target sheet load failed: {target_err}")
+        elif target_raw.empty:
+            st.warning("⚠️ Target sheet is empty.")
         else:
-            return '<span style="color:#94a3b8;font-size:12px;font-weight:500">━ 0.0%</span>'
-
-    def ach_badge(val):
-        if val >= 90:
-            clr, bg = "#065f46", "#d1fae5"
-        elif val >= 75:
-            clr, bg = "#1e3a5f", "#dbeafe"
-        elif val >= 50:
-            clr, bg = "#92400e", "#fef3c7"
-        else:
-            clr, bg = "#991b1b", "#fee2e2"
-        return (
-            f'<span style="background:{bg};color:{clr};font-weight:600;'
-            f'font-size:12px;padding:3px 8px;border-radius:5px">{val:.1f}%</span>'
+            st.success(
+                f"✅ Data loaded — Disb Sheet: {len(df)} rows | Target Sheet: {len(target_raw)} rows"
+            )
+    
+        # ── Filter actual disbursed data ──
+        disb_df = df.copy()
+        if sel_vertical_tvm != "All":
+            disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
+    
+        df_m1 = disb_df[disb_df["Disb Month"] == month1]
+        df_m2 = disb_df[disb_df["Disb Month"] == month2]
+    
+        # Group by Vertical + Manager
+        agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
+    
+        agg_m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
+    
+        # Outer join — include managers appearing in either month
+        comp = pd.merge(agg_m1, agg_m2, on=["Vertical", "Manager"], how="outer").fillna(0)
+    
+        if comp.empty:
+            st.warning("No data available for selected filters.")
+            st.stop()
+    
+        # ── Map targets ──
+        comp["M1_Target_L"] = comp["Manager"].apply(
+            lambda m: get_target_for_manager(m, month1, target_raw)
         )
-
-    # ── Main HTML Comparison Table ──
-    section_header(f"Manager-wise: {month1} vs {month2}")
-
-    rows_html = ""
-    for i, row in comp.iterrows():
-        bg = "#f8fafc" if i % 2 == 0 else "#ffffff"
-        m1t_str = (
-            f"{row['M1_Target_L']:.1f}L"
-            if row["M1_Target_L"] > 0
-            else '<span style="color:#94a3b8">—</span>'
+        comp["M2_Target_L"] = comp["Manager"].apply(
+            lambda m: get_target_for_manager(m, month2, target_raw)
         )
-        m2t_str = (
-            f"{row['M2_Target_L']:.1f}L"
-            if row["M2_Target_L"] > 0
-            else '<span style="color:#94a3b8">—</span>'
+    
+        # Convert to Lakhs
+        comp["M1_Disb_L"] = comp["M1_Disb"] / 100000
+        comp["M2_Disb_L"] = comp["M2_Disb"] / 100000
+    
+        # Achievement %
+        comp["M1_Ach_Pct"] = comp.apply(
+            lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1)
+            if r["M1_Target_L"] > 0 else 0.0, axis=1
         )
-
+        comp["M2_Ach_Pct"] = comp.apply(
+            lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1)
+            if r["M2_Target_L"] > 0 else 0.0, axis=1
+        )
+    
+        # MoM %
+        comp["MoM_Pct"] = comp.apply(
+            lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
+            if r["M1_Disb_L"] > 0 else 0.0, axis=1
+        )
+    
+        comp = comp.sort_values(
+            ["Vertical", "M2_Disb_L"], ascending=[True, False]
+        ).reset_index(drop=True)
+    
+        # ── Summary Metric Cards ──
+        section_header("Team Summary")
+        total_m1d = comp["M1_Disb_L"].sum()
+        total_m2d = comp["M2_Disb_L"].sum()
+        total_m1t = comp["M1_Target_L"].sum()
+        total_m2t = comp["M2_Target_L"].sum()
+        team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0.0
+        team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
+        team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
+    
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.markdown(
+            metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"),
+            unsafe_allow_html=True
+        )
+        c2.markdown(
+            metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"),
+            unsafe_allow_html=True
+        )
+        c3.markdown(
+            metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
+                        "#10b981" if team_m1_ach >= 75 else "#ef4444"),
+            unsafe_allow_html=True
+        )
+        c4.markdown(
+            metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
+                        "#10b981" if team_m2_ach >= 75 else "#ef4444"),
+            unsafe_allow_html=True
+        )
+        c5.markdown(
+            metric_card(
+                "MoM Growth",
+                f"{'▲' if team_mom >= 0 else '▼'} {abs(team_mom):.1f}%",
+                "📅",
+                "#10b981" if team_mom >= 0 else "#ef4444"
+            ),
+            unsafe_allow_html=True
+        )
+    
+        # ── HTML Table Helper Functions ──
+        def mom_badge(val):
+            if val > 0:
+                return (
+                    f'<span style="background:#d1fae5;color:#065f46;font-weight:600;'
+                    f'font-size:12px;padding:3px 9px;border-radius:5px">▲ {val:.1f}%</span>'
+                )
+            elif val < 0:
+                return (
+                    f'<span style="background:#fee2e2;color:#991b1b;font-weight:600;'
+                    f'font-size:12px;padding:3px 9px;border-radius:5px">▼ {abs(val):.1f}%</span>'
+                )
+            else:
+                return '<span style="color:#94a3b8;font-size:12px;font-weight:500">━ 0.0%</span>'
+    
+        def ach_badge(val):
+            if val >= 90:
+                clr, bg = "#065f46", "#d1fae5"
+            elif val >= 75:
+                clr, bg = "#1e3a5f", "#dbeafe"
+            elif val >= 50:
+                clr, bg = "#92400e", "#fef3c7"
+            else:
+                clr, bg = "#991b1b", "#fee2e2"
+            return (
+                f'<span style="background:{bg};color:{clr};font-weight:600;'
+                f'font-size:12px;padding:3px 8px;border-radius:5px">{val:.1f}%</span>'
+            )
+    
+        # ── Main HTML Comparison Table ──
+        section_header(f"Manager-wise: {month1} vs {month2}")
+    
+        rows_html = ""
+        for i, row in comp.iterrows():
+            bg = "#f8fafc" if i % 2 == 0 else "#ffffff"
+            m1t_str = (
+                f"{row['M1_Target_L']:.1f}L"
+                if row["M1_Target_L"] > 0
+                else '<span style="color:#94a3b8">—</span>'
+            )
+            m2t_str = (
+                f"{row['M2_Target_L']:.1f}L"
+                if row["M2_Target_L"] > 0
+                else '<span style="color:#94a3b8">—</span>'
+            )
+    
+            rows_html += f"""
+            <tr style="background:{bg};border-bottom:1px solid #e2e8f0">
+                <td style="padding:10px 14px;font-size:13px;color:#64748b;font-weight:500">
+                    {row['Vertical']}
+                </td>
+                <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0f172a">
+                    {row['Manager']}
+                </td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
+                    {m1t_str}
+                </td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
+                    {row['M1_Disb_L']:.2f}L
+                </td>
+                <td style="padding:10px 14px;text-align:right">
+                    {ach_badge(row['M1_Ach_Pct'])}
+                </td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
+                    {m2t_str}
+                </td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
+                    {row['M2_Disb_L']:.2f}L
+                </td>
+                <td style="padding:10px 14px;text-align:right">
+                    {ach_badge(row['M2_Ach_Pct'])}
+                </td>
+                <td style="padding:10px 14px;text-align:right">
+                    {mom_badge(row['MoM_Pct'])}
+                </td>
+            </tr>"""
+    
+        # Totals footer
+        m1t_total = f"{total_m1t:.1f}L" if total_m1t > 0 else "—"
+        m2t_total = f"{total_m2t:.1f}L" if total_m2t > 0 else "—"
         rows_html += f"""
-        <tr style="background:{bg};border-bottom:1px solid #e2e8f0">
-            <td style="padding:10px 14px;font-size:13px;color:#64748b;font-weight:500">
-                {row['Vertical']}
+        <tr style="background:#f1f5f9;border-top:2px solid #cbd5e1">
+            <td colspan="2" style="padding:12px 14px;font-size:13px;font-weight:700;color:#0f172a">
+                🏁 Team Total
             </td>
-            <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0f172a">
-                {row['Manager']}
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
+                {m1t_total}
             </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
-                {m1t_str}
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
+                {total_m1d:.2f}L
             </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
-                {row['M1_Disb_L']:.2f}L
+            <td style="padding:12px 14px;text-align:right">
+                {ach_badge(team_m1_ach)}
             </td>
-            <td style="padding:10px 14px;text-align:right">
-                {ach_badge(row['M1_Ach_Pct'])}
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
+                {m2t_total}
             </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">
-                {m2t_str}
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
+                {total_m2d:.2f}L
             </td>
-            <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">
-                {row['M2_Disb_L']:.2f}L
+            <td style="padding:12px 14px;text-align:right">
+                {ach_badge(team_m2_ach)}
             </td>
-            <td style="padding:10px 14px;text-align:right">
-                {ach_badge(row['M2_Ach_Pct'])}
-            </td>
-            <td style="padding:10px 14px;text-align:right">
-                {mom_badge(row['MoM_Pct'])}
+            <td style="padding:12px 14px;text-align:right">
+                {mom_badge(team_mom)}
             </td>
         </tr>"""
-
-    # Totals footer
-    m1t_total = f"{total_m1t:.1f}L" if total_m1t > 0 else "—"
-    m2t_total = f"{total_m2t:.1f}L" if total_m2t > 0 else "—"
-    rows_html += f"""
-    <tr style="background:#f1f5f9;border-top:2px solid #cbd5e1">
-        <td colspan="2" style="padding:12px 14px;font-size:13px;font-weight:700;color:#0f172a">
-            🏁 Team Total
-        </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
-            {m1t_total}
-        </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
-            {total_m1d:.2f}L
-        </td>
-        <td style="padding:12px 14px;text-align:right">
-            {ach_badge(team_m1_ach)}
-        </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600;color:#64748b">
-            {m2t_total}
-        </td>
-        <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:#0f172a">
-            {total_m2d:.2f}L
-        </td>
-        <td style="padding:12px 14px;text-align:right">
-            {ach_badge(team_m2_ach)}
-        </td>
-        <td style="padding:12px 14px;text-align:right">
-            {mom_badge(team_mom)}
-        </td>
-    </tr>"""
-
-    table_html = f"""
-    <div style="border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;
-                box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:24px;overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;
-                      min-width:780px">
-            <thead>
-                <tr style="background:#0f172a">
-                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">Vertical</th>
-                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">Manager</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Target</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Disb</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month1} Ach%</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Target</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Disb</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">{month2} Ach%</th>
-                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
-                               white-space:nowrap">MoM %</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
-    </div>
-    """
-    st.markdown(table_html, unsafe_allow_html=True)
-
-    # ── Bar Chart: Month1 vs Month2 Disbursed ──
-    section_header("Disbursed Comparison — Bar Chart")
-    fig_bar = go.Figure()
-    fig_bar.add_trace(go.Bar(
-        name=f"{month1} Disbursed",
-        x=comp["Manager"],
-        y=comp["M1_Disb_L"],
-        marker_color="#6366f1",
-        text=[f"{v:.1f}L" for v in comp["M1_Disb_L"]],
-        textposition="outside",
-    ))
-    fig_bar.add_trace(go.Bar(
-        name=f"{month2} Disbursed",
-        x=comp["Manager"],
-        y=comp["M2_Disb_L"],
-        marker_color="#f59e0b",
-        text=[f"{v:.1f}L" for v in comp["M2_Disb_L"]],
-        textposition="outside",
-    ))
-    fig_bar.update_layout(
-        barmode="group",
-        template="plotly_white",
-        height=420,
-        yaxis_title="Disbursed (Lakhs)",
-        font=dict(family="Inter", size=12),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        xaxis=dict(tickangle=-30),
-        legend=dict(orientation="h", y=-0.25),
-        margin=dict(t=30, b=80, l=40, r=20),
-    )
-    fig_bar.update_traces(cliponaxis=False)
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-    # ── Achievement % Chart ──
-    section_header("Achievement % Comparison")
-    fig_ach = go.Figure()
-    fig_ach.add_trace(go.Bar(
-        name=f"{month1} Ach%",
-        x=comp["Manager"],
-        y=comp["M1_Ach_Pct"],
-        marker_color="#6366f1",
-        text=[f"{v:.1f}%" for v in comp["M1_Ach_Pct"]],
-        textposition="outside",
-    ))
-    fig_ach.add_trace(go.Bar(
-        name=f"{month2} Ach%",
-        x=comp["Manager"],
-        y=comp["M2_Ach_Pct"],
-        marker_color="#f59e0b",
-        text=[f"{v:.1f}%" for v in comp["M2_Ach_Pct"]],
-        textposition="outside",
-    ))
-    fig_ach.add_hline(
-        y=100, line_dash="dash", line_color="#ef4444",
-        annotation_text="100% Target Line", annotation_position="top right"
-    )
-    fig_ach.update_layout(
-        barmode="group",
-        template="plotly_white",
-        height=400,
-        yaxis_title="Achievement %",
-        font=dict(family="Inter", size=12),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        xaxis=dict(tickangle=-30),
-        legend=dict(orientation="h", y=-0.25),
-        margin=dict(t=30, b=80, l=40, r=20),
-    )
-    fig_ach.update_traces(cliponaxis=False)
-    st.plotly_chart(fig_ach, use_container_width=True)
-
-    # ── MoM Growth Chart ──
-    section_header("MoM Growth % by Manager")
-    mom_colors = ["#10b981" if v >= 0 else "#ef4444" for v in comp["MoM_Pct"]]
-    fig_mom = go.Figure(go.Bar(
-        x=comp["Manager"],
-        y=comp["MoM_Pct"],
-        marker_color=mom_colors,
-        text=[f"{'▲' if v >= 0 else '▼'} {abs(v):.1f}%" for v in comp["MoM_Pct"]],
-        textposition="outside",
-    ))
-    fig_mom.add_hline(y=0, line_color="#94a3b8", line_width=1.5)
-    fig_mom.update_layout(
-        template="plotly_white",
-        height=380,
-        yaxis_title="MoM Growth %",
-        font=dict(family="Inter", size=12),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        xaxis=dict(tickangle=-30),
-        showlegend=False,
-        margin=dict(t=30, b=80, l=40, r=20),
-    )
-    fig_mom.update_traces(cliponaxis=False)
-    st.plotly_chart(fig_mom, use_container_width=True)
-
-    # ── Export ──
-    section_header("Export Data")
-    export_df = comp[[
-        "Vertical", "Manager",
-        "M1_Target_L", "M1_Disb_L", "M1_Ach_Pct",
-        "M2_Target_L", "M2_Disb_L", "M2_Ach_Pct",
-        "MoM_Pct"
-    ]].copy()
-    export_df.columns = [
-        "Vertical", "Manager",
-        f"{month1} Target(L)", f"{month1} Disb(L)", f"{month1} Ach%",
-        f"{month2} Target(L)", f"{month2} Disb(L)", f"{month2} Ach%",
-        "MoM%"
-    ]
-    for c in export_df.columns[2:]:
-        export_df[c] = export_df[c].round(2)
-
-    st.dataframe(export_df, use_container_width=True, height=300)
-
-    col_dl1, col_dl2 = st.columns([1, 4])
-    with col_dl1:
-        st.download_button(
-            "⬇️ Download CSV",
-            export_df.to_csv(index=False),
-            f"team_vs_month_{month1}_vs_{month2}.csv",
-            "text/csv"
+    
+        table_html = f"""
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.07);margin-bottom:24px;overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;
+                          min-width:780px">
+                <thead>
+                    <tr style="background:#0f172a">
+                        <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
+                                   color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">Vertical</th>
+                        <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;
+                                   color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">Manager</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month1} Target</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month1} Disb</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month1} Ach%</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month2} Target</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month2} Disb</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#fbbf24;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">{month2} Ach%</th>
+                        <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;
+                                   color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;
+                                   white-space:nowrap">MoM %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows_html}
+                </tbody>
+            </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
+    
+        # ── Bar Chart: Month1 vs Month2 Disbursed ──
+        section_header("Disbursed Comparison — Bar Chart")
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            name=f"{month1} Disbursed",
+            x=comp["Manager"],
+            y=comp["M1_Disb_L"],
+            marker_color="#6366f1",
+            text=[f"{v:.1f}L" for v in comp["M1_Disb_L"]],
+            textposition="outside",
+        ))
+        fig_bar.add_trace(go.Bar(
+            name=f"{month2} Disbursed",
+            x=comp["Manager"],
+            y=comp["M2_Disb_L"],
+            marker_color="#f59e0b",
+            text=[f"{v:.1f}L" for v in comp["M2_Disb_L"]],
+            textposition="outside",
+        ))
+        fig_bar.update_layout(
+            barmode="group",
+            template="plotly_white",
+            height=420,
+            yaxis_title="Disbursed (Lakhs)",
+            font=dict(family="Inter", size=12),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            xaxis=dict(tickangle=-30),
+            legend=dict(orientation="h", y=-0.25),
+            margin=dict(t=30, b=80, l=40, r=20),
         )
-    pdf_bytes_tvm = generate_pdf_bytes(export_df, f"Team vs Month: {month1} vs {month2}")
-    with col_dl2:
-        if pdf_bytes_tvm:
+        fig_bar.update_traces(cliponaxis=False)
+        st.plotly_chart(fig_bar, use_container_width=True)
+    
+        # ── Achievement % Chart ──
+        section_header("Achievement % Comparison")
+        fig_ach = go.Figure()
+        fig_ach.add_trace(go.Bar(
+            name=f"{month1} Ach%",
+            x=comp["Manager"],
+            y=comp["M1_Ach_Pct"],
+            marker_color="#6366f1",
+            text=[f"{v:.1f}%" for v in comp["M1_Ach_Pct"]],
+            textposition="outside",
+        ))
+        fig_ach.add_trace(go.Bar(
+            name=f"{month2} Ach%",
+            x=comp["Manager"],
+            y=comp["M2_Ach_Pct"],
+            marker_color="#f59e0b",
+            text=[f"{v:.1f}%" for v in comp["M2_Ach_Pct"]],
+            textposition="outside",
+        ))
+        fig_ach.add_hline(
+            y=100, line_dash="dash", line_color="#ef4444",
+            annotation_text="100% Target Line", annotation_position="top right"
+        )
+        fig_ach.update_layout(
+            barmode="group",
+            template="plotly_white",
+            height=400,
+            yaxis_title="Achievement %",
+            font=dict(family="Inter", size=12),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            xaxis=dict(tickangle=-30),
+            legend=dict(orientation="h", y=-0.25),
+            margin=dict(t=30, b=80, l=40, r=20),
+        )
+        fig_ach.update_traces(cliponaxis=False)
+        st.plotly_chart(fig_ach, use_container_width=True)
+    
+        # ── MoM Growth Chart ──
+        section_header("MoM Growth % by Manager")
+        mom_colors = ["#10b981" if v >= 0 else "#ef4444" for v in comp["MoM_Pct"]]
+        fig_mom = go.Figure(go.Bar(
+            x=comp["Manager"],
+            y=comp["MoM_Pct"],
+            marker_color=mom_colors,
+            text=[f"{'▲' if v >= 0 else '▼'} {abs(v):.1f}%" for v in comp["MoM_Pct"]],
+            textposition="outside",
+        ))
+        fig_mom.add_hline(y=0, line_color="#94a3b8", line_width=1.5)
+        fig_mom.update_layout(
+            template="plotly_white",
+            height=380,
+            yaxis_title="MoM Growth %",
+            font=dict(family="Inter", size=12),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            xaxis=dict(tickangle=-30),
+            showlegend=False,
+            margin=dict(t=30, b=80, l=40, r=20),
+        )
+        fig_mom.update_traces(cliponaxis=False)
+        st.plotly_chart(fig_mom, use_container_width=True)
+    
+        # ── Export ──
+        section_header("Export Data")
+        export_df = comp[[
+            "Vertical", "Manager",
+            "M1_Target_L", "M1_Disb_L", "M1_Ach_Pct",
+            "M2_Target_L", "M2_Disb_L", "M2_Ach_Pct",
+            "MoM_Pct"
+        ]].copy()
+        export_df.columns = [
+            "Vertical", "Manager",
+            f"{month1} Target(L)", f"{month1} Disb(L)", f"{month1} Ach%",
+            f"{month2} Target(L)", f"{month2} Disb(L)", f"{month2} Ach%",
+            "MoM%"
+        ]
+        for c in export_df.columns[2:]:
+            export_df[c] = export_df[c].round(2)
+    
+        st.dataframe(export_df, use_container_width=True, height=300)
+    
+        col_dl1, col_dl2 = st.columns([1, 4])
+        with col_dl1:
             st.download_button(
-                "📄 Export PDF",
-                pdf_bytes_tvm,
-                f"team_vs_month_{month1}_vs_{month2}.pdf",
-                "application/pdf"
+                "⬇️ Download CSV",
+                export_df.to_csv(index=False),
+                f"team_vs_month_{month1}_vs_{month2}.csv",
+                "text/csv"
             )
+        pdf_bytes_tvm = generate_pdf_bytes(export_df, f"Team vs Month: {month1} vs {month2}")
+        with col_dl2:
+            if pdf_bytes_tvm:
+                st.download_button(
+                    "📄 Export PDF",
+                    pdf_bytes_tvm,
+                    f"team_vs_month_{month1}_vs_{month2}.pdf",
+                    "application/pdf"
+                )
