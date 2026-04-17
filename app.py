@@ -482,14 +482,12 @@ latest_month_index = len(months) - 1
 # ─────────────────────────────────────────
 # SIDEBAR NAVIGATION
 # ─────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 💼 Prime PL")
-    st.markdown("---")
-    dashboard_type = st.radio(
-        "Navigation",
-        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison", "📊 Campaign Performance", "🎯 Target Tracker"],
-        label_visibility="collapsed"
-    )
+dashboard_type = st.radio(
+    "Navigation",
+    ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison",
+     "📊 Campaign Performance", "🎯 Target Tracker", "📊 Team vs Month"],  # ← ye add karein
+    label_visibility="collapsed"
+)
     st.markdown("---")
     if st.button("🚪 Logout"):
         st.session_state.login = False
@@ -596,165 +594,7 @@ if dashboard_type == "🏠 Overview":
 
        
 
-    # # ══════════════════════════════════════════
-    # # 📊 TEAM vs MONTH (2-MONTH MTD COMPARISON)
-    # # ══════════════════════════════════════════
    
-    
-    
-    # TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
-    
-    # # =========================
-    # # LOAD TARGETS (FIXED)
-    # # =========================
-    # @st.cache_data
-    # def load_targets():
-    #     df_t = pd.read_csv(TARGET_SHEET_URL)
-    #     df_t.columns = df_t.columns.str.strip()
-    
-    #     if "Manager" in df_t.columns:
-    #         df_t["Manager"] = df_t["Manager"].astype(str).str.strip().str.lower()
-    
-    #     return df_t
-    
-    
-    # # =========================
-    # # TARGET FETCH (ROBUST)
-    # # =========================
-    # def get_target(Manager, Month, target_df):
-    #     try:
-    #         if target_df.empty:
-    #             return 0
-    
-    #         Manager = str(Manager).strip().lower()
-    
-    #         # manager match
-    #         row = target_df[target_df["Manager"] == Manager]
-    
-    #         if row.empty:
-    #             return 0
-    
-    #         # normalize column match (case/space safe)
-    #         cols = {c.strip().lower(): c for c in target_df.columns}
-    
-    #         month_key = month.strip().lower()
-    
-    #         if month_key not in cols:
-    #             return 0
-    
-    #         actual_col = cols[month_key]
-    
-    #         val = row.iloc[0][actual_col]
-    
-    #         if pd.isna(val):
-    #             return 0
-    
-    #         return float(val)
-    
-    #     except:
-    #         return 0
-    
-    
-    # # =========================
-    # # MAIN
-    # # =========================
-    # st.title("📊 Team Month Comparison (Fixed Target Issue)")
-    
-    # df.columns = df.columns.str.strip()
-    
-    # # DATE FIX
-    # df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
-    # df = df.dropna(subset=["DISB DATE"])
-    
-    # df["Disb Month"] = df["DISB DATE"].dt.strftime("%b-%Y")
-    
-    # months = sorted(df["Disb Month"].unique())
-    
-     
- 
-    # # =========================
-    # # DATA FILTER
-    # # =========================
-    # df_m1 = df[df["Disb Month"] == month1]
-    # df_m2 = df[df["Disb Month"] == month2]
-    
-    # # =========================
-    # # GROUPING
-    # # =========================
-    # m1 = df_m1.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
-    # m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
-    
-    # m2 = df_m2.groupby(["Vertical", "Manager"], as_index=False)["Disbursed AMT"].sum()
-    # m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
-    
-    # # =========================
-    # # MERGE
-    # # =========================
-    # comp = pd.merge(m1, m2, on=["Vertical", "Manager"], how="outer").fillna(0)
-    
-    # # =========================
-    # # TARGET LOAD
-    # # =========================
-    # target_df = load_targets()
-    
-    # # DEBUG (optional)
-    # # st.write(target_df.head())
-    
-    # # =========================
-    # # TARGET MAP
-    # # =========================
-    # comp["M1_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month1, target_df))
-    # comp["M2_Target"] = target_df["Manager"].apply(lambda x: get_target(x, month2, target_df))
-    
-    # # =========================
-    # # ACH %
-    # # =========================
-    # comp["M1_Ach%"] = (comp["M1_Disb"] / comp["M1_Target"].replace(0, 1) * 100).round(1)
-    # comp["M2_Ach%"] = (comp["M2_Disb"] / comp["M2_Target"].replace(0, 1) * 100).round(1)
-    
-    # # =========================
-    # # COMPARISON
-    # # =========================
-    # comp["Disb Comparison"] = comp["M2_Disb"] - comp["M1_Disb"]/comp["M1_Disb"]
-    
-    # comp = comp.sort_values("M2_Disb", ascending=False)
-    
-    # # =========================
-    # # DISPLAY
-    # # =========================
-    # disp = comp.copy()
-    
-    # disp[f"{month1} Target"] = disp["M1_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
-    # disp[f"{month1} Disb"] = disp["M1_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
-    # disp[f"{month1} Ach%"] = disp["M1_Ach%"].map(lambda x: f"{x:.1f}%")
-    
-    # disp[f"{month2} Target"] = disp["M2_Target"].map(lambda x: f"{x:.0f}L" if x else "—")
-    # disp[f"{month2} Disb"] = disp["M2_Disb"].map(lambda x: f"{x/100000:.2f}L" if x else "—")
-    # disp[f"{month2} Ach%"] = disp["M2_Ach%"].map(lambda x: f"{x:.1f}%")
-    
-    # disp["Disb Comparison"] = disp["Disb Comparison"].map(lambda x: f"{x/100000:.1f}%")
-    
-    # final_cols = [
-    #     "Vertical",
-    #     "Manager",
-    #     f"{month1} Target",
-    #     f"{month1} Disb",
-    #     f"{month1} Ach%",
-    #     f"{month2} Target",
-    #     f"{month2} Disb",
-    #     f"{month2} Ach%",
-    #     "Disb Comparison"
-    # ]
-    
-    # st.dataframe(disp[final_cols], use_container_width=True, height=500)
-    
-    # # DOWNLOAD
-    # st.download_button(
-    #     "⬇️ Download Report",
-    #     comp.to_csv(index=False),
-    #     "2_month_comparison.csv",
-    #     "text/csv"
-    # )
 # ══════════════════════════════════════════
 # ⚖️ COMPARISON
 # ══════════════════════════════════════════
@@ -1150,3 +990,266 @@ elif dashboard_type == "🎯 Target Tracker":
         legend=dict(orientation="h", y=-0.2),
     )
     st.plotly_chart(fig_tgt, use_container_width=True)
+
+    # ══════════════════════════════════════════
+    # 📊 TEAM vs MONTH COMPARISON (New Section)
+    # Add this in your sidebar navigation options
+    # ══════════════════════════════════════════
+    
+    elif dashboard_type == "📊 Team vs Month":
+        st.title("📊 Team vs Month Comparison")
+    
+        # ── Sidebar Filters ──
+        with st.sidebar.expander("🔧 Filters", expanded=True):
+            col_m1, col_m2 = st.columns(2)
+            month1 = st.selectbox("Month 1", months, index=max(0, latest_month_index - 1), key="tvm_m1")
+            month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
+            sel_vertical = st.selectbox("Vertical", verticals, key="tvm_vert")
+    
+        # ── Reload ──
+        if st.button("🔄 Reload Data"):
+            st.cache_data.clear()
+            st.rerun()
+    
+        # ══════════════════════════
+        # TARGET SHEET LOAD
+        # ══════════════════════════
+        TARGET_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTplHDYVsgbTHNJsFFqLBzbRc4Gj8RYlrjRs4H8NxRy2V7iAFl0-teSToWaSHz5BReD5rSsgVv1sjMs/pub?output=csv"
+    
+        @st.cache_data(ttl=120)
+        def load_targets_tvm():
+            try:
+                tdf = pd.read_csv(TARGET_SHEET_URL)
+                tdf.columns = tdf.columns.str.strip()
+                return tdf, None
+            except Exception as e:
+                return pd.DataFrame(), str(e)
+    
+        target_raw, target_err = load_targets_tvm()
+    
+        if target_err:
+            st.error(f"Target sheet load failed: {target_err}")
+        elif target_raw.empty:
+            st.warning("Target sheet is empty.")
+        else:
+            st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
+    
+        # ══════════════════════════
+        # TARGET FETCH FUNCTION
+        # ══════════════════════════
+        def get_target_tvm(mgr_name, month_name, tdf):
+            """
+            Target sheet expected columns (case-insensitive):
+              - Manager / Name
+              - Month / Disb Month
+              - Target / Target (L) / Target (Lakhs)   ← value in LAKHS
+            """
+            if tdf is None or tdf.empty:
+                return 0.0
+    
+            cols_lower = {c.lower().strip(): c for c in tdf.columns}
+    
+            # Detect Manager column
+            mgr_col = next((cols_lower[k] for k in ["manager","name","manager name"] if k in cols_lower), None)
+            # Detect Month column
+            mon_col = next((cols_lower[k] for k in ["month","disb month","month name"] if k in cols_lower), None)
+            # Detect Target column (value expected in LAKHS)
+            tgt_col = next((cols_lower[k] for k in [
+                "target","target (l)","target_l","target (lakhs)","amount","target(l)"
+            ] if k in cols_lower), None)
+    
+            if not mgr_col or not tgt_col:
+                return 0.0
+    
+            mgr_rows = tdf[tdf[mgr_col].astype(str).str.strip().str.lower() == mgr_name.strip().lower()]
+    
+            if mgr_rows.empty:
+                return 0.0
+    
+            # Try month match
+            if mon_col:
+                mon_rows = mgr_rows[
+                    mgr_rows[mon_col].astype(str).str.strip().str.lower() == month_name.strip().lower()
+                ]
+                if not mon_rows.empty:
+                    try:
+                        return float(str(mon_rows.iloc[0][tgt_col]).replace(",", "").replace("₹", "").strip())
+                    except:
+                        pass
+    
+            # Fallback: just manager row (single target column, no month column)
+            try:
+                return float(str(mgr_rows.iloc[0][tgt_col]).replace(",", "").replace("₹", "").strip())
+            except:
+                return 0.0
+    
+        # ══════════════════════════
+        # ACTUAL DISBURSED DATA
+        # ══════════════════════════
+        disb_df = df.copy()
+    
+        # Ensure Disb Date is parsed
+        if "DISB DATE" in disb_df.columns:
+            disb_df["DISB DATE"] = pd.to_datetime(disb_df["DISB DATE"], errors="coerce")
+    
+        if sel_vertical != "All":
+            disb_df = disb_df[disb_df["Vertical"] == sel_vertical]
+    
+        df_m1 = disb_df[disb_df["Disb Month"] == month1]
+        df_m2 = disb_df[disb_df["Disb Month"] == month2]
+    
+        # Group actual disbursed by Vertical + Manager
+        agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
+    
+        agg_m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
+        agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
+    
+        # Merge both months
+        comp = pd.merge(agg_m1, agg_m2, on=["Vertical", "Manager"], how="outer").fillna(0)
+    
+        # ══════════════════════════
+        # MAP TARGETS
+        # ══════════════════════════
+        comp["M1_Target_L"] = comp["Manager"].apply(
+            lambda m: get_target_tvm(m, month1, target_raw)
+        )
+        comp["M2_Target_L"] = comp["Manager"].apply(
+            lambda m: get_target_tvm(m, month2, target_raw)
+        )
+    
+        # Convert actual to Lakhs
+        comp["M1_Disb_L"] = comp["M1_Disb"] / 100000
+        comp["M2_Disb_L"] = comp["M2_Disb"] / 100000
+    
+        # Achievement %
+        comp["M1_Ach%"] = comp.apply(
+            lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0, axis=1
+        )
+        comp["M2_Ach%"] = comp.apply(
+            lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0, axis=1
+        )
+    
+        # MoM Comparison %
+        comp["MoM%"] = comp.apply(
+            lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
+            if r["M1_Disb_L"] > 0 else 0, axis=1
+        )
+    
+        comp = comp.sort_values(["Vertical", "M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
+    
+        # ══════════════════════════
+        # SUMMARY METRIC CARDS
+        # ══════════════════════════
+        section_header("Team Summary")
+        total_m1d = comp["M1_Disb_L"].sum()
+        total_m2d = comp["M2_Disb_L"].sum()
+        total_m1t = comp["M1_Target_L"].sum()
+        total_m2t = comp["M2_Target_L"].sum()
+        team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0
+        team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0
+        team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0
+    
+        c1, c2, c3, c4 = st.columns(4)
+        c1.markdown(metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
+        c2.markdown(metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
+        c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
+                                "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+        c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
+                                "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+    
+        # ══════════════════════════
+        # MAIN COMPARISON TABLE (styled HTML)
+        # ══════════════════════════
+        section_header(f"Manager-wise: {month1} vs {month2}")
+    
+        def mom_badge(val):
+            """Green badge for positive, red for negative MoM%"""
+            if val > 0:
+                return f'<span style="background:#d1fae5;color:#065f46;font-weight:600;font-size:12px;padding:3px 8px;border-radius:5px">▲ {val:.1f}%</span>'
+            elif val < 0:
+                return f'<span style="background:#fee2e2;color:#991b1b;font-weight:600;font-size:12px;padding:3px 8px;border-radius:5px">▼ {abs(val):.1f}%</span>'
+            else:
+                return f'<span style="color:#94a3b8;font-size:12px">0.0%</span>'
+    
+        def ach_color(val):
+            if val >= 90: return "#065f46"
+            if val >= 70: return "#b45309"
+            return "#991b1b"
+    
+        # Build HTML table
+        rows_html = ""
+        for i, row in comp.iterrows():
+            bg = "#f8fafc" if i % 2 == 0 else "#ffffff"
+            rows_html += f"""
+            <tr style="background:{bg};border-bottom:1px solid #e2e8f0">
+                <td style="padding:10px 14px;font-size:13px;color:#64748b">{row['Vertical']}</td>
+                <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#0f172a">{row['Manager']}</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">{row['M1_Target_L']:.1f}L</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:500">{row['M1_Disb_L']:.2f}L</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:{ach_color(row['M1_Ach%'])}">{row['M1_Ach%']:.1f}%</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;color:#64748b">{row['M2_Target_L']:.1f}L</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:500">{row['M2_Disb_L']:.2f}L</td>
+                <td style="padding:10px 14px;font-size:13px;text-align:right;font-weight:600;color:{ach_color(row['M2_Ach%'])}">{row['M2_Ach%']:.1f}%</td>
+                <td style="padding:10px 14px;text-align:right">{mom_badge(row['MoM%'])}</td>
+            </tr>"""
+    
+        # Totals row
+        rows_html += f"""
+        <tr style="background:#f1f5f9;border-top:2px solid #cbd5e1">
+            <td colspan="2" style="padding:12px 14px;font-size:13px;font-weight:700;color:#0f172a">Total</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;color:#64748b">{total_m1t:.1f}L</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600">{total_m1d:.2f}L</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:{ach_color(team_m1_ach)}">{team_m1_ach:.1f}%</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;color:#64748b">{total_m2t:.1f}L</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:600">{total_m2d:.2f}L</td>
+            <td style="padding:12px 14px;font-size:13px;text-align:right;font-weight:700;color:{ach_color(team_m2_ach)}">{team_m2_ach:.1f}%</td>
+            <td style="padding:12px 14px;text-align:right">{mom_badge(team_mom)}</td>
+        </tr>"""
+    
+        table_html = f"""
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif">
+            <thead>
+                <tr style="background:#0f172a">
+                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em">Vertical</th>
+                    <th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em">Manager</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em">{month1} Target</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em">{month1} Disb</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em">{month1} Ach%</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.06em">{month2} Target</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.06em">{month2} Disb</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:0.06em">{month2} Ach%</th>
+                    <th style="padding:12px 14px;text-align:right;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em">MoM %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
+    
+        # ══════════════════════════
+        # DOWNLOAD
+        # ══════════════════════════
+        st.markdown("<br>", unsafe_allow_html=True)
+        export_df = comp[[
+            "Vertical", "Manager",
+            "M1_Target_L", "M1_Disb_L", "M1_Ach%",
+            "M2_Target_L", "M2_Disb_L", "M2_Ach%", "MoM%"
+        ]].copy()
+        export_df.columns = [
+            "Vertical", "Manager",
+            f"{month1} Target(L)", f"{month1} Disb(L)", f"{month1} Ach%",
+            f"{month2} Target(L)", f"{month2} Disb(L)", f"{month2} Ach%", "MoM%"
+        ]
+        col_dl1, col_dl2 = st.columns([1, 5])
+        with col_dl1:
+            st.download_button(
+                "⬇️ Download CSV",
+                export_df.to_csv(index=False),
+                "team_vs_month.csv",
+                "text/csv"
+            )
