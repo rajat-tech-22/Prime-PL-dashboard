@@ -237,194 +237,80 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
 # LOGIN PAGE
 # ─────────────────────────────────────────
 if not st.session_state.login:
-
+    # Full-page gradient background
     st.markdown("""
     <style>
-    .stApp { background: #0b1120 !important; }
-    [data-testid="stAppViewContainer"] { background: #0b1120 !important; }
-    [data-testid="stHeader"] { background: transparent !important; }
+    .stApp { background: #0f172a !important; }
+    [data-testid="stAppViewContainer"] { background: #0f172a !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Lock check
-    if st.session_state.lock_time:
-        elapsed = time.time() - st.session_state.lock_time
-        remaining = LOCK_TIME - elapsed
-        if remaining > 0:
-            h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-            st.error(f"🔒 Account locked. Try again in {h}h {m}m.")
-            st.stop()
-        else:
-            st.session_state.attempts = 0
-            st.session_state.lock_time = None
-
-    # ── Left panel HTML (logo + branding) ──
-    st.markdown(f"""
-    <div style="
-        display:flex;
-        min-height:88vh;
-        border-radius:20px;
-        overflow:hidden;
-        max-width:960px;
-        margin:28px auto;
-        box-shadow:0 30px 70px rgba(0,0,0,0.5);
-        font-family:'Inter',sans-serif;
-    ">
-      <!-- LEFT PANEL -->
-      <div style="
-          width:42%;
-          background:#0f172a;
-          padding:44px 36px;
-          display:flex;
-          flex-direction:column;
-          justify-content:space-between;
-          position:relative;
-          border-right:0.5px solid rgba(255,255,255,0.06);
-      ">
-        <!-- dot bg -->
-        <div style="position:absolute;inset:0;
-             background-image:radial-gradient(circle,rgba(255,255,255,0.07) 1px,transparent 1px);
-             background-size:26px 26px;pointer-events:none;border-radius:20px 0 0 20px"></div>
-        <!-- green glow -->
-        <div style="position:absolute;width:320px;height:320px;border-radius:50%;
-             background:radial-gradient(circle,rgba(92,184,60,0.10),transparent 70%);
-             top:22%;left:-90px;pointer-events:none"></div>
-
-        <!-- BIG CENTRED LOGO -->
-        <div style="position:relative;z-index:1;display:flex;justify-content:center;align-items:center;padding:10px 0 6px;">
-          <div style="
-              background:#ffffff;
-              border-radius:16px;
-              padding:20px 30px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              width:100%;
-              max-width:290px;
-              box-shadow:0 0 0 1.5px rgba(92,184,60,0.30),0 10px 30px rgba(0,0,0,0.35);
-          ">
-            <img src="data:image/jpeg;base64,{MMM_LOGO_B64}"
-                 style="width:250px;display:block;"
-                 alt="MyMoneyMantra" />
+    st.markdown("""
+    <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
+                max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
+      <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
+                  padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
+                  position:relative;">
+        <div style="position:absolute;inset:0;opacity:0.06;
+             background-image:radial-gradient(circle,#fff 1px,transparent 1px);
+             background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
+                      display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
+          <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
+        </div>
+        <div>
+          <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
+                      letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
+                      display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
+          <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
+            Track. Analyse.<br>Perform.
+          </div>
+          <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
+            Real-time disbursal insights, target tracking, and team performance — all in one place.
           </div>
         </div>
-
-        <!-- Hero text -->
-        <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 0 18px;">
-          <div style="display:inline-flex;align-items:center;gap:7px;
-               background:rgba(92,184,60,0.12);border:0.5px solid rgba(92,184,60,0.30);
-               color:#86efac;font-size:10px;font-weight:600;text-transform:uppercase;
-               letter-spacing:0.10em;padding:5px 13px;border-radius:20px;
-               margin-bottom:20px;width:fit-content;">
-            <div style="width:5px;height:5px;border-radius:50%;background:#4ade80"></div>
-            Prime PL Dashboard
+        <div style="display:flex;gap:16px">
+          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                      border-radius:10px;padding:10px 14px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
+            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
           </div>
-          <div style="font-size:27px;font-weight:700;color:#f1f5f9;line-height:1.4;margin-bottom:13px;">
-            Track. Analyse.<br><span style="color:#5cb83c;">Perform.</span>
-          </div>
-          <div style="font-size:13px;color:rgba(148,163,184,0.85);line-height:1.7;">
-            Real-time disbursal insights, target tracking &amp; complete team performance — all in one place.
-          </div>
-        </div>
-
-        <!-- Stats row -->
-        <div style="position:relative;z-index:1;display:flex;gap:10px;">
-          <div style="flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 8px;text-align:center;">
-            <div style="font-size:16px;font-weight:600;color:#5cb83c;margin-bottom:3px;">6+</div>
-            <div style="font-size:9px;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.09em;">Views</div>
-          </div>
-          <div style="flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 8px;text-align:center;">
-            <div style="font-size:16px;font-weight:600;color:#4ade80;margin-bottom:3px;">Live</div>
-            <div style="font-size:9px;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.09em;">Data Feed</div>
-          </div>
-          <div style="flex:1;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 8px;text-align:center;">
-            <div style="font-size:16px;font-weight:600;color:#f8fafc;margin-bottom:3px;">IST</div>
-            <div style="font-size:9px;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.09em;">Time Zone</div>
+          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                      border-radius:10px;padding:10px 14px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
+            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
           </div>
         </div>
       </div>
-
-      <!-- RIGHT PANEL -->
-      <div style="
-          width:58%;
-          background:#ffffff;
-          padding:52px 48px;
-          display:flex;
-          flex-direction:column;
-          justify-content:center;
-      ">
-        <div style="display:flex;align-items:center;gap:7px;
-             font-size:10px;font-weight:600;color:#5cb83c;
-             text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">
-          <div style="width:22px;height:1.5px;background:#5cb83c;border-radius:2px;"></div>
-          Welcome to MyMoneyMantra
-        </div>
-        <div style="font-size:23px;font-weight:700;color:#0f172a;margin-bottom:6px;">
-          Sign in to your account
-        </div>
-        <div style="font-size:13px;color:#64748b;margin-bottom:30px;line-height:1.6;">
-          Enter your credentials to access the Prime PL Dashboard and track your team's performance.
+      <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
+                    letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:28px">
+          Enter your credentials to access the Prime PL Dashboard.
         </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Form fields using Streamlit (rendered over right panel area) ──
-    # We position inputs using columns trick
-    _, mid, _ = st.columns([2.1, 3.3, 1.0])
-    with mid:
-        st.markdown("""
-        <style>
-        /* Make input fields clean on dark bg */
-        div[data-testid="stTextInput"] > div > div > input {
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 10px !important;
-            padding: 0 38px 0 14px !important;
-            color: #0f172a !important;
-            height: 44px !important;
-            font-size: 13.5px !important;
-        }
-        div[data-testid="stTextInput"] > div > div > input:focus {
-            border-color: #5cb83c !important;
-            box-shadow: 0 0 0 3px rgba(92,184,60,0.12) !important;
-        }
-        div[data-testid="stTextInput"] label {
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.07em !important;
-            color: #475569 !important;
-        }
-        div[data-testid="stTextInput"] > div {
-            position: relative;
-        }
-        .sign-in-btn > button {
-            background: #5cb83c !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 10px !important;
-            height: 46px !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            width: 100% !important;
-            letter-spacing: 0.03em !important;
-        }
-        .sign-in-btn > button:hover { background: #4aa832 !important; }
-        </style>
-        """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([2, 3, 2])
+    with col2:
+        if st.session_state.lock_time:
+            elapsed = time.time() - st.session_state.lock_time
+            remaining = LOCK_TIME - elapsed
+            if remaining > 0:
+                h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+                st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+                st.stop()
+            else:
+                st.session_state.attempts = 0
+                st.session_state.lock_time = None
 
-        st.markdown('<p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#475569;margin-bottom:4px;">Username</p>', unsafe_allow_html=True)
-        u = st.text_input("username_hidden", placeholder="Enter your username 👤", label_visibility="collapsed")
+        u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
+        p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
 
-        st.markdown('<p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#475569;margin-bottom:4px;margin-top:8px;">Password</p>', unsafe_allow_html=True)
-        p = st.text_input("password_hidden", type="password", placeholder="Enter your password 🔒", label_visibility="collapsed")
-
-        st.markdown('<div class="sign-in-btn">', unsafe_allow_html=True)
-        sign_in = st.button("Sign In  →", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        if sign_in:
+        if st.button("Sign In →", use_container_width=True):
             if u == USERNAME and p == PASSWORD:
                 st.session_state.login = True
                 st.session_state.attempts = 0
@@ -434,28 +320,11 @@ if not st.session_state.login:
                 left = MAX_ATTEMPTS - st.session_state.attempts
                 if left <= 0:
                     st.session_state.lock_time = time.time()
-                    st.error("🔒 Too many attempts. Account locked for 12 hours.")
+                    st.error("Too many attempts. Account locked for 12 hours.")
                 else:
-                    st.error(f"❌ Invalid credentials. {left} attempt(s) remaining.")
-
-        st.markdown("""
-        <div style="display:flex;align-items:center;gap:8px;background:#f0fdf4;
-                    border:0.5px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-top:14px;">
-          <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0;"></div>
-          <span style="font-size:11.5px;color:#166534;">Secure access — 4 attempts allowed before lockout</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
-          <div style="flex:1;height:0.5px;background:#e2e8f0;"></div>
-          <span style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;">Powered by MyMoneyMantra · Seal the deal</span>
-          <div style="flex:1;height:0.5px;background:#e2e8f0;"></div>
-        </div>
-        <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:14px;">
-          © 2025 MyMoneyMantra Pvt. Ltd. · All rights reserved
-        </div>
-        """, unsafe_allow_html=True)
+                    st.error(f"Invalid credentials. {left} attempt(s) remaining.")
 
     st.stop()
-
 
 # ─────────────────────────────────────────
 # HELPERS
