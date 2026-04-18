@@ -213,30 +213,48 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-.login-box {
-    background: white;
+# Replace the login CSS in your st.markdown block:
+.login-wrap {
+    display: flex;
+    max-width: 780px;
+    margin: 40px auto;
     border-radius: 20px;
-    padding: 40px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-    max-width: 420px;
-    margin: 60px auto;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    font-family: 'Inter', sans-serif;
 }
-.login-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #0f172a;
-    text-align: center;
-    margin-bottom: 6px;
+.login-left {
+    background: linear-gradient(160deg, #0d1525 0%, #111827 100%);
+    width: 280px;
+    flex-shrink: 0;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
-.login-sub {
-    font-size: 14px;
-    color: #64748b;
-    text-align: center;
-    margin-bottom: 24px;
+.login-brand-logo {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.4);
 }
-</style>
-""", unsafe_allow_html=True)
+.login-brand-name { font-size: 20px; font-weight: 700; color: #f8fafc; line-height: 1.2; }
+.login-brand-sub  { font-size: 11px; color: rgba(148,163,184,0.75); margin-top: 5px; letter-spacing: 0.04em; }
+.login-stat       { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.08);
+                    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.login-stat-num   { font-size: 18px; font-weight: 700; color: #fff; }
+.login-stat-lbl   { font-size: 10px; color: rgba(148,163,184,0.65); text-transform: uppercase;
+                    letter-spacing: 0.06em; margin-top: 2px; }
+.login-right      { background: white; flex: 1; padding: 44px 36px; }
+.login-title      { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.login-sub        { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+.login-security   { display: flex; align-items: center; gap: 8px; background: #f0fdf4;
+                    border: 0.5px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-top: 18px; }
+.login-security-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; flex-shrink: 0; }
+.login-security-txt { font-size: 11px; color: #065f46; font-weight: 500; }
 
 # ─────────────────────────────────────────
 # AUTH
