@@ -213,48 +213,30 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-# Replace the login CSS in your st.markdown block:
-.login-wrap {
-    display: flex;
-    max-width: 780px;
-    margin: 40px auto;
+.login-box {
+    background: white;
     border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    font-family: 'Inter', sans-serif;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    max-width: 420px;
+    margin: 60px auto;
 }
-.login-left {
-    background: linear-gradient(160deg, #0d1525 0%, #111827 100%);
-    width: 280px;
-    flex-shrink: 0;
-    padding: 40px 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 6px;
 }
-.login-brand-logo {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 700; color: white;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+.login-sub {
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 24px;
 }
-.login-brand-name { font-size: 20px; font-weight: 700; color: #f8fafc; line-height: 1.2; }
-.login-brand-sub  { font-size: 11px; color: rgba(148,163,184,0.75); margin-top: 5px; letter-spacing: 0.04em; }
-.login-stat       { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.08);
-                    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-.login-stat-num   { font-size: 18px; font-weight: 700; color: #fff; }
-.login-stat-lbl   { font-size: 10px; color: rgba(148,163,184,0.65); text-transform: uppercase;
-                    letter-spacing: 0.06em; margin-top: 2px; }
-.login-right      { background: white; flex: 1; padding: 44px 36px; }
-.login-title      { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.login-sub        { font-size: 13px; color: #64748b; margin-bottom: 28px; }
-.login-security   { display: flex; align-items: center; gap: 8px; background: #f0fdf4;
-                    border: 0.5px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-top: 18px; }
-.login-security-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; flex-shrink: 0; }
-.login-security-txt { font-size: 11px; color: #065f46; font-weight: 500; }
+</style>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
 # AUTH
@@ -269,55 +251,94 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
         st.session_state[key] = val
 
 if not st.session_state.login:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
+    # Full-page gradient background
+    st.markdown("""
+    <style>
+    .stApp { background: #0f172a !important; }
+    [data-testid="stAppViewContainer"] { background: #0f172a !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
-    if not st.session_state.login:
-    st.markdown('''
-    <div class="login-page">
-      <div class="login-left">
-        <div>
-          <div class="login-logo-row">
-            <div class="login-logo-icon">M</div>
-            <div>
-              <div class="login-logo-main">MyMoneyMantra</div>
-              <div class="login-logo-sub">Prime PL Dashboard</div>
-            </div>
-          </div>
-          <div class="login-tagline">Smart Loans,<br><span>Smarter Insights</span></div>
-          <div class="login-tagdesc">Track disbursements, monitor targets, and analyse team performance — all in one place.</div>
+    st.markdown("""
+    <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
+                max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
+      <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
+                  padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
+                  position:relative;">
+        <div style="position:absolute;inset:0;opacity:0.06;
+             background-image:radial-gradient(circle,#fff 1px,transparent 1px);
+             background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
+                      display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
+          <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
         </div>
-        <div class="login-stats">
-          <div class="login-stat-box"><div class="login-stat-num">12.4<small>Cr</small></div><div class="login-stat-lbl">Monthly Disbursed</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">98.2<small>%</small></div><div class="login-stat-lbl">Target Achievement</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">6<small> Mgrs</small></div><div class="login-stat-lbl">Active Managers</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">2.74<small>%</small></div><div class="login-stat-lbl">Avg Payout %</div></div>
+        <div>
+          <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
+                      letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
+                      display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
+          <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
+            Track. Analyse.<br>Perform.
+          </div>
+          <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
+            Real-time disbursal insights, target tracking, and team performance — all in one place.
+          </div>
+        </div>
+        <div style="display:flex;gap:16px">
+          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                      border-radius:10px;padding:10px 14px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
+            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                      border-radius:10px;padding:10px 14px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
+            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
+          </div>
         </div>
       </div>
-      <div class="login-right">
-        <div class="login-pill"><div class="login-pill-dot"></div> System Online</div>
-        <div class="login-title">Welcome back</div>
-        <div class="login-sub">Sign in to MyMoneyMantra Prime PL</div>
-    ''', unsafe_allow_html=True)
-
-    # existing lock check...
-    u = st.text_input("Username", placeholder="Enter username")
-    p = st.text_input("Password", type="password", placeholder="Enter password")
-
-    if st.button("Sign In →", use_container_width=True):
-        # your existing auth logic unchanged...
-
-    st.markdown('''
-        <div class="login-security">
-          <div class="login-security-dot"></div>
-          <div class="login-security-txt">SSL encrypted &bull; Locks after 4 failed attempts &bull; 12 hr cooldown</div>
+      <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
+                    letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:28px">
+          Enter your credentials to access the Prime PL Dashboard.
         </div>
       </div>
     </div>
-    ''', unsafe_allow_html=True)
-    st.stop()
+    """, unsafe_allow_html=True)
 
+    col1, col2, col3 = st.columns([2, 3, 2])
+    with col2:
+        if st.session_state.lock_time:
+            elapsed = time.time() - st.session_state.lock_time
+            remaining = LOCK_TIME - elapsed
+            if remaining > 0:
+                h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+                st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+                st.stop()
+            else:
+                st.session_state.attempts = 0
+                st.session_state.lock_time = None
+
+        u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
+        p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
+
+        if st.button("Sign In →", use_container_width=True):
+            if u == USERNAME and p == PASSWORD:
+                st.session_state.login = True
+                st.session_state.attempts = 0
+                st.rerun()
+            else:
+                st.session_state.attempts += 1
+                left = MAX_ATTEMPTS - st.session_state.attempts
+                if left <= 0:
+                    st.session_state.lock_time = time.time()
+                    st.error("Too many attempts. Account locked for 12 hours.")
+                else:
+                    st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+
+    st.stop()
 # ─────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────
