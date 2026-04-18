@@ -101,58 +101,56 @@ if not st.session_state.login:
 
     st.stop()
 
-# ─────────────────────────────────────────
-# GLOBAL CSS
-# ─────────────────────────────────────────
 
-# ─────────────────────────────────────────
-# AUTH
-# ─────────────────────────────────────────
-USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-MAX_ATTEMPTS = 4
-LOCK_TIME = 43200
 
-for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
-    if key not in st.session_state:
-        st.session_state[key] = val
+# # ─────────────────────────────────────────
+# # AUTH
+# # ─────────────────────────────────────────
+# USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+# PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
+# MAX_ATTEMPTS = 4
+# LOCK_TIME = 43200
 
-if not st.session_state.login:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
+# for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
+#     if key not in st.session_state:
+#         st.session_state[key] = val
 
-    if st.session_state.lock_time:
-        elapsed = time.time() - st.session_state.lock_time
-        remaining = LOCK_TIME - elapsed
-        if remaining > 0:
-            h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-            st.error(f"🔒 Account locked. Try again in {h}h {m}m")
-            st.stop()
-        else:
-            st.session_state.attempts = 0
-            st.session_state.lock_time = None
+# if not st.session_state.login:
+#     st.markdown('<div class="login-box">', unsafe_allow_html=True)
+#     st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
+#     st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
 
-    u = st.text_input("Username", placeholder="Enter username")
-    p = st.text_input("Password", type="password", placeholder="Enter password")
+#     if st.session_state.lock_time:
+#         elapsed = time.time() - st.session_state.lock_time
+#         remaining = LOCK_TIME - elapsed
+#         if remaining > 0:
+#             h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+#             st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+#             st.stop()
+#         else:
+#             st.session_state.attempts = 0
+#             st.session_state.lock_time = None
 
-    if st.button("Sign In →", use_container_width=True):
-        if u == USERNAME and p == PASSWORD:
-            st.session_state.login = True
-            st.session_state.attempts = 0
-            st.success("Welcome back! ✅")
-            st.rerun()
-        else:
-            st.session_state.attempts += 1
-            left = MAX_ATTEMPTS - st.session_state.attempts
-            if left <= 0:
-                st.session_state.lock_time = time.time()
-                st.error("Too many attempts. Account locked for 12 hours.")
-            else:
-                st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+#     u = st.text_input("Username", placeholder="Enter username")
+#     p = st.text_input("Password", type="password", placeholder="Enter password")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+#     if st.button("Sign In →", use_container_width=True):
+#         if u == USERNAME and p == PASSWORD:
+#             st.session_state.login = True
+#             st.session_state.attempts = 0
+#             st.success("Welcome back! ✅")
+#             st.rerun()
+#         else:
+#             st.session_state.attempts += 1
+#             left = MAX_ATTEMPTS - st.session_state.attempts
+#             if left <= 0:
+#                 st.session_state.lock_time = time.time()
+#                 st.error("Too many attempts. Account locked for 12 hours.")
+#             else:
+#                 st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+
+#     st.markdown('</div>', unsafe_allow_html=True)
+#     st.stop()
 
 # ─────────────────────────────────────────
 # HELPERS
