@@ -21,71 +21,91 @@ st_autorefresh(interval=60 * 1000, key="refresh")
 # ─────────────────────────────────────────
 # GLOBAL CSS (PROFESSIONAL THEME)
 # ─────────────────────────────────────────
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+import streamlit as st
 
-/* Login Container Styles */
-.login-page {
-    display: flex; max-width: 900px; margin: 60px auto; border-radius: 24px;
-    overflow: hidden; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
-    background: #ffffff; border: 1px solid #e2e8f0;
-}
-.login-left {
-    width: 45%; background: #0f172a; padding: 48px; color: white;
-    display: flex; flex-direction: column; justify-content: space-between;
-}
-.login-right {
-    width: 55%; padding: 48px; display: flex; flex-direction: column; justify-content: center;
-}
-.login-title { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
-.login-sub { font-size: 14px; color: #64748b; margin-bottom: 32px; }
-
-/* Input field overrides */
-.stTextInput > div > div > input { border-radius: 10px !important; padding: 12px 16px !important; }
-</style>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────
-# AUTH LOGIC
-# ─────────────────────────────────────────
-USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-
-if "login" not in st.session_state: st.session_state.login = False
-if "attempts" not in st.session_state: st.session_state.attempts = 0
-if "lock_time" not in st.session_state: st.session_state.lock_time = None
-
-if not st.session_state.login:
-    _, col_center, _ = st.columns([0.1, 0.8, 0.1])
-    with col_center:
-        st.markdown('''
-        <div class="login-page">
-          <div class="login-left">
+def login_ui():
+    st.markdown("""
+    <style>
+    /* Main wrapper to remove sidebar and top padding */
+    .stApp { background-color: #f0f2f6; }
+    
+    .login-card {
+        display: flex;
+        width: 800px;
+        height: 500px;
+        margin: 50px auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .left-pane {
+        width: 40%;
+        background: #0b1739;
+        padding: 40px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .right-pane {
+        width: 60%;
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .stat-box {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .stat-val { font-size: 18px; font-weight: 700; }
+    .stat-lbl { font-size: 10px; color: #7b9cdb; text-transform: uppercase; }
+    
+    </style>
+    
+    <div class="login-card">
+        <div class="left-pane">
             <div>
-                <div style="font-size: 24px; font-weight: 800; margin-bottom: 12px;">Prime PL</div>
-                <div style="font-size: 14px; color: #94a3b8; line-height: 1.6;">Welcome back to the MyMoneyMantra performance dashboard.</div>
+                <h2 style="color:white;">MyMoneyMantra</h2>
+                <p style="color:#7b9cdb; font-size:14px;">PRIME PL DASHBOARD</p>
+                <h1 style="font-size:24px; margin-top:20px;">Smart Loans, <br>Smarter Insights</h1>
             </div>
-            <div style="margin-top: 40px; font-size: 12px; color: #475569;">SECURE ACCESS PORTAL &bull; V 2.0</div>
-          </div>
-          <div class="login-right">
-            <div class="login-title">Sign In</div>
-            <div class="login-sub">Enter your credentials to continue</div>
-        ''', unsafe_allow_html=True)
+            <div class="stat-grid">
+                <div class="stat-box"><div class="stat-val">12.4 Cr</div><div class="stat-lbl">Monthly Disbursed</div></div>
+                <div class="stat-box"><div class="stat-val">98.2 %</div><div class="stat-lbl">Target Achievement</div></div>
+            </div>
+        </div>
+        <div class="right-pane">
+            <h2 style="color:#0b1739;">Welcome back</h2>
+            <p style="color:#64748b;">Sign in to MyMoneyMantra Prime PL</p>
+            </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        u = st.text_input("Username", placeholder="Username")
-        p = st.text_input("Password", type="password", placeholder="••••••••")
+# App mein use karne ka tarika:
+login_ui()
 
-        if st.button("Authenticate", use_container_width=True):
-            if u == USERNAME and p == PASSWORD:
-                st.session_state.login = True
-                st.rerun()
-            else:
-                st.error("Invalid credentials.")
-        st.markdown('</div></div>', unsafe_allow_html=True)
-    st.stop()
-
+# Ab Streamlit ke inputs ko 'right-pane' mein adjust karne ke liye column use karein:
+col1, col2 = st.columns([0.4, 0.6]) # Left pane ke liye space chhod kar
+with col2:
+    # Yaha aapke existing st.text_input aur login button aayenge
+    username = st.text_input("USERNAME")
+    password = st.text_input("PASSWORD", type="password")
+    if st.button("Sign In"):
+        # Login logic
+        pass
 # ─────────────────────────────────────────
 # MAIN DASHBOARD (ONLY RUNS AFTER LOGIN)
 # ─────────────────────────────────────────
