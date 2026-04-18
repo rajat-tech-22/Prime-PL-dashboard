@@ -392,6 +392,29 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
         return b""
 
 # ─────────────────────────────────────────
+# CURRENT MONTH HELPER
+# ─────────────────────────────────────────
+def get_current_month_index(months_list):
+    """Return index of current month in months_list, fallback to last."""
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist)
+    current_month_str = now.strftime("%B %Y")   # e.g. "April 2026"
+    # also try short form e.g. "Apr-26", "Apr 2026", "April-26"
+    candidates = [
+        current_month_str,
+        now.strftime("%b %Y"),
+        now.strftime("%b-%y"),
+        now.strftime("%B-%Y"),
+        now.strftime("%m-%Y"),
+        now.strftime("%Y-%m"),
+    ]
+    for i, m in enumerate(months_list):
+        if str(m).strip() in candidates:
+            return i
+    # fallback: latest month
+    return len(months_list) - 1
+
+# ─────────────────────────────────────────
 # DATA LOADING
 # ─────────────────────────────────────────
 @st.cache_data(ttl=60)
@@ -428,6 +451,9 @@ months = sorted(df["Disb Month"].dropna().unique())
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months) - 1
+
+# ── Smart current month index ──
+current_month_index = get_current_month_index(months)
 
 # ─────────────────────────────────────────
 # TARGET FETCH FUNCTION (shared)
@@ -506,7 +532,7 @@ if dashboard_type == "🏠 Overview":
     st.title("Overview — All Managers")
 
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        selected_month = st.selectbox("Month", months, index=latest_month_index)
+        selected_month = st.selectbox("Month", months, index=current_month_index)
         selected_vertical = st.selectbox("Vertical", verticals)
 
     filtered_df = df.copy()
@@ -585,7 +611,7 @@ if dashboard_type == "🏠 Overview":
 # ══════════════════════════════════════════
 elif dashboard_type == "👤 Single Manager":
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month_sm = st.selectbox("Month", months, index=latest_month_index, key="sm_month")
+        sel_month_sm = st.selectbox("Month", months, index=current_month_index, key="sm_month")
         mgr_list = sorted(df[df["Disb Month"] == sel_month_sm]["Manager"].dropna().unique())
         sel_mgr = st.selectbox("Manager", mgr_list, key="sm_mgr")
         sel_vert_sm = st.selectbox("Vertical", verticals, key="sm_vert")
@@ -660,12 +686,12 @@ elif dashboard_type == "👤 Single Manager":
 # ══════════════════════════════════════════
 elif dashboard_type == "⚖️ Comparison":
     with st.sidebar.expander("🔧 First Selection", expanded=True):
-        m1 = st.selectbox("Month", months, index=latest_month_index, key="m1")
+        m1 = st.selectbox("Month", months, index=current_month_index, key="m1")
         mgr1 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m1]["Manager"].dropna().unique()), key="mgr1")
     f1 = df[(df["Disb Month"] == m1) & (df["Manager"] == mgr1)]
 
     with st.sidebar.expander("🔧 Second Selection", expanded=True):
-        m2 = st.selectbox("Month", months, index=latest_month_index, key="m2")
+        m2 = st.selectbox("Month", months, index=current_month_index, key="m2")
         mgr2 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m2]["Manager"].dropna().unique()), key="mgr2")
     f2 = df[(df["Disb Month"] == m2) & (df["Manager"] == mgr2)]
 
@@ -766,7 +792,7 @@ elif dashboard_type == "⚖️ Comparison":
 # ══════════════════════════════════════════
 elif dashboard_type == "📊 Campaign Performance":
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month = st.selectbox("Month", sorted(df["Disb Month"].dropna().unique()), index=latest_month_index)
+        sel_month = st.selectbox("Month", sorted(df["Disb Month"].dropna().unique()), index=current_month_index)
         temp_df = df[df["Disb Month"] == sel_month]
         camp_list = sorted(temp_df["Campaign"].dropna().unique())
         c1, c2 = st.columns(2)
@@ -869,7 +895,7 @@ elif dashboard_type == "🎯 Target Tracker":
     st.title("🎯 Target Tracker")
 
     with st.sidebar.expander("🔧 Filter", expanded=True):
-        sel_month = st.selectbox("Month", months, index=latest_month_index)
+        sel_month = st.selectbox("Month", months, index=current_month_index)
         period = st.radio("Period", ["Monthly", "Weekly"])
 
     col_ref, col_info = st.columns([1, 5])
@@ -1000,11 +1026,49 @@ elif dashboard_type == "🎯 Target Tracker":
 elif dashboard_type == "📅 Team vs Month":
     st.title("📅 Team vs Month Comparison")
 
+    # ── IST now ──
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+    now_ist_tvm = datetime.now(ist_tz)
+
     # ── Sidebar Filters ──
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        month1 = st.selectbox("Month 1", months, index=max(0, latest_month_index - 1), key="tvm_m1")
-        month2 = st.selectbox("Month 2", months, index=latest_month_index, key="tvm_m2")
+        month1 = st.selectbox("Month 1", months, index=max(0, current_month_index - 1), key="tvm_m1")
+        month2 = st.selectbox("Month 2", months, index=current_month_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
+
+        st.markdown("---")
+        st.markdown("**📅 Till Date Filter**")
+
+        # ── Determine date range for month2 from data ──
+        disb_col = "DISB DATE"
+        has_date_col = disb_col in df.columns
+
+        if has_date_col:
+            month2_dates = df[df["Disb Month"] == month2][disb_col].dropna()
+            if not month2_dates.empty:
+                min_date_m2 = month2_dates.min().date()
+                max_date_m2 = month2_dates.max().date()
+            else:
+                min_date_m2 = now_ist_tvm.date().replace(day=1)
+                max_date_m2 = now_ist_tvm.date()
+        else:
+            min_date_m2 = now_ist_tvm.date().replace(day=1)
+            max_date_m2 = now_ist_tvm.date()
+
+        enable_till_date = st.checkbox("Enable Till Date Filter", value=False, key="tvm_till_enable")
+
+        if enable_till_date:
+            till_date = st.date_input(
+                "Show data till date",
+                value=max_date_m2,
+                min_value=min_date_m2,
+                max_value=max_date_m2,
+                key="tvm_till_date",
+                help="Filter Month 2 data up to this date. Useful for MTD comparison."
+            )
+            st.caption(f"📊 Showing Month 2 data till: **{till_date.strftime('%d %b %Y')}**")
+        else:
+            till_date = None
 
     # ── Reload button ──
     col_ref2, col_info2 = st.columns([1, 5])
@@ -1032,6 +1096,24 @@ elif dashboard_type == "📅 Team vs Month":
 
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
+
+    # ── Apply Till Date filter on Month 2 ──
+    if enable_till_date and till_date is not None and has_date_col:
+        df_m2 = df_m2[df_m2[disb_col].notna()]
+        df_m2 = df_m2[df_m2[disb_col].dt.date <= till_date]
+
+        # Also apply same day-of-month filter on Month 1 for fair comparison
+        same_day = till_date.day
+        df_m1 = df_m1[df_m1[disb_col].notna()]
+        df_m1 = df_m1[df_m1[disb_col].dt.day <= same_day]
+
+        st.info(
+            f"📅 **Till Date active:** "
+            f"Month 1 ({month1}) filtered till day **{same_day}**, "
+            f"Month 2 ({month2}) filtered till **{till_date.strftime('%d %b %Y')}**"
+        )
+    elif enable_till_date and not has_date_col:
+        st.warning("⚠️ 'DISB DATE' column not found in data. Till Date filter could not be applied.")
 
     # ── Group actual disbursed ──
     agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
@@ -1085,9 +1167,13 @@ elif dashboard_type == "📅 Team vs Month":
     team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
     team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
 
+    # Till date label for cards
+    m2_label = f"{month2}" + (f" (till {till_date.strftime('%d %b')})" if (enable_till_date and till_date) else "")
+    m1_label = f"{month1}" + (f" (till day {till_date.day})" if (enable_till_date and till_date and has_date_col) else "")
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(metric_card(f"{month1} Disbursed", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
-    c2.markdown(metric_card(f"{month2} Disbursed", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
+    c1.markdown(metric_card(f"{m1_label} Disb", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
+    c2.markdown(metric_card(f"{m2_label} Disb", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
     c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
                             "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
     c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
