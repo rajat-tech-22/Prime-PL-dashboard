@@ -11,95 +11,95 @@ from io import BytesIO
 # ─────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────
-if not st.session_state.login:
-    # Full-page gradient background
-    st.markdown("""
-    <style>
-    .stApp { background: #0f172a !important; }
-    [data-testid="stAppViewContainer"] { background: #0f172a !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
-                max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
-      <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
-                  padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
-                  position:relative;">
-        <div style="position:absolute;inset:0;opacity:0.06;
-             background-image:radial-gradient(circle,#fff 1px,transparent 1px);
-             background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
-                      display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
-          <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
-        </div>
-        <div>
-          <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
-                      letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
-                      display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
-          <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
-            Track. Analyse.<br>Perform.
+    if not st.session_state.login:
+        # Full-page gradient background
+        st.markdown("""
+        <style>
+        .stApp { background: #0f172a !important; }
+        [data-testid="stAppViewContainer"] { background: #0f172a !important; }
+        </style>
+        """, unsafe_allow_html=True)
+    
+        st.markdown("""
+        <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
+                    max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
+          <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
+                      padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
+                      position:relative;">
+            <div style="position:absolute;inset:0;opacity:0.06;
+                 background-image:radial-gradient(circle,#fff 1px,transparent 1px);
+                 background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
+                          display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
+              <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
+            </div>
+            <div>
+              <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
+                          letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
+                          display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
+              <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
+                Track. Analyse.<br>Perform.
+              </div>
+              <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
+                Real-time disbursal insights, target tracking, and team performance — all in one place.
+              </div>
+            </div>
+            <div style="display:flex;gap:16px">
+              <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                          border-radius:10px;padding:10px 14px;text-align:center">
+                <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
+                <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
+                          border-radius:10px;padding:10px 14px;text-align:center">
+                <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
+                <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
+              </div>
+            </div>
           </div>
-          <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
-            Real-time disbursal insights, target tracking, and team performance — all in one place.
+          <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
+            <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
+                        letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
+            <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
+            <div style="font-size:13px;color:#64748b;margin-bottom:28px">
+              Enter your credentials to access the Prime PL Dashboard.
+            </div>
           </div>
         </div>
-        <div style="display:flex;gap:16px">
-          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                      border-radius:10px;padding:10px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
-            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                      border-radius:10px;padding:10px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
-            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
-          </div>
-        </div>
-      </div>
-      <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
-        <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
-                    letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
-        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
-        <div style="font-size:13px;color:#64748b;margin-bottom:28px">
-          Enter your credentials to access the Prime PL Dashboard.
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([2, 3, 2])
-    with col2:
-        if st.session_state.lock_time:
-            elapsed = time.time() - st.session_state.lock_time
-            remaining = LOCK_TIME - elapsed
-            if remaining > 0:
-                h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-                st.error(f"🔒 Account locked. Try again in {h}h {m}m")
-                st.stop()
-            else:
-                st.session_state.attempts = 0
-                st.session_state.lock_time = None
-
-        u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
-        p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
-
-        if st.button("Sign In →", use_container_width=True):
-            if u == USERNAME and p == PASSWORD:
-                st.session_state.login = True
-                st.session_state.attempts = 0
-                st.rerun()
-            else:
-                st.session_state.attempts += 1
-                left = MAX_ATTEMPTS - st.session_state.attempts
-                if left <= 0:
-                    st.session_state.lock_time = time.time()
-                    st.error("Too many attempts. Account locked for 12 hours.")
+        """, unsafe_allow_html=True)
+    
+        col1, col2, col3 = st.columns([2, 3, 2])
+        with col2:
+            if st.session_state.lock_time:
+                elapsed = time.time() - st.session_state.lock_time
+                remaining = LOCK_TIME - elapsed
+                if remaining > 0:
+                    h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+                    st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+                    st.stop()
                 else:
-                    st.error(f"Invalid credentials. {left} attempt(s) remaining.")
-
-    st.stop()
+                    st.session_state.attempts = 0
+                    st.session_state.lock_time = None
+    
+            u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
+            p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
+    
+            if st.button("Sign In →", use_container_width=True):
+                if u == USERNAME and p == PASSWORD:
+                    st.session_state.login = True
+                    st.session_state.attempts = 0
+                    st.rerun()
+                else:
+                    st.session_state.attempts += 1
+                    left = MAX_ATTEMPTS - st.session_state.attempts
+                    if left <= 0:
+                        st.session_state.lock_time = time.time()
+                        st.error("Too many attempts. Account locked for 12 hours.")
+                    else:
+                        st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+    
+        st.stop()
 
 
 
