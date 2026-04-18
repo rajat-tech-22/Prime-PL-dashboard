@@ -11,146 +11,281 @@ from io import BytesIO
 # ─────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────
-    if not st.session_state.login:
-        # Full-page gradient background
-        st.markdown("""
-        <style>
-        .stApp { background: #0f172a !important; }
-        [data-testid="stAppViewContainer"] { background: #0f172a !important; }
-        </style>
-        """, unsafe_allow_html=True)
-    
-        st.markdown("""
-        <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
-                    max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
-          <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
-                      padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
-                      position:relative;">
-            <div style="position:absolute;inset:0;opacity:0.06;
-                 background-image:radial-gradient(circle,#fff 1px,transparent 1px);
-                 background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
-                          display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
-              <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
-            </div>
-            <div>
-              <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
-                          letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
-                          display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
-              <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
-                Track. Analyse.<br>Perform.
-              </div>
-              <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
-                Real-time disbursal insights, target tracking, and team performance — all in one place.
-              </div>
-            </div>
-            <div style="display:flex;gap:16px">
-              <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                          border-radius:10px;padding:10px 14px;text-align:center">
-                <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
-                <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                          border-radius:10px;padding:10px 14px;text-align:center">
-                <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
-                <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
-              </div>
-            </div>
-          </div>
-          <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
-            <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
-                        letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
-            <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
-            <div style="font-size:13px;color:#64748b;margin-bottom:28px">
-              Enter your credentials to access the Prime PL Dashboard.
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-        col1, col2, col3 = st.columns([2, 3, 2])
-        with col2:
-            if st.session_state.lock_time:
-                elapsed = time.time() - st.session_state.lock_time
-                remaining = LOCK_TIME - elapsed
-                if remaining > 0:
-                    h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-                    st.error(f"🔒 Account locked. Try again in {h}h {m}m")
-                    st.stop()
-                else:
-                    st.session_state.attempts = 0
-                    st.session_state.lock_time = None
-    
-            u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
-            p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
-    
-            if st.button("Sign In →", use_container_width=True):
-                if u == USERNAME and p == PASSWORD:
-                    st.session_state.login = True
-                    st.session_state.attempts = 0
-                    st.rerun()
-                else:
-                    st.session_state.attempts += 1
-                    left = MAX_ATTEMPTS - st.session_state.attempts
-                    if left <= 0:
-                        st.session_state.lock_time = time.time()
-                        st.error("Too many attempts. Account locked for 12 hours.")
-                    else:
-                        st.error(f"Invalid credentials. {left} attempt(s) remaining.")
-    
-        st.stop()
+st.set_page_config(
+    page_title="Prime PL Dashboard",
+    page_icon="💼",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+st_autorefresh(interval=60 * 1000, key="refresh")
 
+# ─────────────────────────────────────────
+# GLOBAL CSS
+# ─────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
 
-# # ─────────────────────────────────────────
-# # AUTH
-# # ─────────────────────────────────────────
-# USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-# PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-# MAX_ATTEMPTS = 4
-# LOCK_TIME = 43200
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
 
-# for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
-#     if key not in st.session_state:
-#         st.session_state[key] = val
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stMultiSelect label,
+[data-testid="stSidebar"] .stNumberInput label {
+    color: #cbd5e1 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600 !important;
+}
 
-# if not st.session_state.login:
-#     st.markdown('<div class="login-box">', unsafe_allow_html=True)
-#     st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-#     st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
+[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stSelectbox input,
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stMultiSelect input,
+[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-baseweb="select"] div {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
 
-#     if st.session_state.lock_time:
-#         elapsed = time.time() - st.session_state.lock_time
-#         remaining = LOCK_TIME - elapsed
-#         if remaining > 0:
-#             h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-#             st.error(f"🔒 Account locked. Try again in {h}h {m}m")
-#             st.stop()
-#         else:
-#             st.session_state.attempts = 0
-#             st.session_state.lock_time = None
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    border: 1px solid #334155 !important;
+}
 
-#     u = st.text_input("Username", placeholder="Enter username")
-#     p = st.text_input("Password", type="password", placeholder="Enter password")
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover p {
+    color: #ffffff !important;
+}
 
-#     if st.button("Sign In →", use_container_width=True):
-#         if u == USERNAME and p == PASSWORD:
-#             st.session_state.login = True
-#             st.session_state.attempts = 0
-#             st.success("Welcome back! ✅")
-#             st.rerun()
-#         else:
-#             st.session_state.attempts += 1
-#             left = MAX_ATTEMPTS - st.session_state.attempts
-#             if left <= 0:
-#                 st.session_state.lock_time = time.time()
-#                 st.error("Too many attempts. Account locked for 12 hours.")
-#             else:
-#                 st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+[data-testid="stSidebar"] span[data-baseweb="tag"] {
+    background-color: #e0e7ff !important;
+}
+[data-testid="stSidebar"] span[data-baseweb="tag"] span {
+    color: #1e1b4b !important;
+    font-weight: 600 !important;
+}
 
-#     st.markdown('</div>', unsafe_allow_html=True)
-#     st.stop()
+[data-testid="stSidebar"] .streamlit-expanderHeader p {
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+}
+[data-testid="stSidebar"] details {
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    margin-bottom: 8px !important;
+}
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 { color: #f8fafc !important; }
+
+[data-testid="stSidebar"] .stButton > button {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 100%;
+}
+[data-testid="stSidebar"] .stButton > button:hover { background: #dc2626 !important; }
+
+.stApp { background-color: #f8fafc; }
+
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+.metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+.metric-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
+}
+.metric-icon { font-size: 20px; margin-bottom: 6px; }
+
+.section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 28px 0 16px 0;
+    padding-left: 12px;
+    border-left: 4px solid #6366f1;
+}
+
+.insight-strip {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+    color: white;
+}
+.insight-item { text-align: center; font-size: 13px; }
+.insight-item b {
+    display: block;
+    font-size: 11px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+.target-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+.progress-bar-bg {
+    background: #f1f5f9;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+    margin: 10px 0 6px 0;
+}
+.progress-bar-fill {
+    height: 12px;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+}
+
+.stDataFrame { border-radius: 12px !important; overflow: hidden; }
+thead tr th { background: #f8fafc !important; font-weight: 600 !important; }
+
+.streamlit-expanderHeader {
+    background: #f1f5f9 !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
+
+h1 { color: #0f172a !important; font-weight: 700 !important; }
+h2 { color: #1e293b !important; font-weight: 600 !important; }
+h3 { color: #334155 !important; font-weight: 600 !important; }
+
+.stDownloadButton > button {
+    background: #6366f1 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+.stDownloadButton > button:hover { background: #4f46e5 !important; }
+
+.login-box {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    max-width: 420px;
+    margin: 60px auto;
+}
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 6px;
+}
+.login-sub {
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 24px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
+MAX_ATTEMPTS = 4
+LOCK_TIME = 43200
+
+for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
+    if key not in st.session_state:
+        st.session_state[key] = val
+
+if not st.session_state.login:
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
+
+    if st.session_state.lock_time:
+        elapsed = time.time() - st.session_state.lock_time
+        remaining = LOCK_TIME - elapsed
+        if remaining > 0:
+            h, m = int(remaining // 3600), int((remaining % 3600) // 60)
+            st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+            st.stop()
+        else:
+            st.session_state.attempts = 0
+            st.session_state.lock_time = None
+
+    u = st.text_input("Username", placeholder="Enter username")
+    p = st.text_input("Password", type="password", placeholder="Enter password")
+
+    if st.button("Sign In →", use_container_width=True):
+        if u == USERNAME and p == PASSWORD:
+            st.session_state.login = True
+            st.session_state.attempts = 0
+            st.success("Welcome back! ✅")
+            st.rerun()
+        else:
+            st.session_state.attempts += 1
+            left = MAX_ATTEMPTS - st.session_state.attempts
+            if left <= 0:
+                st.session_state.lock_time = time.time()
+                st.error("Too many attempts. Account locked for 12 hours.")
+            else:
+                st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 
 # ─────────────────────────────────────────
 # HELPERS
