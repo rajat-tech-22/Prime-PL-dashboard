@@ -239,7 +239,7 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
-# AUTH
+# AUTH (PROFESSIONAL UI)
 # ─────────────────────────────────────────
 USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
 PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
@@ -251,42 +251,92 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
         st.session_state[key] = val
 
 if not st.session_state.login:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
 
+    # Background + Center Layout
+    st.markdown("""
+    <style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 90vh;
+    }
+    .login-card {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        width: 380px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+    .brand-logo {
+        font-size: 32px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 6px;
+    }
+    .brand-sub {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+    .login-footer {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+    # Branding
+    st.markdown('<div class="brand-logo">Prime PL</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brand-sub">Performance Dashboard Login</div>', unsafe_allow_html=True)
+
+    # Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
         if remaining > 0:
             h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-            st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+            st.error(f"🔒 Locked for {h}h {m}m")
             st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    u = st.text_input("Username", placeholder="Enter username")
-    p = st.text_input("Password", type="password", placeholder="Enter password")
+    # Inputs
+    u = st.text_input("👤 Username", placeholder="Enter username")
+    p = st.text_input("🔒 Password", type="password", placeholder="Enter password")
 
-    if st.button("Sign In →", use_container_width=True):
+    # Button
+    if st.button("Login", use_container_width=True):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.session_state.attempts = 0
-            st.success("Welcome back! ✅")
+            st.success("Login successful ✅")
             st.rerun()
         else:
             st.session_state.attempts += 1
             left = MAX_ATTEMPTS - st.session_state.attempts
             if left <= 0:
                 st.session_state.lock_time = time.time()
-                st.error("Too many attempts. Account locked for 12 hours.")
+                st.error("Too many attempts. Locked for 12 hours.")
             else:
-                st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+                st.error(f"Invalid credentials ({left} left)")
+
+    # Footer
+    st.markdown('<div class="login-footer">© 2026 Prime Dashboard</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
+    st.markdown('</div>', unsafe_allow_html=True)
 
+    st.stop()
 # ─────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────
