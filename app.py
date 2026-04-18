@@ -22,119 +22,306 @@ st_autorefresh(interval=60 * 1000, key="refresh")
 # ─────────────────────────────────────────
 # GLOBAL CSS
 # ─────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-    .login-page {
-        display: flex;
-        max-width: 820px;
-        margin: 36px auto;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.14);
-        font-family: 'Inter', sans-serif;
-        min-height: 540px;
-    }
-    .login-left {
-        width: 52%;
-        background: #0b1437;
-        padding: 44px 38px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        position: relative;
-        overflow: hidden;
-    }
-    .login-logo-row {
-        display: flex; align-items: center; gap: 12px; margin-bottom: 26px;
-    }
-    .login-logo-icon {
-        width: 46px; height: 46px; border-radius: 14px;
-        background: #1a56db;
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        font-size: 20px; font-weight: 800; color: #fff;
-    }
-    .login-logo-main { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.2; }
-    .login-logo-sub  { font-size: 10px; color: #7b9cdb; letter-spacing: 0.08em;
-                       text-transform: uppercase; margin-top: 2px; font-weight: 500; }
-    .login-tagline   { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.25;
-                       letter-spacing: -0.4px; margin-bottom: 10px; }
-    .login-tagline span { color: #4d8af0; }
-    .login-tagdesc   { font-size: 12px; color: #7b9cdb; line-height: 1.6; max-width: 280px; }
-    .login-stats     { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .login-stat-box  { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.09);
-                       border-radius: 12px; padding: 13px 15px; }
-    .login-stat-num  { font-size: 19px; font-weight: 800; color: #fff; }
-    .login-stat-num small { font-size: 11px; font-weight: 500; color: #7b9cdb; margin-left: 2px; }
-    .login-stat-lbl  { font-size: 10px; color: #5a7bbf; text-transform: uppercase;
-                       letter-spacing: 0.07em; margin-top: 3px; font-weight: 600; }
-    .login-right {
-        width: 48%;
-        background: #ffffff;
-        padding: 44px 38px;
-        display: flex; flex-direction: column; justify-content: center;
-    }
-    .login-pill {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: #eff6ff; border: 0.5px solid #bfdbfe;
-        border-radius: 999px; padding: 5px 12px;
-        font-size: 11px; font-weight: 700; color: #1d4ed8;
-        letter-spacing: 0.04em; margin-bottom: 16px; width: fit-content;
-    }
-    .login-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
-    .login-title  { font-size: 22px; font-weight: 800; color: #0f172a;
-                    letter-spacing: -0.4px; margin-bottom: 4px; }
-    .login-sub    { font-size: 13px; color: #64748b; margin-bottom: 26px; }
-    .login-security {
-        display: flex; align-items: center; gap: 8px;
-        background: #f0fdf4; border: 0.5px solid #bbf7d0;
-        border-radius: 9px; padding: 10px 14px; margin-top: 20px;
-    }
-    .login-security-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-    .login-security-txt { font-size: 11px; color: #065f46; font-weight: 600; }
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
 
-if not st.session_state.login:
-    st.markdown('''
-    <div class="login-page">
-      <div class="login-left">
-        <div>
-          <div class="login-logo-row">
-            <div class="login-logo-icon">M</div>
-            <div>
-              <div class="login-logo-main">MyMoneyMantra</div>
-              <div class="login-logo-sub">Prime PL Dashboard</div>
-            </div>
-          </div>
-          <div class="login-tagline">Smart Loans,<br><span>Smarter Insights</span></div>
-          <div class="login-tagdesc">Track disbursements, monitor targets, and analyse team performance — all in one place.</div>
-        </div>
-        <div class="login-stats">
-          <div class="login-stat-box"><div class="login-stat-num">12.4<small>Cr</small></div><div class="login-stat-lbl">Monthly Disbursed</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">98.2<small>%</small></div><div class="login-stat-lbl">Target Achievement</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">6<small> Mgrs</small></div><div class="login-stat-lbl">Active Managers</div></div>
-          <div class="login-stat-box"><div class="login-stat-num">2.74<small>%</small></div><div class="login-stat-lbl">Avg Payout %</div></div>
-        </div>
-      </div>
-      <div class="login-right">
-        <div class="login-pill"><div class="login-pill-dot"></div> System Online</div>
-        <div class="login-title">Welcome back</div>
-        <div class="login-sub">Sign in to MyMoneyMantra Prime PL</div>
-    ''', unsafe_allow_html=True)
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
 
-    # existing lock check...
-    u = st.text_input("Username", placeholder="Enter username")
-    p = st.text_input("Password", type="password", placeholder="Enter password")
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stMultiSelect label,
+[data-testid="stSidebar"] .stNumberInput label {
+    color: #cbd5e1 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600 !important;
+}
 
-    if st.button("Sign In →", use_container_width=True):
-        # your existing auth logic unchanged...
+[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stSelectbox input,
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stMultiSelect input,
+[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-baseweb="select"] div {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
 
-    st.markdown('''
-        <div class="login-security">
-          <div class="login-security-dot"></div>
-          <div class="login-security-txt">SSL encrypted &bull; Locks after 4 failed attempts &bull; 12 hr cooldown</div>
-        </div>
-      </div>
-    </div>
-    ''', unsafe_allow_html=True)
-    st.stop()
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    border: 1px solid #334155 !important;
+}
+
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover p {
+    color: #ffffff !important;
+}
+
+[data-testid="stSidebar"] span[data-baseweb="tag"] {
+    background-color: #e0e7ff !important;
+}
+[data-testid="stSidebar"] span[data-baseweb="tag"] span {
+    color: #1e1b4b !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stSidebar"] .streamlit-expanderHeader p {
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+}
+[data-testid="stSidebar"] details {
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    margin-bottom: 8px !important;
+}
+
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 { color: #f8fafc !important; }
+
+[data-testid="stSidebar"] .stButton > button {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 100%;
+}
+[data-testid="stSidebar"] .stButton > button:hover { background: #dc2626 !important; }
+
+.stApp { background-color: #f8fafc; }
+
+.metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+.metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+.metric-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.1;
+}
+.metric-icon { font-size: 20px; margin-bottom: 6px; }
+
+.section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 28px 0 16px 0;
+    padding-left: 12px;
+    border-left: 4px solid #1a56db;
+}
+
+.insight-strip {
+    background: linear-gradient(135deg, #1a56db 0%, #1648c0 100%);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+    color: white;
+}
+.insight-item { text-align: center; font-size: 13px; }
+.insight-item b {
+    display: block;
+    font-size: 11px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+.target-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+.progress-bar-bg {
+    background: #f1f5f9;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+    margin: 10px 0 6px 0;
+}
+.progress-bar-fill {
+    height: 12px;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+}
+
+.stDataFrame { border-radius: 12px !important; overflow: hidden; }
+thead tr th { background: #f8fafc !important; font-weight: 600 !important; }
+
+.streamlit-expanderHeader {
+    background: #f1f5f9 !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
+
+h1 { color: #0f172a !important; font-weight: 700 !important; }
+h2 { color: #1e293b !important; font-weight: 600 !important; }
+h3 { color: #334155 !important; font-weight: 600 !important; }
+
+.stDownloadButton > button {
+    background: #1a56db !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+.stDownloadButton > button:hover { background: #1648c0 !important; }
+
+/* ── LOGIN PAGE ── */
+.login-page {
+    display: flex;
+    max-width: 860px;
+    margin: 30px auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 560px;
+}
+.login-left {
+    width: 52%;
+    background: #0b1437;
+    padding: 44px 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+.login-blob1 {
+    position: absolute; width: 260px; height: 260px; border-radius: 50%;
+    background: #1a3a7c; opacity: 0.45; top: -80px; right: -60px; pointer-events: none;
+}
+.login-blob2 {
+    position: absolute; width: 180px; height: 180px; border-radius: 50%;
+    background: #0f2d6b; opacity: 0.5; bottom: -40px; left: -40px; pointer-events: none;
+}
+.login-logo-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 26px; position: relative; z-index: 2;
+}
+.login-logo-icon {
+    width: 48px; height: 48px; border-radius: 14px; background: #1a56db;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 22px; font-weight: 800; color: #fff;
+}
+.login-logo-main { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.2; letter-spacing: -0.3px; }
+.login-logo-sub  { font-size: 10px; color: #7b9cdb; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; font-weight: 600; }
+.login-tagline   {
+    font-size: 26px; font-weight: 800; color: #fff; line-height: 1.25;
+    letter-spacing: -0.5px; margin-bottom: 10px; position: relative; z-index: 2;
+}
+.login-tagline span { color: #4d8af0; }
+.login-tagdesc   {
+    font-size: 13px; color: #7b9cdb; line-height: 1.6; max-width: 280px;
+    position: relative; z-index: 2; margin-bottom: 32px;
+}
+.login-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; z-index: 2;
+}
+.login-stat-box {
+    background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.09);
+    border-radius: 12px; padding: 14px 16px;
+}
+.login-stat-num { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+.login-stat-num small { font-size: 12px; font-weight: 500; color: #7b9cdb; margin-left: 2px; }
+.login-stat-lbl { font-size: 10px; color: #5a7bbf; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; font-weight: 600; }
+.login-stat-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; display: inline-block; margin-right: 5px; vertical-align: middle; }
+.login-stat-dot.g { background: #22c55e; }
+.login-stat-dot.a { background: #f59e0b; }
+
+.login-right {
+    width: 48%;
+    background: #ffffff;
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.login-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eff6ff; border: 0.5px solid #bfdbfe;
+    border-radius: 999px; padding: 5px 14px;
+    font-size: 11px; font-weight: 700; color: #1d4ed8;
+    letter-spacing: 0.04em; margin-bottom: 18px; width: fit-content;
+}
+.login-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.login-title { font-size: 23px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px; margin-bottom: 4px; }
+.login-sub   { font-size: 13px; color: #64748b; margin-bottom: 26px; font-weight: 400; }
+.login-security {
+    display: flex; align-items: center; gap: 8px;
+    background: #f0fdf4; border: 0.5px solid #bbf7d0;
+    border-radius: 9px; padding: 10px 14px; margin-top: 18px;
+}
+.login-security-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+.login-security-txt { font-size: 11px; color: #065f46; font-weight: 600; }
+.login-divider {
+    display: flex; align-items: center; gap: 10px; margin: 14px 0 0;
+}
+.login-divider-line { flex: 1; height: 0.5px; background: #f1f5f9; }
+.login-divider-txt  { font-size: 10px; color: #cbd5e1; letter-spacing: 0.06em; font-weight: 600; }
+
+/* Override Streamlit button inside login right */
+.login-right .stButton > button {
+    background: #1a56db !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    height: 48px !important;
+    letter-spacing: 0.02em !important;
+    transition: background 0.2s !important;
+}
+.login-right .stButton > button:hover { background: #1648c0 !important; }
+</style>
+""", unsafe_allow_html=True)
+
 # ─────────────────────────────────────────
 # AUTH
 # ─────────────────────────────────────────
@@ -148,40 +335,97 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
         st.session_state[key] = val
 
 if not st.session_state.login:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
 
+    # Left panel HTML
+    st.markdown('''
+    <div class="login-page">
+      <div class="login-left">
+        <div class="login-blob1"></div>
+        <div class="login-blob2"></div>
+        <div>
+          <div class="login-logo-row">
+            <div class="login-logo-icon">M</div>
+            <div>
+              <div class="login-logo-main">MyMoneyMantra</div>
+              <div class="login-logo-sub">Prime PL Dashboard</div>
+            </div>
+          </div>
+          <div class="login-tagline">Smart Loans,<br><span>Smarter Insights</span></div>
+          <div class="login-tagdesc">Track disbursements, monitor targets, and analyse team performance — all in one place.</div>
+        </div>
+        <div class="login-stats">
+          <div class="login-stat-box">
+            <div class="login-stat-num">12.4<small>Cr</small></div>
+            <div class="login-stat-lbl"><span class="login-stat-dot"></span>Monthly Disbursed</div>
+          </div>
+          <div class="login-stat-box">
+            <div class="login-stat-num">98.2<small>%</small></div>
+            <div class="login-stat-lbl"><span class="login-stat-dot g"></span>Target Achievement</div>
+          </div>
+          <div class="login-stat-box">
+            <div class="login-stat-num">6<small> Mgrs</small></div>
+            <div class="login-stat-lbl"><span class="login-stat-dot a"></span>Active Managers</div>
+          </div>
+          <div class="login-stat-box">
+            <div class="login-stat-num">2.74<small>%</small></div>
+            <div class="login-stat-lbl"><span class="login-stat-dot"></span>Avg Payout %</div>
+          </div>
+        </div>
+      </div>
+      <div class="login-right">
+        <div class="login-pill"><div class="login-pill-dot"></div>&nbsp;System Online</div>
+        <div class="login-title">Welcome back</div>
+        <div class="login-sub">Sign in to MyMoneyMantra Prime PL</div>
+    ''', unsafe_allow_html=True)
+
+    # Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
         if remaining > 0:
             h, m = int(remaining // 3600), int((remaining % 3600) // 60)
             st.error(f"🔒 Account locked. Try again in {h}h {m}m")
+            st.markdown('</div></div>', unsafe_allow_html=True)
             st.stop()
         else:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    u = st.text_input("Username", placeholder="Enter username")
-    p = st.text_input("Password", type="password", placeholder="Enter password")
+    # Inputs on RIGHT side using columns
+    _, right_col = st.columns([0.05, 1])
+    with right_col:
+        u = st.text_input("Username", placeholder="Enter your username", label_visibility="visible")
+        p = st.text_input("Password", type="password", placeholder="Enter your password", label_visibility="visible")
 
-    if st.button("Sign In →", use_container_width=True):
-        if u == USERNAME and p == PASSWORD:
-            st.session_state.login = True
-            st.session_state.attempts = 0
-            st.success("Welcome back! ✅")
-            st.rerun()
-        else:
-            st.session_state.attempts += 1
-            left = MAX_ATTEMPTS - st.session_state.attempts
-            if left <= 0:
-                st.session_state.lock_time = time.time()
-                st.error("Too many attempts. Account locked for 12 hours.")
+        if st.button("Sign In →", use_container_width=True):
+            if u == USERNAME and p == PASSWORD:
+                st.session_state.login = True
+                st.session_state.attempts = 0
+                st.success("Welcome back! ✅")
+                st.rerun()
             else:
-                st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+                st.session_state.attempts += 1
+                left = MAX_ATTEMPTS - st.session_state.attempts
+                if left <= 0:
+                    st.session_state.lock_time = time.time()
+                    st.error("Too many attempts. Account locked for 12 hours.")
+                else:
+                    st.error(f"Invalid credentials. {left} attempt(s) remaining.")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('''
+        <div class="login-divider">
+          <div class="login-divider-line"></div>
+          <span class="login-divider-txt">SECURE ACCESS</span>
+          <div class="login-divider-line"></div>
+        </div>
+        <div class="login-security">
+          <div class="login-security-dot"></div>
+          <div class="login-security-txt">SSL encrypted &bull; Locks after 4 failed attempts &bull; 12hr cooldown</div>
+        </div>
+      </div>
+    </div>
+    ''', unsafe_allow_html=True)
+
     st.stop()
 
 # ─────────────────────────────────────────
@@ -202,7 +446,7 @@ def format_inr(n):
     parts.reverse()
     return "₹" + ",".join(parts) + "," + last3 if parts else "₹" + last3
 
-COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6"]
+COLORS = ["#1a56db","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6"]
 GOLD = "#f59e0b"
 
 def get_colors(index_list, top_val):
@@ -219,7 +463,7 @@ def calc_metrics(f):
     tcall = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
     return td, tr, ap, tc, ad, tb, tcamp, tcall
 
-def metric_card(label, value, icon="", color="#6366f1"):
+def metric_card(label, value, icon="", color="#1a56db"):
     return f"""
     <div class="metric-card">
         <div class="metric-icon">{icon}</div>
@@ -242,7 +486,7 @@ def styled_bar(df_group, col, x_col, y_col, title, top_val=None, height=400):
     fig = go.Figure(go.Bar(
         x=df_group[x_col],
         y=df_group[y_col] / 100000,
-        text=[f"<b>{v/100000:.2f}L</b>" for v in df_group[y_col]],
+        text=[f"<b>₹{v/100000:.2f}L</b>" for v in df_group[y_col]],
         textposition="outside",
         marker_color=colors,
         marker_line_width=0,
@@ -254,7 +498,7 @@ def styled_bar(df_group, col, x_col, y_col, title, top_val=None, height=400):
         height=height,
         plot_bgcolor="white",
         paper_bgcolor="white",
-        font=dict(family="Inter, sans-serif", size=12),
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
         margin=dict(t=50, b=60, l=40, r=20),
         xaxis=dict(tickangle=-30),
     )
@@ -272,7 +516,7 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
         pdf.ln(4)
         cols = list(df_display.columns)
         col_w = min(190 // len(cols), 40)
-        pdf.set_fill_color(99, 102, 241)
+        pdf.set_fill_color(26, 86, 219)
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Helvetica", "B", 8)
         for c in cols:
@@ -292,11 +536,9 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
 # CURRENT MONTH HELPER
 # ─────────────────────────────────────────
 def get_current_month_index(months_list):
-    """Return index of current month in months_list, fallback to last."""
     ist = timezone(timedelta(hours=5, minutes=30))
     now = datetime.now(ist)
-    current_month_str = now.strftime("%B %Y")   # e.g. "April 2026"
-    # also try short form e.g. "Apr-26", "Apr 2026", "April-26"
+    current_month_str = now.strftime("%B %Y")
     candidates = [
         current_month_str,
         now.strftime("%b %Y"),
@@ -308,7 +550,6 @@ def get_current_month_index(months_list):
     for i, m in enumerate(months_list):
         if str(m).strip() in candidates:
             return i
-    # fallback: latest month
     return len(months_list) - 1
 
 # ─────────────────────────────────────────
@@ -347,13 +588,11 @@ target_raw, target_err = load_targets()
 months = sorted(df["Disb Month"].dropna().unique())
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
-latest_month_index = len(months) - 1
 
-# ── Smart current month index ──
 current_month_index = get_current_month_index(months)
 
 # ─────────────────────────────────────────
-# TARGET FETCH FUNCTION (shared)
+# TARGET FETCH FUNCTION
 # ─────────────────────────────────────────
 def get_target_for_manager(mgr_name, month_name, tdf):
     if tdf is None or tdf.empty:
@@ -412,9 +651,9 @@ greet = ("Good Morning 🌅" if 5 <= hour < 12
          else "Good Night 🌙")
 
 st.markdown(f"""
-<div style="background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+<div style="background: linear-gradient(135deg, #1a56db, #1648c0, #0f2d6b);
             border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; color: white;">
-    <div style="font-size: 22px; font-weight: 700;">{greet}, Welcome to Prime PL!</div>
+    <div style="font-size: 22px; font-weight: 700;">{greet}, Welcome to MyMoneyMantra Prime PL!</div>
     <div style="font-size: 13px; opacity: 0.85; margin-top: 4px;">
         {now_ist.strftime("%A, %d %B %Y  •  %I:%M %p")} IST
     </div>
@@ -458,7 +697,7 @@ if dashboard_type == "🏠 Overview":
         ap = (tr / td * 100) if td else 0
 
         cards = [
-            ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+            ("Total Disbursed", format_inr(td), "💰", "#1a56db"),
             ("Total Revenue", format_inr(tr), "📈", "#10b981"),
             ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
             ("Transactions", f"{tt:,}", "🔁", "#ef4444"),
@@ -491,6 +730,43 @@ if dashboard_type == "🏠 Overview":
         with c2:
             if pdf_bytes:
                 st.download_button("📄 Export PDF", pdf_bytes, "overview.pdf", "application/pdf")
+
+        # ── Payout % All Months Chart ──
+        section_header("Avg Payout % — All Months (Current Month Highlighted)")
+        payout_trend = df.groupby("Disb Month").apply(
+            lambda x: (x["Total_Revenue"].sum() / x["Disbursed AMT"].sum() * 100)
+            if x["Disbursed AMT"].sum() > 0 else 0
+        ).reset_index()
+        payout_trend.columns = ["Disb Month", "Avg Payout %"]
+        payout_trend = payout_trend[payout_trend["Disb Month"].isin(months)]
+
+        colors_payout = [GOLD if m == selected_month else "#1a56db" for m in payout_trend["Disb Month"]]
+        avg_payout_all = payout_trend["Avg Payout %"].mean()
+
+        fig_payout = go.Figure(go.Bar(
+            x=payout_trend["Disb Month"],
+            y=payout_trend["Avg Payout %"].round(2),
+            text=[f"<b>{v:.2f}%</b>" for v in payout_trend["Avg Payout %"]],
+            textposition="outside",
+            marker_color=colors_payout,
+            marker_line_width=0,
+        ))
+        fig_payout.add_hline(
+            y=avg_payout_all, line_dash="dash", line_color="#94a3b8", line_width=1.5,
+            annotation_text=f"Avg {avg_payout_all:.2f}%", annotation_position="top right"
+        )
+        fig_payout.update_layout(
+            title=dict(text=f"Avg Payout % by Month — {selected_month} highlighted in gold",
+                       font=dict(size=15, color="#0f172a")),
+            yaxis_title="Payout %",
+            template="plotly_white", height=400,
+            plot_bgcolor="white", paper_bgcolor="white",
+            font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
+            margin=dict(t=50, b=60, l=40, r=20),
+            xaxis=dict(tickangle=-30, automargin=True),
+        )
+        fig_payout.update_traces(cliponaxis=False)
+        st.plotly_chart(fig_payout, use_container_width=True)
 
         section_header("Campaign-wise Disbursed")
         cs = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
@@ -531,7 +807,7 @@ elif dashboard_type == "👤 Single Manager":
         td, tr, ap, tc, ad, tb, tcamp, tcall = calc_metrics(f_sm)
 
         cards = [
-            ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+            ("Total Disbursed", format_inr(td), "💰", "#1a56db"),
             ("Total Revenue", format_inr(tr), "📈", "#10b981"),
             ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
             ("Transactions", f"{tc:,}", "🔁", "#ef4444"),
@@ -566,10 +842,10 @@ elif dashboard_type == "👤 Single Manager":
         trend = df[df["Manager"] == sel_mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
         fig_t = go.Figure(go.Scatter(
             x=trend["Disb Month"], y=trend["Disbursed AMT"]/100000,
-            mode="lines+markers", line=dict(width=2.5, color="#6366f1"), marker=dict(size=8)
+            mode="lines+markers", line=dict(width=2.5, color="#1a56db"), marker=dict(size=8)
         ))
         fig_t.update_layout(template="plotly_white", height=380, yaxis_title="Disbursed (L)",
-                             font=dict(family="Inter"), plot_bgcolor="white", paper_bgcolor="white")
+                             font=dict(family="Plus Jakarta Sans"), plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig_t, use_container_width=True)
 
         section_header("Raw Data")
@@ -617,7 +893,7 @@ elif dashboard_type == "⚖️ Comparison":
     st.success(f"🏆 Winner: **{winner}** with {format_inr(max(d1, d2))}")
 
     col1, col2 = st.columns(2)
-    cards_meta = [("Total Disbursed","#6366f1"),("Total Revenue","#10b981"),("Avg Payout %","#f59e0b"),("Transactions","#ef4444")]
+    cards_meta = [("Total Disbursed","#1a56db"),("Total Revenue","#10b981"),("Avg Payout %","#f59e0b"),("Transactions","#ef4444")]
     vals1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", f"{t1:,}"]
     vals2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", f"{t2:,}"]
     icons = ["💰","📈","📊","🔁"]
@@ -640,12 +916,12 @@ elif dashboard_type == "⚖️ Comparison":
         lbl2: [d2/100000, r2/100000, t2],
     })
     fig_c = go.Figure()
-    for lbl, vals, clr in [(lbl1, comp[lbl1], "#6366f1"), (lbl2, comp[lbl2], "#ef4444")]:
+    for lbl, vals, clr in [(lbl1, comp[lbl1], "#1a56db"), (lbl2, comp[lbl2], "#ef4444")]:
         fig_c.add_trace(go.Bar(name=lbl, x=comp["Metric"], y=vals,
                                text=[f"<b>{v:.2f}</b>" for v in vals],
                                textposition="outside", marker_color=clr))
     fig_c.update_layout(barmode="group", template="plotly_white", height=420,
-                        font=dict(family="Inter"), plot_bgcolor="white")
+                        font=dict(family="Plus Jakarta Sans"), plot_bgcolor="white")
     st.plotly_chart(fig_c, use_container_width=True)
 
     growth = ((d1 - d2) / d2 * 100) if d2 else 0
@@ -654,24 +930,24 @@ elif dashboard_type == "⚖️ Comparison":
     for title, col_name in [("Bank","Bank"),("Caller","Caller"),("Campaign","Campaign")]:
         section_header(f"{title}-wise Comparison")
         fig = go.Figure()
-        for f_x, lbl, clr in [(f1, lbl1, "#6366f1"), (f2, lbl2, "#ef4444")]:
+        for f_x, lbl, clr in [(f1, lbl1, "#1a56db"), (f2, lbl2, "#ef4444")]:
             s = f_x.groupby(col_name)["Disbursed AMT"].sum()
             fig.add_trace(go.Bar(x=s.index, y=s.values/100000,
-                                 text=[f"<b>{v/100000:.2f}L</b>" for v in s.values],
+                                 text=[f"<b>₹{v/100000:.2f}L</b>" for v in s.values],
                                  textposition="auto", name=lbl, marker_color=clr))
         fig.update_layout(barmode="group", template="plotly_white", xaxis_tickangle=-30,
-                          height=400, font=dict(family="Inter"), plot_bgcolor="white")
+                          height=400, font=dict(family="Plus Jakarta Sans"), plot_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True)
 
     section_header("Trend Line Comparison")
     fig_tl = go.Figure()
-    for mgr, lbl, clr in [(mgr1, lbl1, "#6366f1"), (mgr2, lbl2, "#ef4444")]:
+    for mgr, lbl, clr in [(mgr1, lbl1, "#1a56db"), (mgr2, lbl2, "#ef4444")]:
         t_data = df[df["Manager"] == mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
         fig_tl.add_trace(go.Scatter(x=t_data["Disb Month"], y=t_data["Disbursed AMT"]/100000,
                                     mode="lines+markers", name=lbl,
                                     line=dict(width=2.5, color=clr), marker=dict(size=7)))
     fig_tl.update_layout(template="plotly_white", height=400, yaxis_title="Disbursed (L)",
-                          hovermode="x unified", font=dict(family="Inter"), plot_bgcolor="white")
+                          hovermode="x unified", font=dict(family="Plus Jakarta Sans"), plot_bgcolor="white")
     st.plotly_chart(fig_tl, use_container_width=True)
 
     for label_x, f_x, fname in [(f"Data — {lbl1}", f1, "mgr1.csv"), (f"Data — {lbl2}", f2, "mgr2.csv")]:
@@ -717,7 +993,7 @@ elif dashboard_type == "📊 Campaign Performance":
     top_mgr = camp_f.groupby("Manager")["Disbursed AMT"].sum().idxmax()
 
     cards_row = [
-        ("Total Disbursed", format_inr(td), "💰", "#6366f1"),
+        ("Total Disbursed", format_inr(td), "💰", "#1a56db"),
         ("Total Revenue", format_inr(tr), "📈", "#10b981"),
         ("Avg Payout %", f"{ap:.2f}%", "📊", "#f59e0b"),
         ("Best Manager", top_mgr, "🏆", "#8b5cf6"),
@@ -856,7 +1132,7 @@ elif dashboard_type == "🎯 Target Tracker":
         if pct >= 100:
             bar_color = "#10b981"; status = "✅ Target Achieved!"
         elif pct >= 75:
-            bar_color = "#6366f1"; status = f"🔵 {pct:.1f}% — On track"
+            bar_color = "#1a56db"; status = f"🔵 {pct:.1f}% — On track"
         elif pct >= 50:
             bar_color = "#f59e0b"; status = f"🟡 {pct:.1f}% — Needs push"
         else:
@@ -871,7 +1147,7 @@ elif dashboard_type == "🎯 Target Tracker":
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;margin-bottom:4px;">
                 <span>✅ Achieved: <b style="color:#0f172a">{actual_l:.2f}L</b></span>
                 <span>⏳ Remaining: <b style="color:#ef4444">{remaining:.2f}L</b></span>
-                <span>🎯 Full Target: <b style="color:#6366f1">{target_l:.1f}L</b></span>
+                <span>🎯 Full Target: <b style="color:#1a56db">{target_l:.1f}L</b></span>
             </div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width:{pct:.1f}%;background:{bar_color}"></div>
@@ -889,7 +1165,7 @@ elif dashboard_type == "🎯 Target Tracker":
     team_pct = (total_actual / total_target * 100) if total_target else 0
 
     col_a, col_b, col_c = st.columns(3)
-    col_a.markdown(metric_card("Team Disbursed", f"{total_actual:.1f}L", "💼", "#6366f1"), unsafe_allow_html=True)
+    col_a.markdown(metric_card("Team Disbursed", f"{total_actual:.1f}L", "💼", "#1a56db"), unsafe_allow_html=True)
     col_b.markdown(metric_card("Team Target", f"{total_target:.1f}L", "🎯", "#f59e0b"), unsafe_allow_html=True)
     col_c.markdown(metric_card("Achievement %", f"{team_pct:.1f}%", "📊",
                                "#10b981" if team_pct >= 75 else "#ef4444"), unsafe_allow_html=True)
@@ -898,19 +1174,28 @@ elif dashboard_type == "🎯 Target Tracker":
     target_df_plot = mgr_actual.copy()
     target_df_plot["Target"] = target_df_plot["Manager"].map(lambda m: targets_dict.get(m, 50))
     target_df_plot["Actual_L"] = target_df_plot["Actual"] / 100000
+    ach_pcts = (target_df_plot["Actual_L"] / target_df_plot["Target"] * 100).fillna(0)
 
     fig_tgt = go.Figure()
-    fig_tgt.add_trace(go.Bar(name="Target", x=target_df_plot["Manager"], y=target_df_plot["Target"],
-                              marker_color="#e2e8f0",
-                              text=[f"{v:.1f}L" for v in target_df_plot["Target"]],
-                              textposition="outside"))
-    fig_tgt.add_trace(go.Bar(name="Actual", x=target_df_plot["Manager"], y=target_df_plot["Actual_L"],
-                              marker_color="#6366f1",
-                              text=[f"{v:.1f}L" for v in target_df_plot["Actual_L"]],
-                              textposition="outside"))
+    fig_tgt.add_trace(go.Bar(
+        name="Target",
+        x=target_df_plot["Manager"],
+        y=target_df_plot["Target"],
+        marker_color="#e2e8f0",
+        text=[f"₹{v:.1f}L" for v in target_df_plot["Target"]],
+        textposition="outside"
+    ))
+    fig_tgt.add_trace(go.Bar(
+        name="Actual",
+        x=target_df_plot["Manager"],
+        y=target_df_plot["Actual_L"],
+        marker_color="#1a56db",
+        text=[f"₹{a:.1f}L ({p:.1f}%)" for a, p in zip(target_df_plot["Actual_L"], ach_pcts)],
+        textposition="outside"
+    ))
     fig_tgt.update_layout(
         barmode="overlay", template="plotly_white", height=420,
-        font=dict(family="Inter", size=12), plot_bgcolor="white",
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=12), plot_bgcolor="white",
         yaxis_title="Disbursed (Lakhs)",
         legend=dict(orientation="h", y=-0.2),
     )
@@ -923,11 +1208,9 @@ elif dashboard_type == "🎯 Target Tracker":
 elif dashboard_type == "📅 Team vs Month":
     st.title("📅 Team vs Month Comparison")
 
-    # ── IST now ──
     ist_tz = timezone(timedelta(hours=5, minutes=30))
     now_ist_tvm = datetime.now(ist_tz)
 
-    # ── Sidebar Filters ──
     with st.sidebar.expander("🔧 Filters", expanded=True):
         month1 = st.selectbox("Month 1", months, index=max(0, current_month_index - 1), key="tvm_m1")
         month2 = st.selectbox("Month 2", months, index=current_month_index, key="tvm_m2")
@@ -936,7 +1219,6 @@ elif dashboard_type == "📅 Team vs Month":
         st.markdown("---")
         st.markdown("**📅 Till Date Filter**")
 
-        # ── Determine date range for month2 from data ──
         disb_col = "DISB DATE"
         has_date_col = disb_col in df.columns
 
@@ -967,7 +1249,6 @@ elif dashboard_type == "📅 Team vs Month":
         else:
             till_date = None
 
-    # ── Reload button ──
     col_ref2, col_info2 = st.columns([1, 5])
     with col_ref2:
         if st.button("🔄 Reload Data"):
@@ -981,12 +1262,10 @@ elif dashboard_type == "📅 Team vs Month":
         else:
             st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
 
-    # ── Raw target preview ──
     if not target_raw.empty:
         with st.expander("📋 View Raw Target Sheet", expanded=False):
             st.dataframe(target_raw, use_container_width=True, height=220)
 
-    # ── Filter disbursed data ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
@@ -994,16 +1273,12 @@ elif dashboard_type == "📅 Team vs Month":
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
 
-    # ── Apply Till Date filter on Month 2 ──
     if enable_till_date and till_date is not None and has_date_col:
         df_m2 = df_m2[df_m2[disb_col].notna()]
         df_m2 = df_m2[df_m2[disb_col].dt.date <= till_date]
-
-        # Also apply same day-of-month filter on Month 1 for fair comparison
         same_day = till_date.day
         df_m1 = df_m1[df_m1[disb_col].notna()]
         df_m1 = df_m1[df_m1[disb_col].dt.day <= same_day]
-
         st.info(
             f"📅 **Till Date active:** "
             f"Month 1 ({month1}) filtered till day **{same_day}**, "
@@ -1012,21 +1287,18 @@ elif dashboard_type == "📅 Team vs Month":
     elif enable_till_date and not has_date_col:
         st.warning("⚠️ 'DISB DATE' column not found in data. Till Date filter could not be applied.")
 
-    # ── Group actual disbursed ──
     agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
 
     agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
 
-    # ── Merge months ──
     comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
 
     if comp.empty:
         st.warning("No data found for the selected months/vertical.")
         st.stop()
 
-    # ── Map targets (in Lakhs) ──
     comp["M1_Target_L"] = comp["Manager"].apply(
         lambda m: get_target_for_manager(m, month1, target_raw)
     )
@@ -1034,11 +1306,9 @@ elif dashboard_type == "📅 Team vs Month":
         lambda m: get_target_for_manager(m, month2, target_raw)
     )
 
-    # ── Convert actual to Lakhs ──
     comp["M1_Disb_L"] = (comp["M1_Disb"] / 100000).round(2)
     comp["M2_Disb_L"] = (comp["M2_Disb"] / 100000).round(2)
 
-    # ── Achievement % ──
     comp["M1_Ach%"] = comp.apply(
         lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0.0, axis=1
     )
@@ -1046,7 +1316,6 @@ elif dashboard_type == "📅 Team vs Month":
         lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0.0, axis=1
     )
 
-    # ── MoM Comparison % ──
     comp["MoM%"] = comp.apply(
         lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
         if r["M1_Disb_L"] > 0 else 0.0, axis=1
@@ -1054,7 +1323,6 @@ elif dashboard_type == "📅 Team vs Month":
 
     comp = comp.sort_values(["Vertical","M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
 
-    # ── Summary Metric Cards ──
     section_header("Team Summary")
     total_m1d = comp["M1_Disb_L"].sum()
     total_m2d = comp["M2_Disb_L"].sum()
@@ -1064,19 +1332,17 @@ elif dashboard_type == "📅 Team vs Month":
     team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
     team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
 
-    # Till date label for cards
     m2_label = f"{month2}" + (f" (till {till_date.strftime('%d %b')})" if (enable_till_date and till_date) else "")
     m1_label = f"{month1}" + (f" (till day {till_date.day})" if (enable_till_date and till_date and has_date_col) else "")
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(metric_card(f"{m1_label} Disb", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
+    c1.markdown(metric_card(f"{m1_label} Disb", f"{total_m1d:.1f}L", "💰", "#1a56db"), unsafe_allow_html=True)
     c2.markdown(metric_card(f"{m2_label} Disb", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
     c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
                             "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
     c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
                             "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
 
-    # ── MoM strip ──
     mom_color_strip = "#10b981" if team_mom >= 0 else "#ef4444"
     mom_arrow = "▲" if team_mom >= 0 else "▼"
     st.markdown(f"""
@@ -1090,7 +1356,6 @@ elif dashboard_type == "📅 Team vs Month":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Main Comparison Table ──
     section_header(f"Manager-wise: {month1} vs {month2}")
 
     def mom_badge(val):
@@ -1121,7 +1386,7 @@ elif dashboard_type == "📅 Team vs Month":
         <tr style="background:{bg};border-bottom:1px solid #f1f5f9">
             <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">{row['Vertical']}</td>
             <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">{row['Manager']}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#6366f1;font-weight:500">{m1t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#1a56db;font-weight:500">{m1t_display}</td>
             <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
             <td style="padding:11px 14px;text-align:right">
                 <span style="background:{ach_bg(row['M1_Ach%'])};color:{ach_color(row['M1_Ach%'])};
@@ -1140,30 +1405,19 @@ elif dashboard_type == "📅 Team vs Month":
             <td style="padding:11px 14px;text-align:right">{mom_badge(row['MoM%'])}</td>
         </tr>"""
 
-    # Totals row
     rows_html += f"""
     <tr style="background:#1e293b;border-top:2px solid #334155">
-        <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">
-            🏢 TOTAL
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#818cf8;font-weight:600">
-            {total_m1t:.1f}L
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
-            {total_m1d:.2f}L
-        </td>
+        <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">🏢 TOTAL</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#818cf8;font-weight:600">{total_m1t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">{total_m1d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m1_ach)};color:{ach_color(team_m1_ach)};
                          font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
                 {team_m1_ach:.1f}%
             </span>
         </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#a78bfa;font-weight:600">
-            {total_m2t:.1f}L
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
-            {total_m2d:.2f}L
-        </td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#a78bfa;font-weight:600">{total_m2t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">{total_m2d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m2_ach)};color:{ach_color(team_m2_ach)};
                          font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
@@ -1176,45 +1430,18 @@ elif dashboard_type == "📅 Team vs Month":
     table_html = f"""
     <div style="border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;
                 box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:20px">
-        <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif">
+        <table style="width:100%;border-collapse:collapse;font-family:'Plus Jakarta Sans',sans-serif">
             <thead>
                 <tr style="background:#0f172a">
-                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Vertical
-                    </th>
-                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Manager
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Target
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Disb
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Ach%
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Target
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Disb
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Ach%
-                    </th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        MoM %
-                    </th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">Vertical</th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">Manager</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Target</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Disb</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Ach%</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Target</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Disb</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Ach%</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">MoM %</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>
@@ -1223,32 +1450,34 @@ elif dashboard_type == "📅 Team vs Month":
     """
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # ── Bar Chart: Target vs Actual ──
     section_header(f"Target vs Actual — {month1} & {month2}")
     fig_bar = go.Figure()
     fig_bar.add_trace(go.Bar(
         name=f"{month1} Target", x=comp["Manager"], y=comp["M1_Target_L"],
-        marker_color="rgba(99,102,241,0.25)",
-        text=[f"{v:.1f}L" for v in comp["M1_Target_L"]], textposition="outside"
+        marker_color="rgba(26,86,219,0.2)",
+        text=[f"₹{v:.1f}L" for v in comp["M1_Target_L"]], textposition="outside"
     ))
     fig_bar.add_trace(go.Bar(
         name=f"{month1} Actual", x=comp["Manager"], y=comp["M1_Disb_L"],
-        marker_color="#6366f1",
-        text=[f"{v:.1f}L" for v in comp["M1_Disb_L"]], textposition="outside"
+        marker_color="#1a56db",
+        text=[f"₹{v:.1f}L ({a:.1f}%)" for v, a in zip(comp["M1_Disb_L"], comp["M1_Ach%"])],
+        textposition="outside"
     ))
     fig_bar.add_trace(go.Bar(
         name=f"{month2} Target", x=comp["Manager"], y=comp["M2_Target_L"],
-        marker_color="rgba(139,92,246,0.25)",
-        text=[f"{v:.1f}L" for v in comp["M2_Target_L"]], textposition="outside"
+        marker_color="rgba(139,92,246,0.2)",
+        text=[f"₹{v:.1f}L" for v in comp["M2_Target_L"]], textposition="outside"
     ))
     fig_bar.add_trace(go.Bar(
         name=f"{month2} Actual", x=comp["Manager"], y=comp["M2_Disb_L"],
         marker_color="#8b5cf6",
-        text=[f"{v:.1f}L" for v in comp["M2_Disb_L"]], textposition="outside"
+        text=[f"₹{v:.1f}L ({a:.1f}%)" for v, a in zip(comp["M2_Disb_L"], comp["M2_Ach%"])],
+        textposition="outside"
     ))
     fig_bar.update_layout(
         barmode="group", template="plotly_white", height=440,
-        font=dict(family="Inter", size=12), plot_bgcolor="white", paper_bgcolor="white",
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
+        plot_bgcolor="white", paper_bgcolor="white",
         yaxis_title="Disbursed (Lakhs)", xaxis_tickangle=-30,
         legend=dict(orientation="h", y=-0.25),
         margin=dict(t=40, b=80)
@@ -1256,7 +1485,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_bar.update_traces(cliponaxis=False)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── MoM % Bar Chart ──
     section_header("MoM Change % per Manager")
     mom_colors = ["#10b981" if v >= 0 else "#ef4444" for v in comp["MoM%"]]
     fig_mom = go.Figure(go.Bar(
@@ -1270,19 +1498,19 @@ elif dashboard_type == "📅 Team vs Month":
     fig_mom.add_hline(y=0, line_dash="dash", line_color="#94a3b8", line_width=1.5)
     fig_mom.update_layout(
         template="plotly_white", height=380,
-        font=dict(family="Inter", size=12), plot_bgcolor="white", paper_bgcolor="white",
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
+        plot_bgcolor="white", paper_bgcolor="white",
         yaxis_title="MoM Change (%)", xaxis_tickangle=-30,
         margin=dict(t=40, b=60)
     )
     fig_mom.update_traces(cliponaxis=False)
     st.plotly_chart(fig_mom, use_container_width=True)
 
-    # ── Achievement % Comparison Chart ──
     section_header("Achievement % Comparison")
     fig_ach = go.Figure()
     fig_ach.add_trace(go.Bar(
         name=f"{month1} Ach%", x=comp["Manager"], y=comp["M1_Ach%"],
-        marker_color="#6366f1",
+        marker_color="#1a56db",
         text=[f"{v:.1f}%" for v in comp["M1_Ach%"]], textposition="outside"
     ))
     fig_ach.add_trace(go.Bar(
@@ -1294,7 +1522,8 @@ elif dashboard_type == "📅 Team vs Month":
                       annotation_text="100% Target", annotation_position="top right")
     fig_ach.update_layout(
         barmode="group", template="plotly_white", height=400,
-        font=dict(family="Inter", size=12), plot_bgcolor="white", paper_bgcolor="white",
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=12),
+        plot_bgcolor="white", paper_bgcolor="white",
         yaxis_title="Achievement %", xaxis_tickangle=-30,
         legend=dict(orientation="h", y=-0.22),
         margin=dict(t=40, b=70)
@@ -1302,7 +1531,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_ach.update_traces(cliponaxis=False)
     st.plotly_chart(fig_ach, use_container_width=True)
 
-    # ── Download ──
     st.markdown("<br>", unsafe_allow_html=True)
     export_df = comp[[
         "Vertical","Manager",
