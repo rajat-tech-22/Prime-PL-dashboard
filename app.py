@@ -22,83 +22,119 @@ st_autorefresh(interval=60 * 1000, key="refresh")
 # ─────────────────────────────────────────
 # GLOBAL CSS
 # ─────────────────────────────────────────
-# Replace the login CSS in your st.markdown block:
-.login-wrap {
-    display: flex;
-    max-width: 780px;
-    margin: 40px auto;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    font-family: 'Inter', sans-serif;
-}
-.login-left {
-    background: linear-gradient(160deg, #0d1525 0%, #111827 100%);
-    width: 280px;
-    flex-shrink: 0;
-    padding: 40px 30px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-.login-brand-logo {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 700; color: white;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 24px rgba(99,102,241,0.4);
-}
-.login-brand-name { font-size: 20px; font-weight: 700; color: #f8fafc; line-height: 1.2; }
-.login-brand-sub  { font-size: 11px; color: rgba(148,163,184,0.75); margin-top: 5px; letter-spacing: 0.04em; }
-.login-stat       { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.08);
-                    border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-.login-stat-num   { font-size: 18px; font-weight: 700; color: #fff; }
-.login-stat-lbl   { font-size: 10px; color: rgba(148,163,184,0.65); text-transform: uppercase;
-                    letter-spacing: 0.06em; margin-top: 2px; }
-.login-right      { background: white; flex: 1; padding: 44px 36px; }
-.login-title      { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.login-sub        { font-size: 13px; color: #64748b; margin-bottom: 28px; }
-.login-security   { display: flex; align-items: center; gap: 8px; background: #f0fdf4;
-                    border: 0.5px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin-top: 18px; }
-.login-security-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; flex-shrink: 0; }
-.login-security-txt { font-size: 11px; color: #065f46; font-weight: 500; }
 
-st.markdown('''
-<div class="login-wrap">
-  <div class="login-left">
-    <div>
-      <div class="login-brand-logo">P</div>
-      <div class="login-brand-name">Prime PL<br>Dashboard</div>
-      <div class="login-brand-sub">Personal Loan Analytics Suite</div>
+    .login-page {
+        display: flex;
+        max-width: 820px;
+        margin: 36px auto;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+        font-family: 'Inter', sans-serif;
+        min-height: 540px;
+    }
+    .login-left {
+        width: 52%;
+        background: #0b1437;
+        padding: 44px 38px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+    .login-logo-row {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 26px;
+    }
+    .login-logo-icon {
+        width: 46px; height: 46px; border-radius: 14px;
+        background: #1a56db;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        font-size: 20px; font-weight: 800; color: #fff;
+    }
+    .login-logo-main { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.2; }
+    .login-logo-sub  { font-size: 10px; color: #7b9cdb; letter-spacing: 0.08em;
+                       text-transform: uppercase; margin-top: 2px; font-weight: 500; }
+    .login-tagline   { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.25;
+                       letter-spacing: -0.4px; margin-bottom: 10px; }
+    .login-tagline span { color: #4d8af0; }
+    .login-tagdesc   { font-size: 12px; color: #7b9cdb; line-height: 1.6; max-width: 280px; }
+    .login-stats     { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .login-stat-box  { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.09);
+                       border-radius: 12px; padding: 13px 15px; }
+    .login-stat-num  { font-size: 19px; font-weight: 800; color: #fff; }
+    .login-stat-num small { font-size: 11px; font-weight: 500; color: #7b9cdb; margin-left: 2px; }
+    .login-stat-lbl  { font-size: 10px; color: #5a7bbf; text-transform: uppercase;
+                       letter-spacing: 0.07em; margin-top: 3px; font-weight: 600; }
+    .login-right {
+        width: 48%;
+        background: #ffffff;
+        padding: 44px 38px;
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    .login-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #eff6ff; border: 0.5px solid #bfdbfe;
+        border-radius: 999px; padding: 5px 12px;
+        font-size: 11px; font-weight: 700; color: #1d4ed8;
+        letter-spacing: 0.04em; margin-bottom: 16px; width: fit-content;
+    }
+    .login-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+    .login-title  { font-size: 22px; font-weight: 800; color: #0f172a;
+                    letter-spacing: -0.4px; margin-bottom: 4px; }
+    .login-sub    { font-size: 13px; color: #64748b; margin-bottom: 26px; }
+    .login-security {
+        display: flex; align-items: center; gap: 8px;
+        background: #f0fdf4; border: 0.5px solid #bbf7d0;
+        border-radius: 9px; padding: 10px 14px; margin-top: 20px;
+    }
+    .login-security-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .login-security-txt { font-size: 11px; color: #065f46; font-weight: 600; }
+
+if not st.session_state.login:
+    st.markdown('''
+    <div class="login-page">
+      <div class="login-left">
+        <div>
+          <div class="login-logo-row">
+            <div class="login-logo-icon">M</div>
+            <div>
+              <div class="login-logo-main">MyMoneyMantra</div>
+              <div class="login-logo-sub">Prime PL Dashboard</div>
+            </div>
+          </div>
+          <div class="login-tagline">Smart Loans,<br><span>Smarter Insights</span></div>
+          <div class="login-tagdesc">Track disbursements, monitor targets, and analyse team performance — all in one place.</div>
+        </div>
+        <div class="login-stats">
+          <div class="login-stat-box"><div class="login-stat-num">12.4<small>Cr</small></div><div class="login-stat-lbl">Monthly Disbursed</div></div>
+          <div class="login-stat-box"><div class="login-stat-num">98.2<small>%</small></div><div class="login-stat-lbl">Target Achievement</div></div>
+          <div class="login-stat-box"><div class="login-stat-num">6<small> Mgrs</small></div><div class="login-stat-lbl">Active Managers</div></div>
+          <div class="login-stat-box"><div class="login-stat-num">2.74<small>%</small></div><div class="login-stat-lbl">Avg Payout %</div></div>
+        </div>
+      </div>
+      <div class="login-right">
+        <div class="login-pill"><div class="login-pill-dot"></div> System Online</div>
+        <div class="login-title">Welcome back</div>
+        <div class="login-sub">Sign in to MyMoneyMantra Prime PL</div>
+    ''', unsafe_allow_html=True)
+
+    # existing lock check...
+    u = st.text_input("Username", placeholder="Enter username")
+    p = st.text_input("Password", type="password", placeholder="Enter password")
+
+    if st.button("Sign In →", use_container_width=True):
+        # your existing auth logic unchanged...
+
+    st.markdown('''
+        <div class="login-security">
+          <div class="login-security-dot"></div>
+          <div class="login-security-txt">SSL encrypted &bull; Locks after 4 failed attempts &bull; 12 hr cooldown</div>
+        </div>
+      </div>
     </div>
-    <div>
-      <div class="login-stat"><div class="login-stat-num">₹12.4Cr</div><div class="login-stat-lbl">Monthly Disbursed</div></div>
-      <div class="login-stat"><div class="login-stat-num">98.2%</div><div class="login-stat-lbl">Target Achievement</div></div>
-      <div class="login-stat"><div class="login-stat-num">6 Mgrs</div><div class="login-stat-lbl">Active Managers</div></div>
-    </div>
-  </div>
-  <div class="login-right">
-    <div class="login-title">Welcome back 👋</div>
-    <div class="login-sub">Sign in to your Prime PL Dashboard</div>
-''', unsafe_allow_html=True)
-
-u = st.text_input("Username", placeholder="Enter username")
-p = st.text_input("Password", type="password", placeholder="Enter password")
-
-if st.button("Sign In →", use_container_width=True):
-    # ... your existing auth logic ...
-
-st.markdown('''
-    <div class="login-security">
-      <div class="login-security-dot"></div>
-      <div class="login-security-txt">SSL encrypted &bull; Locks after 4 failed attempts</div>
-    </div>
-  </div>
-</div>
-''', unsafe_allow_html=True)
-
+    ''', unsafe_allow_html=True)
+    st.stop()
 # ─────────────────────────────────────────
 # AUTH
 # ─────────────────────────────────────────
