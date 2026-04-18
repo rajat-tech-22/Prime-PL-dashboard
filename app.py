@@ -10,153 +10,114 @@ from io import BytesIO
 
 
 # ─────────────────────────────────────────
-# PAGE CONFIG
-# ─────────────────────────────────────────
-st.set_page_config(
-    page_title="Prime PL Dashboard",
-    page_icon="💼",
-    layout="wide"
-)
-
-# ─────────────────────────────────────────
-# AUTH CONFIG
-# ─────────────────────────────────────────
-USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-MAX_ATTEMPTS = 4
-LOCK_TIME = 43200
-
-for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
-    if key not in st.session_state:
-        st.session_state[key] = val
-
-# ─────────────────────────────────────────
-# LOGIN UI (MODERN SPLIT)
+# PROFESSIONAL LOGIN (STREAMLIT FIXED UX)
 # ─────────────────────────────────────────
 if not st.session_state.login:
 
     st.markdown("""
     <style>
-    .main {padding:0 !important;}
-
-    .container {
-        display:flex;
-        height:100vh;
+    .block-container {
+        padding: 0rem !important;
     }
 
-    .left {
-        flex:1;
-        background:linear-gradient(135deg,#0f172a,#1e3a8a);
-        color:white;
-        padding:60px;
-        display:flex;
-        flex-direction:column;
-        justify-content:space-between;
+    .left-box {
+        background: linear-gradient(135deg,#0f172a,#1e3a8a);
+        color: white;
+        padding: 60px 40px;
+        height: 100vh;
     }
 
-    .right {
-        flex:1;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        background:#f8fafc;
+    .right-box {
+        padding: 60px 40px;
     }
 
-    .card {
-        background:white;
-        padding:40px;
-        border-radius:20px;
-        width:360px;
-        box-shadow:0 10px 40px rgba(0,0,0,0.08);
+    .login-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
     .title {
-        font-size:28px;
-        font-weight:700;
+        font-size: 28px;
+        font-weight: 700;
     }
 
-    .sub {
-        font-size:13px;
-        color:#64748b;
-        margin-bottom:20px;
+    .subtitle {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 20px;
     }
 
-    .highlight {color:#60a5fa;}
-
-    .stat {
-        background:rgba(255,255,255,0.08);
-        padding:16px;
-        border-radius:12px;
+    .highlight {
+        color: #60a5fa;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="container">', unsafe_allow_html=True)
+    col1, col2 = st.columns([1.2, 1])
 
     # LEFT PANEL
-    st.markdown("""
-    <div class="left">
-        <div>
-            <h2>💼 MyMoneyMantra</h2>
-            <h1>Smart Loans,<br><span class="highlight">Smarter Insights</span></h1>
-            <p>Track disbursements, monitor targets and analyze team performance.</p>
-        </div>
+    with col1:
+        st.markdown('<div class="left-box">', unsafe_allow_html=True)
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div class="stat"><b>12.4Cr</b><br><small>Monthly Disbursed</small></div>
-            <div class="stat"><b>98.2%</b><br><small>Target Achieved</small></div>
-            <div class="stat"><b>6</b><br><small>Managers</small></div>
-            <div class="stat"><b>2.74%</b><br><small>Avg Payout</small></div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("### 💼 MyMoneyMantra")
+        st.markdown("""
+        <h1>Smart Loans,<br><span class='highlight'>Smarter Insights</span></h1>
+        """, unsafe_allow_html=True)
+
+        st.markdown("Track disbursements, monitor targets and analyze performance.")
+
+        st.markdown("### 📊 Stats")
+        st.markdown("""
+        **12.4Cr** - Monthly Disbursed  
+        **98.2%** - Target Achieved  
+        **6** - Managers  
+        **2.74%** - Avg Payout  
+        """)
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # RIGHT PANEL
-    with st.container():
-        st.markdown('<div class="right">', unsafe_allow_html=True)
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="right-box">', unsafe_allow_html=True)
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
         st.markdown('<div class="title">Welcome back</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sub">Sign in to Prime PL Dashboard</div>', unsafe_allow_html=True)
+        st.markdown('<div class="subtitle">Sign in to Prime PL Dashboard</div>', unsafe_allow_html=True)
 
-        # LOCK SYSTEM
+        # LOCK CHECK
         if st.session_state.lock_time:
             elapsed = time.time() - st.session_state.lock_time
             if elapsed < LOCK_TIME:
-                st.error("🔒 Account locked. Try later.")
+                st.error("🔒 Account locked")
                 st.stop()
             else:
                 st.session_state.attempts = 0
                 st.session_state.lock_time = None
 
-        user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
+        user = st.text_input("Username", placeholder="Enter username")
+        pwd = st.text_input("Password", type="password", placeholder="Enter password")
 
-        st.caption(f"{MAX_ATTEMPTS - st.session_state.attempts} attempts remaining")
+        st.caption(f"{MAX_ATTEMPTS - st.session_state.attempts} attempts left")
 
         if st.button("Sign In", use_container_width=True):
             if user == USERNAME and pwd == PASSWORD:
                 st.session_state.login = True
-                st.session_state.attempts = 0
-                st.success("Login success ✅")
                 st.rerun()
             else:
                 st.session_state.attempts += 1
-                if st.session_state.attempts >= MAX_ATTEMPTS:
-                    st.session_state.lock_time = time.time()
-                    st.error("Too many attempts. Locked.")
-                else:
-                    st.error("Invalid credentials")
+                st.error("Invalid credentials")
 
         st.markdown("""
         <div style="background:#ecfdf5;padding:10px;border-radius:8px;font-size:12px;margin-top:10px;">
-        🔒 Secure login • Attempt protection enabled
+        🔒 Secure login enabled
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 # ─────────────────────────────────────────
