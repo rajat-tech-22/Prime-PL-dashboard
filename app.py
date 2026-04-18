@@ -213,73 +213,31 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-.login-page {
-    display: flex;
-    max-width: 820px;
-    margin: 36px auto;
+.login-box {
+    background: white;
     border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.14);
-    font-family: 'Inter', sans-serif;
-    min-height: 540px;
+    padding: 40px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    max-width: 420px;
+    margin: 60px auto;
 }
-.login-left {
-    width: 52%;
-    background: #0b1437;
-    padding: 44px 38px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 6px;
 }
-.login-logo-row {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 26px;
+.login-sub {
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 24px;
 }
-.login-logo-icon {
-    width: 46px; height: 46px; border-radius: 14px;
-    background: #1a56db;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    font-size: 20px; font-weight: 800; color: #fff;
-}
-.login-logo-main { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.2; }
-.login-logo-sub  { font-size: 10px; color: #7b9cdb; letter-spacing: 0.08em;
-                   text-transform: uppercase; margin-top: 2px; font-weight: 500; }
-.login-tagline   { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.25;
-                   letter-spacing: -0.4px; margin-bottom: 10px; }
-.login-tagline span { color: #4d8af0; }
-.login-tagdesc   { font-size: 12px; color: #7b9cdb; line-height: 1.6; max-width: 280px; }
-.login-stats     { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.login-stat-box  { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.09);
-                   border-radius: 12px; padding: 13px 15px; }
-.login-stat-num  { font-size: 19px; font-weight: 800; color: #fff; }
-.login-stat-num small { font-size: 11px; font-weight: 500; color: #7b9cdb; margin-left: 2px; }
-.login-stat-lbl  { font-size: 10px; color: #5a7bbf; text-transform: uppercase;
-                   letter-spacing: 0.07em; margin-top: 3px; font-weight: 600; }
-.login-right {
-    width: 48%;
-    background: #ffffff;
-    padding: 44px 38px;
-    display: flex; flex-direction: column; justify-content: center;
-}
-.login-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #eff6ff; border: 0.5px solid #bfdbfe;
-    border-radius: 999px; padding: 5px 12px;
-    font-size: 11px; font-weight: 700; color: #1d4ed8;
-    letter-spacing: 0.04em; margin-bottom: 16px; width: fit-content;
-}
-.login-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
-.login-title  { font-size: 22px; font-weight: 800; color: #0f172a;
-                letter-spacing: -0.4px; margin-bottom: 4px; }
-.login-sub    { font-size: 13px; color: #64748b; margin-bottom: 26px; }
-.login-security {
-    display: flex; align-items: center; gap: 8px;
-    background: #f0fdf4; border: 0.5px solid #bbf7d0;
-    border-radius: 9px; padding: 10px 14px; margin-top: 20px;
-}
-.login-security-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-.login-security-txt { font-size: 11px; color: #065f46; font-weight: 600; }
+</style>
+""", unsafe_allow_html=True)
+
 # ─────────────────────────────────────────
 # AUTH
 # ─────────────────────────────────────────
