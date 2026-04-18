@@ -104,6 +104,18 @@ html, body, [class*="css"] {
 }
 [data-testid="stSidebar"] .stButton > button:hover { background: #dc2626 !important; }
 
+.stApp > div:first-child [data-testid="stVerticalBlock"] > div:last-child .stButton > button,
+div[class*="login"] .stButton > button {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 12px !important;
+    letter-spacing: 0.02em !important;
+}
+
 .stApp { background-color: #f8fafc; }
 
 .metric-card {
@@ -213,28 +225,134 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-.login-box {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-    max-width: 420px;
-    margin: 60px auto;
+.login-page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    background: #0a0f1e;
+}
+.login-left {
+    flex: 1;
+    background: linear-gradient(145deg, #0f172a 0%, #1a1040 40%, #0d1829 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 48px;
+    position: relative;
+    overflow: hidden;
+    min-width: 340px;
+}
+.login-left::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: -120px;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+}
+.login-left::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; right: -80px;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+}
+.login-left-content { position: relative; z-index: 2; text-align: center; }
+.login-logo-circle {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 36px;
+    box-shadow: 0 12px 40px rgba(99,102,241,0.45);
+}
+.login-left-brand {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+.login-left-brand span { color: #818cf8; }
+.login-left-tagline {
+    font-size: 13px;
+    color: #64748b;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 40px;
+}
+.login-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    text-align: left;
+}
+.login-feature-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.login-feature-text { font-size: 13px; color: #94a3b8; font-weight: 500; }
+.login-right {
+    width: 480px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 52px;
+}
+.login-right-header { margin-bottom: 36px; text-align: left; width: 100%; }
+.login-welcome-tag {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 100px;
+    margin-bottom: 14px;
 }
 .login-title {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 28px;
+    font-weight: 800;
     color: #0f172a;
-    text-align: center;
+    line-height: 1.2;
     margin-bottom: 6px;
 }
 .login-sub {
     font-size: 14px;
     color: #64748b;
-    text-align: center;
-    margin-bottom: 24px;
+    font-weight: 400;
+    margin-bottom: 0;
 }
+.login-footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 12px;
+    color: #94a3b8;
+    letter-spacing: 0.02em;
+}
+.login-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 24px 0;
+    width: 100%;
+}
+.login-brand { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -251,9 +369,38 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
         st.session_state[key] = val
 
 if not st.session_state.login:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<div class="login-title">💼 Prime PL Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">👋 Welcome back! Please sign in.</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="login-page-wrapper">
+        <div class="login-left">
+            <div class="login-left-content">
+                <div class="login-logo-circle">💼</div>
+                <div class="login-left-brand">MyMoney<span>Mantra</span></div>
+                <div class="login-left-tagline">Prime PL Intelligence Suite</div>
+                <div class="login-feature-item">
+                    <div class="login-feature-icon" style="background:rgba(99,102,241,0.15);">📊</div>
+                    <div class="login-feature-text">Real-time disbursement & revenue tracking</div>
+                </div>
+                <div class="login-feature-item">
+                    <div class="login-feature-icon" style="background:rgba(16,185,129,0.12);">🎯</div>
+                    <div class="login-feature-text">Manager target vs achievement dashboard</div>
+                </div>
+                <div class="login-feature-item">
+                    <div class="login-feature-icon" style="background:rgba(245,158,11,0.12);">📅</div>
+                    <div class="login-feature-text">Month-on-month team comparison & trends</div>
+                </div>
+                <div class="login-feature-item">
+                    <div class="login-feature-icon" style="background:rgba(139,92,246,0.12);">⚖️</div>
+                    <div class="login-feature-text">Campaign & bank-wise performance insights</div>
+                </div>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-right-header">
+                <div class="login-welcome-tag">Welcome Back</div>
+                <div class="login-title">Sign in to<br>MyMoneyMantra</div>
+                <div class="login-sub">Enter your credentials to access the Prime PL Dashboard</div>
+            </div>
+    """, unsafe_allow_html=True)
 
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
@@ -284,7 +431,12 @@ if not st.session_state.login:
             else:
                 st.error(f"Invalid credentials. {left} attempt(s) remaining.")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="login-divider"></div>
+        <div class="login-footer">🔒 Secured access &nbsp;·&nbsp; MyMoneyMantra Prime PL &nbsp;·&nbsp; © 2025</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 # ─────────────────────────────────────────
