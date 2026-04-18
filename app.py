@@ -241,6 +241,13 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 # ─────────────────────────────────────────
 # AUTH (PROFESSIONAL UI)
 # ─────────────────────────────────────────
+# ─────────────────────────────────────────
+# AUTH - MODERN SPLIT LOGIN UI
+# ─────────────────────────────────────────
+import streamlit as st
+import os
+import time
+
 USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
 PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 MAX_ATTEMPTS = 4
@@ -252,88 +259,207 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
 
 if not st.session_state.login:
 
-    # Background + Center Layout
     st.markdown("""
     <style>
-    .login-container {
+    body { margin: 0; }
+
+    .main-container {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+        flex: 1;
+        background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        color: white;
+        padding: 60px 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .brand {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 40px;
+    }
+
+    .headline {
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .highlight {
+        color: #60a5fa;
+    }
+
+    .subtext {
+        margin-top: 20px;
+        font-size: 15px;
+        color: #cbd5f5;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 40px;
+    }
+
+    .stat-box {
+        background: rgba(255,255,255,0.08);
+        padding: 18px;
+        border-radius: 14px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    /* RIGHT PANEL */
+    .right-panel {
+        flex: 1;
+        background: #f8fafc;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 90vh;
     }
+
     .login-card {
+        width: 360px;
         background: white;
         padding: 40px;
-        border-radius: 20px;
-        width: 380px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
-        text-align: center;
+        border-radius: 18px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
     }
-    .brand-logo {
-        font-size: 32px;
-        font-weight: 800;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+
+    .status {
+        font-size: 12px;
+        color: #16a34a;
+        margin-bottom: 10px;
+    }
+
+    .title {
+        font-size: 26px;
+        font-weight: 700;
         margin-bottom: 6px;
     }
-    .brand-sub {
+
+    .subtitle {
         font-size: 13px;
         color: #64748b;
-        margin-bottom: 24px;
+        margin-bottom: 25px;
     }
-    .login-footer {
-        font-size: 11px;
-        color: #94a3b8;
-        margin-top: 20px;
+
+    .footer-box {
+        background: #ecfdf5;
+        color: #065f46;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 12px;
+        margin-top: 15px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
 
-    # Branding
-    st.markdown('<div class="brand-logo">Prime PL</div>', unsafe_allow_html=True)
-    st.markdown('<div class="brand-sub">Performance Dashboard Login</div>', unsafe_allow_html=True)
+    # LEFT SIDE
+    st.markdown("""
+    <div class="left-panel">
+        <div>
+            <div class="brand">💼 MyMoneyMantra</div>
 
-    # Lock check
-    if st.session_state.lock_time:
-        elapsed = time.time() - st.session_state.lock_time
-        remaining = LOCK_TIME - elapsed
-        if remaining > 0:
-            h, m = int(remaining // 3600), int((remaining % 3600) // 60)
-            st.error(f"🔒 Locked for {h}h {m}m")
-            st.stop()
-        else:
-            st.session_state.attempts = 0
-            st.session_state.lock_time = None
+            <div class="headline">
+                Smart Loans,<br>
+                <span class="highlight">Smarter Insights</span>
+            </div>
 
-    # Inputs
-    u = st.text_input("👤 Username", placeholder="Enter username")
-    p = st.text_input("🔒 Password", type="password", placeholder="Enter password")
+            <div class="subtext">
+                Track disbursements, monitor targets, and analyse team performance — all in one place.
+            </div>
+        </div>
 
-    # Button
-    if st.button("Login", use_container_width=True):
-        if u == USERNAME and p == PASSWORD:
-            st.session_state.login = True
-            st.session_state.attempts = 0
-            st.success("Login successful ✅")
-            st.rerun()
-        else:
-            st.session_state.attempts += 1
-            left = MAX_ATTEMPTS - st.session_state.attempts
-            if left <= 0:
-                st.session_state.lock_time = time.time()
-                st.error("Too many attempts. Locked for 12 hours.")
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value">12.4Cr</div>
+                <div class="stat-label">Monthly Disbursed</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">98.2%</div>
+                <div class="stat-label">Target Achievement</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Active Managers</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">2.74%</div>
+                <div class="stat-label">Avg Payout %</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # RIGHT SIDE
+    with st.container():
+        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+        st.markdown('<div class="status">🟢 System Online</div>', unsafe_allow_html=True)
+        st.markdown('<div class="title">Welcome back</div>', unsafe_allow_html=True)
+        st.markdown('<div class="subtitle">Sign in to MyMoneyMantra Prime PL</div>', unsafe_allow_html=True)
+
+        # LOCK CHECK
+        if st.session_state.lock_time:
+            elapsed = time.time() - st.session_state.lock_time
+            remaining = LOCK_TIME - elapsed
+            if remaining > 0:
+                st.error(f"🔒 Locked for {int(remaining//3600)}h")
+                st.stop()
             else:
-                st.error(f"Invalid credentials ({left} left)")
+                st.session_state.attempts = 0
+                st.session_state.lock_time = None
 
-    # Footer
-    st.markdown('<div class="login-footer">© 2026 Prime Dashboard</div>', unsafe_allow_html=True)
+        # INPUTS
+        username = st.text_input("USERNAME", placeholder="Enter your username")
+        password = st.text_input("PASSWORD", type="password", placeholder="Enter your password")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.caption(f"{MAX_ATTEMPTS - st.session_state.attempts} attempts remaining")
+
+        # LOGIN BUTTON
+        if st.button("Sign In", use_container_width=True):
+            if username == USERNAME and password == PASSWORD:
+                st.session_state.login = True
+                st.session_state.attempts = 0
+                st.success("Login successful ✅")
+                st.rerun()
+            else:
+                st.session_state.attempts += 1
+                if st.session_state.attempts >= MAX_ATTEMPTS:
+                    st.session_state.lock_time = time.time()
+                    st.error("Too many attempts. Locked for 12 hours.")
+                else:
+                    st.error("Invalid credentials")
+
+        st.markdown("""
+        <div class="footer-box">
+        🔒 SSL encrypted • Locks after 4 failed attempts • 12hr cooldown
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
