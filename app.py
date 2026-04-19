@@ -213,28 +213,48 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-.login-box {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-    max-width: 420px;
-    margin: 60px auto;
+/* ── LOGIN PAGE STYLES ── */
+.login-page-bg {
+    background: #0f172a;
 }
-.login-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #0f172a;
-    text-align: center;
-    margin-bottom: 6px;
+
+/* Hide Streamlit default label above text inputs on login */
+.login-input-area .stTextInput > label {
+    display: none !important;
 }
-.login-sub {
-    font-size: 14px;
-    color: #64748b;
-    text-align: center;
-    margin-bottom: 24px;
+
+/* Style text inputs on login */
+.login-input-area .stTextInput > div > div > input {
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+    color: #0f172a !important;
+    height: 46px !important;
 }
+.login-input-area .stTextInput > div > div > input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+}
+.login-input-area .stTextInput > div > div > input::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Login sign-in button */
+.login-btn > button {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    height: 48px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    width: 100% !important;
+    transition: opacity 0.2s !important;
+}
+.login-btn > button:hover { opacity: 0.9 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -251,65 +271,20 @@ for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
         st.session_state[key] = val
 
 if not st.session_state.login:
-    # Full-page gradient background
+    # Dark background for login page
     st.markdown("""
     <style>
     .stApp { background: #0f172a !important; }
     [data-testid="stAppViewContainer"] { background: #0f172a !important; }
+    [data-testid="stHeader"] { background: transparent !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="display:flex;min-height:85vh;border-radius:20px;overflow:hidden;
-                max-width:900px;margin:40px auto;box-shadow:0 25px 60px rgba(0,0,0,0.4)">
-      <div style="width:42%;background:linear-gradient(160deg,#1e1b4b,#312e81,#4c1d95);
-                  padding:48px 36px;display:flex;flex-direction:column;justify-content:space-between;
-                  position:relative;">
-        <div style="position:absolute;inset:0;opacity:0.06;
-             background-image:radial-gradient(circle,#fff 1px,transparent 1px);
-             background-size:24px 24px;pointer-events:none;border-radius:20px 0 0 20px"></div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:8px;
-                      display:flex;align-items:center;justify-content:center;font-size:18px">💼</div>
-          <span style="color:#e0e7ff;font-size:16px;font-weight:600">MyMoneyMantra</span>
-        </div>
-        <div>
-          <div style="background:rgba(255,255,255,0.12);color:#c7d2fe;font-size:11px;font-weight:600;
-                      letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:20px;
-                      display:inline-block;margin-bottom:20px">Prime PL Dashboard</div>
-          <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:12px">
-            Track. Analyse.<br>Perform.
-          </div>
-          <div style="font-size:13px;color:rgba(199,210,254,0.7);line-height:1.6">
-            Real-time disbursal insights, target tracking, and team performance — all in one place.
-          </div>
-        </div>
-        <div style="display:flex;gap:16px">
-          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                      border-radius:10px;padding:10px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;color:#fff">6+</div>
-            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Views</div>
-          </div>
-          <div style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(255,255,255,0.12);
-                      border-radius:10px;padding:10px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;color:#fff">Live</div>
-            <div style="font-size:10px;color:rgba(199,210,254,0.6);text-transform:uppercase;letter-spacing:0.07em">Data</div>
-          </div>
-        </div>
-      </div>
-      <div style="width:58%;background:#ffffff;padding:52px 44px;display:flex;flex-direction:column;justify-content:center">
-        <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;
-                    letter-spacing:0.1em;margin-bottom:8px">Welcome to MyMoneyMantra</div>
-        <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Sign in to your account</div>
-        <div style="font-size:13px;color:#64748b;margin-bottom:28px">
-          Enter your credentials to access the Prime PL Dashboard.
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── Centered layout ──
+    outer_l, outer_c, outer_r = st.columns([1, 2, 1])
 
-    col1, col2, col3 = st.columns([2, 3, 2])
-    with col2:
+    with outer_c:
+        # ── Lock check ──
         if st.session_state.lock_time:
             elapsed = time.time() - st.session_state.lock_time
             remaining = LOCK_TIME - elapsed
@@ -321,10 +296,144 @@ if not st.session_state.login:
                 st.session_state.attempts = 0
                 st.session_state.lock_time = None
 
-        u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
-        p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
+        # ── Left panel (branding) ──
+        st.markdown("""
+        <div style="
+            background: linear-gradient(155deg, #1e1b4b 0%, #312e81 45%, #4c1d95 100%);
+            border-radius: 20px 20px 0 0;
+            padding: 36px 36px 28px 36px;
+            position: relative;
+            overflow: hidden;
+        ">
+            <div style="
+                position: absolute; inset: 0; pointer-events: none; border-radius: 20px 20px 0 0;
+                background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+                background-size: 22px 22px;
+            "></div>
 
-        if st.button("Sign In →", use_container_width=True):
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:28px; position:relative;">
+                <div style="
+                    width:40px; height:40px; background:rgba(255,255,255,0.15);
+                    border-radius:10px; display:flex; align-items:center;
+                    justify-content:center; font-size:20px;
+                ">💼</div>
+                <div>
+                    <div style="color:#e0e7ff; font-size:15px; font-weight:700; line-height:1.2;">MyMoneyMantra</div>
+                    <div style="color:rgba(165,180,252,0.7); font-size:11px; font-weight:500;
+                                text-transform:uppercase; letter-spacing:0.08em;">Prime PL Dashboard</div>
+                </div>
+                <div style="margin-left:auto; display:flex; align-items:center; gap:6px;
+                            background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3);
+                            border-radius:20px; padding:4px 10px;">
+                    <div style="width:7px;height:7px;background:#10b981;border-radius:50%;"></div>
+                    <span style="color:#6ee7b7;font-size:11px;font-weight:600;">System Online</span>
+                </div>
+            </div>
+
+            <div style="position:relative;">
+                <div style="font-size:27px; font-weight:800; color:#fff; line-height:1.25; margin-bottom:10px;">
+                    Smart Loans,<br>
+                    <span style="color:#a5b4fc;">Smarter Insights</span>
+                </div>
+                <div style="font-size:13px; color:rgba(199,210,254,0.7); line-height:1.65; margin-bottom:24px;">
+                    Track disbursements, monitor targets, and<br>
+                    analyse team performance — all in one place.
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+                                border-radius:12px; padding:12px 18px; text-align:center; flex:1;">
+                        <div style="font-size:22px; font-weight:800; color:#fff;">12.4<span style="font-size:14px;font-weight:600;color:#a5b4fc;">Cr</span></div>
+                        <div style="font-size:10px; color:rgba(165,180,252,0.7); text-transform:uppercase;
+                                    letter-spacing:0.07em; margin-top:2px;">Monthly Disbursed</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+                                border-radius:12px; padding:12px 18px; text-align:center; flex:1;">
+                        <div style="font-size:22px; font-weight:800; color:#fff;">98.2<span style="font-size:14px;font-weight:600;color:#a5b4fc;">%</span></div>
+                        <div style="font-size:10px; color:rgba(165,180,252,0.7); text-transform:uppercase;
+                                    letter-spacing:0.07em; margin-top:2px;">Target Achievement</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+                                border-radius:12px; padding:12px 18px; text-align:center; flex:1;">
+                        <div style="font-size:22px; font-weight:800; color:#fff;">6<span style="font-size:14px;font-weight:600;color:#a5b4fc;">Mgrs</span></div>
+                        <div style="font-size:10px; color:rgba(165,180,252,0.7); text-transform:uppercase;
+                                    letter-spacing:0.07em; margin-top:2px;">Active Managers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Right panel (form) ── white card, rounded bottom
+        st.markdown("""
+        <div style="
+            background: #ffffff;
+            border-radius: 0 0 20px 20px;
+            padding: 32px 36px 8px 36px;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+        ">
+            <div style="font-size:22px; font-weight:700; color:#0f172a; margin-bottom:4px;">Welcome back</div>
+            <div style="font-size:13px; color:#64748b; margin-bottom:24px;">Sign in to MyMoneyMantra Prime PL</div>
+
+            <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;
+                        letter-spacing:0.08em; margin-bottom:6px;">Username</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Input fields inside white card ──
+        st.markdown('<div class="login-input-area" style="background:#fff; padding:0 36px; border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">', unsafe_allow_html=True)
+        u = st.text_input("u_label", placeholder="Enter your username", label_visibility="collapsed", key="login_u")
+        st.markdown("""
+        <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;
+                    letter-spacing:0.08em; margin:14px 0 6px 0;">Password</div>
+        """, unsafe_allow_html=True)
+        p = st.text_input("p_label", type="password", placeholder="Enter your password", label_visibility="collapsed", key="login_p")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Attempt dots ──
+        attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+        dots_html = ""
+        for i in range(MAX_ATTEMPTS):
+            color = "#6366f1" if i < attempts_left else "#e2e8f0"
+            dots_html += f'<div style="width:8px;height:8px;border-radius:50%;background:{color};"></div>'
+
+        st.markdown(f"""
+        <div style="background:#fff; padding:10px 36px 0 36px; border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <div style="display:flex; gap:5px;">{dots_html}</div>
+                <span style="font-size:11px; color:#94a3b8; font-weight:500;">{attempts_left} attempt{'s' if attempts_left != 1 else ''} allowed</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Sign In button ──
+        st.markdown('<div class="login-input-area login-btn" style="background:#fff; padding:0 36px; border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">', unsafe_allow_html=True)
+        sign_in = st.button("Sign In →", use_container_width=True, key="login_btn")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── Security note + bottom of card ──
+        st.markdown("""
+        <div style="
+            background: #ffffff;
+            border-radius: 0 0 20px 20px;
+            padding: 16px 36px 28px 36px;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+        ">
+            <div style="font-size:10px; font-weight:600; color:#94a3b8; text-align:center;
+                        text-transform:uppercase; letter-spacing:0.1em; margin-bottom:10px;">Secure Access</div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px;
+                        padding:10px 14px; display:flex; align-items:flex-start; gap:8px;">
+                <div style="width:8px;height:8px;background:#10b981;border-radius:50%;margin-top:3px;flex-shrink:0;"></div>
+                <span style="font-size:12px; color:#166534; font-weight:500; line-height:1.5;">
+                    SSL encrypted &bull; Locks after 4 failed attempts &bull; 12hr cooldown
+                </span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Handle login logic ──
+        if sign_in:
             if u == USERNAME and p == PASSWORD:
                 st.session_state.login = True
                 st.session_state.attempts = 0
@@ -334,9 +443,10 @@ if not st.session_state.login:
                 left = MAX_ATTEMPTS - st.session_state.attempts
                 if left <= 0:
                     st.session_state.lock_time = time.time()
-                    st.error("Too many attempts. Account locked for 12 hours.")
+                    st.error("🔒 Too many attempts. Account locked for 12 hours.")
                 else:
-                    st.error(f"Invalid credentials. {left} attempt(s) remaining.")
+                    st.error(f"❌ Invalid credentials. {left} attempt(s) remaining.")
+                st.rerun()
 
     st.stop()
 
@@ -448,11 +558,9 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
 # CURRENT MONTH HELPER
 # ─────────────────────────────────────────
 def get_current_month_index(months_list):
-    """Return index of current month in months_list, fallback to last."""
     ist = timezone(timedelta(hours=5, minutes=30))
     now = datetime.now(ist)
-    current_month_str = now.strftime("%B %Y")   # e.g. "April 2026"
-    # also try short form e.g. "Apr-26", "Apr 2026", "April-26"
+    current_month_str = now.strftime("%B %Y")
     candidates = [
         current_month_str,
         now.strftime("%b %Y"),
@@ -464,7 +572,6 @@ def get_current_month_index(months_list):
     for i, m in enumerate(months_list):
         if str(m).strip() in candidates:
             return i
-    # fallback: latest month
     return len(months_list) - 1
 
 # ─────────────────────────────────────────
@@ -505,7 +612,6 @@ verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
 latest_month_index = len(months) - 1
 
-# ── Smart current month index ──
 current_month_index = get_current_month_index(months)
 
 # ─────────────────────────────────────────
@@ -1079,11 +1185,9 @@ elif dashboard_type == "🎯 Target Tracker":
 elif dashboard_type == "📅 Team vs Month":
     st.title("📅 Team vs Month Comparison")
 
-    # ── IST now ──
     ist_tz = timezone(timedelta(hours=5, minutes=30))
     now_ist_tvm = datetime.now(ist_tz)
 
-    # ── Sidebar Filters ──
     with st.sidebar.expander("🔧 Filters", expanded=True):
         month1 = st.selectbox("Month 1", months, index=max(0, current_month_index - 1), key="tvm_m1")
         month2 = st.selectbox("Month 2", months, index=current_month_index, key="tvm_m2")
@@ -1092,7 +1196,6 @@ elif dashboard_type == "📅 Team vs Month":
         st.markdown("---")
         st.markdown("**📅 Till Date Filter**")
 
-        # ── Determine date range for month2 from data ──
         disb_col = "DISB DATE"
         has_date_col = disb_col in df.columns
 
@@ -1123,7 +1226,6 @@ elif dashboard_type == "📅 Team vs Month":
         else:
             till_date = None
 
-    # ── Reload button ──
     col_ref2, col_info2 = st.columns([1, 5])
     with col_ref2:
         if st.button("🔄 Reload Data"):
@@ -1137,12 +1239,10 @@ elif dashboard_type == "📅 Team vs Month":
         else:
             st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
 
-    # ── Raw target preview ──
     if not target_raw.empty:
         with st.expander("📋 View Raw Target Sheet", expanded=False):
             st.dataframe(target_raw, use_container_width=True, height=220)
 
-    # ── Filter disbursed data ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
@@ -1150,12 +1250,10 @@ elif dashboard_type == "📅 Team vs Month":
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
 
-    # ── Apply Till Date filter on Month 2 ──
     if enable_till_date and till_date is not None and has_date_col:
         df_m2 = df_m2[df_m2[disb_col].notna()]
         df_m2 = df_m2[df_m2[disb_col].dt.date <= till_date]
 
-        # Also apply same day-of-month filter on Month 1 for fair comparison
         same_day = till_date.day
         df_m1 = df_m1[df_m1[disb_col].notna()]
         df_m1 = df_m1[df_m1[disb_col].dt.day <= same_day]
@@ -1168,21 +1266,18 @@ elif dashboard_type == "📅 Team vs Month":
     elif enable_till_date and not has_date_col:
         st.warning("⚠️ 'DISB DATE' column not found in data. Till Date filter could not be applied.")
 
-    # ── Group actual disbursed ──
     agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
 
     agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
 
-    # ── Merge months ──
     comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
 
     if comp.empty:
         st.warning("No data found for the selected months/vertical.")
         st.stop()
 
-    # ── Map targets (in Lakhs) ──
     comp["M1_Target_L"] = comp["Manager"].apply(
         lambda m: get_target_for_manager(m, month1, target_raw)
     )
@@ -1190,11 +1285,9 @@ elif dashboard_type == "📅 Team vs Month":
         lambda m: get_target_for_manager(m, month2, target_raw)
     )
 
-    # ── Convert actual to Lakhs ──
     comp["M1_Disb_L"] = (comp["M1_Disb"] / 100000).round(2)
     comp["M2_Disb_L"] = (comp["M2_Disb"] / 100000).round(2)
 
-    # ── Achievement % ──
     comp["M1_Ach%"] = comp.apply(
         lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0.0, axis=1
     )
@@ -1202,7 +1295,6 @@ elif dashboard_type == "📅 Team vs Month":
         lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0.0, axis=1
     )
 
-    # ── MoM Comparison % ──
     comp["MoM%"] = comp.apply(
         lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
         if r["M1_Disb_L"] > 0 else 0.0, axis=1
@@ -1210,7 +1302,6 @@ elif dashboard_type == "📅 Team vs Month":
 
     comp = comp.sort_values(["Vertical","M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
 
-    # ── Summary Metric Cards ──
     section_header("Team Summary")
     total_m1d = comp["M1_Disb_L"].sum()
     total_m2d = comp["M2_Disb_L"].sum()
@@ -1220,7 +1311,6 @@ elif dashboard_type == "📅 Team vs Month":
     team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
     team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
 
-    # Till date label for cards
     m2_label = f"{month2}" + (f" (till {till_date.strftime('%d %b')})" if (enable_till_date and till_date) else "")
     m1_label = f"{month1}" + (f" (till day {till_date.day})" if (enable_till_date and till_date and has_date_col) else "")
 
@@ -1232,7 +1322,6 @@ elif dashboard_type == "📅 Team vs Month":
     c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
                             "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
 
-    # ── MoM strip ──
     mom_color_strip = "#10b981" if team_mom >= 0 else "#ef4444"
     mom_arrow = "▲" if team_mom >= 0 else "▼"
     st.markdown(f"""
@@ -1246,7 +1335,6 @@ elif dashboard_type == "📅 Team vs Month":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Main Comparison Table ──
     section_header(f"Manager-wise: {month1} vs {month2}")
 
     def mom_badge(val):
@@ -1296,7 +1384,6 @@ elif dashboard_type == "📅 Team vs Month":
             <td style="padding:11px 14px;text-align:right">{mom_badge(row['MoM%'])}</td>
         </tr>"""
 
-    # Totals row
     rows_html += f"""
     <tr style="background:#1e293b;border-top:2px solid #334155">
         <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">
@@ -1336,41 +1423,23 @@ elif dashboard_type == "📅 Team vs Month":
             <thead>
                 <tr style="background:#0f172a">
                     <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Vertical
-                    </th>
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">Vertical</th>
                     <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Manager
-                    </th>
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">Manager</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Target
-                    </th>
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Target</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Disb
-                    </th>
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Disb</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Ach%
-                    </th>
+                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Ach%</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Target
-                    </th>
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Target</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Disb
-                    </th>
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Disb</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Ach%
-                    </th>
+                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Ach%</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        MoM %
-                    </th>
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">MoM %</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>
@@ -1379,7 +1448,6 @@ elif dashboard_type == "📅 Team vs Month":
     """
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # ── Bar Chart: Target vs Actual ──
     section_header(f"Target vs Actual — {month1} & {month2}")
     fig_bar = go.Figure()
     fig_bar.add_trace(go.Bar(
@@ -1412,7 +1480,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_bar.update_traces(cliponaxis=False)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── MoM % Bar Chart ──
     section_header("MoM Change % per Manager")
     mom_colors = ["#10b981" if v >= 0 else "#ef4444" for v in comp["MoM%"]]
     fig_mom = go.Figure(go.Bar(
@@ -1433,7 +1500,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_mom.update_traces(cliponaxis=False)
     st.plotly_chart(fig_mom, use_container_width=True)
 
-    # ── Achievement % Comparison Chart ──
     section_header("Achievement % Comparison")
     fig_ach = go.Figure()
     fig_ach.add_trace(go.Bar(
@@ -1458,7 +1524,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_ach.update_traces(cliponaxis=False)
     st.plotly_chart(fig_ach, use_container_width=True)
 
-    # ── Download ──
     st.markdown("<br>", unsafe_allow_html=True)
     export_df = comp[[
         "Vertical","Manager",
