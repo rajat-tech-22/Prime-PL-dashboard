@@ -106,44 +106,139 @@ html, body, [class*="css"] {
 
 .stApp { background-color: #f8fafc; }
 
+/* ── LOGIN STYLES ── */
+.login-outer {
+    display: flex;
+    min-height: 88vh;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.login-split {
+    display: flex;
+    width: 100%;
+    max-width: 880px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.12);
+}
+.login-left {
+    width: 52%;
+    background: linear-gradient(160deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    min-height: 520px;
+}
+.login-right {
+    width: 48%;
+    background: white;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.ll-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+}
+.ll-logo {
+    width: 40px; height: 40px;
+    background: #6366f1;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+}
+.ll-brandname { font-size: 15px; font-weight: 600; color: #e0e7ff; }
+.ll-content { position: relative; z-index: 2; }
+.ll-heading {
+    font-size: 26px; font-weight: 700;
+    color: #ffffff; line-height: 1.35;
+    margin-bottom: 10px;
+}
+.ll-sub {
+    font-size: 13px; color: #a5b4fc;
+    line-height: 1.6; margin-bottom: 1.5rem;
+}
+.ll-stats {
+    display: flex; gap: 12px;
+    position: relative; z-index: 2;
+}
+.ll-stat {
+    flex: 1;
+    background: rgba(99,102,241,0.22);
+    border: 1px solid rgba(165,180,252,0.28);
+    border-radius: 12px;
+    padding: 14px;
+}
+.ll-stat-val { font-size: 20px; font-weight: 700; color: #e0e7ff; margin-bottom: 2px; }
+.ll-stat-lbl { font-size: 11px; color: #818cf8; }
+.lr-icon {
+    width: 48px; height: 48px;
+    background: #eef2ff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 1.2rem;
+}
+.lr-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.lr-sub { font-size: 13px; color: #64748b; margin-bottom: 1.5rem; }
+.lr-badges {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 1rem;
+}
+.lr-badge {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px; color: #64748b;
+    display: flex; align-items: center; gap: 5px;
+}
+.lr-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.lr-footer {
+    margin-top: 1.5rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1rem;
+    font-size: 11px; color: #94a3b8;
+    text-align: center;
+}
+
+/* ── DASHBOARD STYLES ── */
 .metric-card {
     background: white;
     border-radius: 16px;
     padding: 20px 24px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     text-align: center;
     transition: transform 0.2s, box-shadow 0.2s;
     min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
 }
 .metric-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.10);
 }
 .metric-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #94a3b8;
-    margin-bottom: 8px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #94a3b8; margin-bottom: 8px;
 }
-.metric-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.1;
-}
+.metric-value { font-size: 26px; font-weight: 700; color: #0f172a; line-height: 1.1; }
 .metric-icon { font-size: 20px; margin-bottom: 6px; }
 
 .section-header {
-    font-size: 18px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 18px; font-weight: 700; color: #0f172a;
     margin: 28px 0 16px 0;
     padding-left: 12px;
     border-left: 4px solid #6366f1;
@@ -151,45 +246,28 @@ html, body, [class*="css"] {
 
 .insight-strip {
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border-radius: 12px;
-    padding: 14px 20px;
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 16px 0;
-    color: white;
+    border-radius: 12px; padding: 14px 20px;
+    display: flex; justify-content: space-around;
+    flex-wrap: wrap; gap: 10px;
+    margin: 16px 0; color: white;
 }
 .insight-item { text-align: center; font-size: 13px; }
 .insight-item b {
-    display: block;
-    font-size: 11px;
-    opacity: 0.8;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 2px;
+    display: block; font-size: 11px; opacity: 0.8;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;
 }
 
 .target-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    border: 1px solid #e2e8f0;
+    background: white; border-radius: 16px;
+    padding: 20px; border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     margin-bottom: 16px;
 }
 .progress-bar-bg {
-    background: #f1f5f9;
-    border-radius: 999px;
-    height: 12px;
-    overflow: hidden;
-    margin: 10px 0 6px 0;
+    background: #f1f5f9; border-radius: 999px;
+    height: 12px; overflow: hidden; margin: 10px 0 6px 0;
 }
-.progress-bar-fill {
-    height: 12px;
-    border-radius: 999px;
-    transition: width 0.5s ease;
-}
+.progress-bar-fill { height: 12px; border-radius: 999px; transition: width 0.5s ease; }
 
 .stDataFrame { border-radius: 12px !important; overflow: hidden; }
 thead tr th { background: #f8fafc !important; font-weight: 600 !important; }
@@ -213,95 +291,25 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
 
-.login-outer {
-    display: flex;
-    min-height: 92vh;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+/* Primary button override for login */
+[data-testid="stMain"] .stButton > button[kind="primary"] {
+    background: #6366f1 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 0.6rem 1rem !important;
 }
-.login-split {
-    display: flex;
-    width: 100%;
-    max-width: 860px;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+[data-testid="stMain"] .stButton > button[kind="primary"]:hover {
+    background: #4f46e5 !important;
 }
-.login-left {
-    width: 52%;
-    background: linear-gradient(160deg, #1e1b4b 0%, #312e81 60%, #4c1d95 100%);
-    padding: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-}
-.login-right {
-    width: 48%;
-    background: white;
-    padding: 2.5rem 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.ll-brand { display:flex; align-items:center; gap:10px; margin-bottom:2rem; }
-.ll-logo {
-    width: 40px; height: 40px;
-    background: #6366f1;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-}
-.ll-brandname { font-size: 15px; font-weight: 600; color: #e0e7ff; }
-.ll-heading { font-size: 26px; font-weight: 700; color: #ffffff; line-height: 1.35; margin-bottom: 10px; }
-.ll-sub { font-size: 13px; color: #a5b4fc; line-height: 1.6; margin-bottom: 2rem; }
-.ll-stats { display: flex; gap: 12px; }
-.ll-stat {
-    flex: 1;
-    background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(165,180,252,0.25);
-    border-radius: 12px;
-    padding: 14px;
-}
-.ll-stat-val { font-size: 20px; font-weight: 700; color: #e0e7ff; margin-bottom: 2px; }
-.ll-stat-lbl { font-size: 11px; color: #818cf8; }
-.lr-icon {
-    width: 48px; height: 48px;
-    background: #eef2ff;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    margin-bottom: 1.2rem;
-}
-.lr-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.lr-sub { font-size: 13px; color: #64748b; margin-bottom: 2rem; }
-.lr-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1.5rem; }
-.lr-badge {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 11px;
-    color: #64748b;
-    display: flex; align-items: center; gap: 5px;
-}
-.lr-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.lr-footer {
-    margin-top: 1.5rem;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 1rem;
-    font-size: 11px;
-    color: #94a3b8;
-    text-align: center;
-}
+</style>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────
 # AUTH
 # ─────────────────────────────────────────
-
 USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
 PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
 MAX_ATTEMPTS = 4
@@ -310,134 +318,6 @@ LOCK_TIME = 43200
 for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
     if key not in st.session_state:
         st.session_state[key] = val
-
-if not st.session_state.login:
-    
-    # Lock check
-    if st.session_state.lock_time:
-        elapsed = time.time() - st.session_state.lock_time
-        remaining = LOCK_TIME - elapsed
-        if remaining > 0:
-            h_r, m_r = int(remaining // 3600), int((remaining % 3600) // 60)
-            st.error(f"🔒 Account locked. Try again in {h_r}h {m_r}m.")
-            st.stop()
-        else:
-            st.session_state.attempts = 0
-            st.session_state.lock_time = None
-
-    st.markdown('<div class="login-outer"><div class="login-split">', unsafe_allow_html=True)
-
-    # ── LEFT PANEL ──
-    ist_l = timezone(timedelta(hours=5, minutes=30))
-    now_l = datetime.now(ist_l)
-    
-    # Actual team disbursed & achievement (latest month from data)
-    try:
-        latest = months[-1] if months else ""
-        latest_disb = df[df["Disb Month"] == latest]["Disbursed AMT"].sum() / 10000000
-        latest_rev  = df[df["Disb Month"] == latest]["Total_Revenue"].sum()
-        latest_disb_total = df[df["Disb Month"] == latest]["Disbursed AMT"].sum()
-        ach_pct = (latest_rev / latest_disb_total * 100) if latest_disb_total else 0
-        stat1_val = f"₹{latest_disb:.1f}Cr"
-        stat1_lbl = f"{latest} Disbursed"
-        stat2_val = f"{ach_pct:.1f}%"
-        stat2_lbl = "Avg Payout %"
-    except:
-        stat1_val, stat1_lbl = "Prime PL", "Dashboard"
-        stat2_val, stat2_lbl = "Live", "Analytics"
-
-    st.markdown(f"""
-    <div class="login-left">
-        <div>
-            <div class="ll-brand">
-                <div class="ll-logo">💼</div>
-                <span class="ll-brandname">Prime PL Dashboard</span>
-            </div>
-            <div class="ll-heading">Track. Analyze.<br>Grow your portfolio.</div>
-            <div class="ll-sub">
-                Real-time disbursement tracking, campaign insights
-                &amp; team targets — all in one place.
-            </div>
-            <svg viewBox="0 0 260 130" width="100%" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.5rem">
-                <rect x="0"   y="90" width="30" height="38" rx="4" fill="#4f46e5" opacity="0.9"/>
-                <rect x="38"  y="70" width="30" height="58" rx="4" fill="#6366f1" opacity="0.9"/>
-                <rect x="76"  y="50" width="30" height="78" rx="4" fill="#818cf8" opacity="0.9"/>
-                <rect x="114" y="35" width="30" height="93" rx="4" fill="#a5b4fc" opacity="0.9"/>
-                <rect x="152" y="20" width="30" height="108" rx="4" fill="#c7d2fe" opacity="0.9"/>
-                <rect x="190" y="10" width="30" height="118" rx="4" fill="#e0e7ff" opacity="0.9"/>
-                <polyline points="15,90 53,70 91,50 129,35 167,20 205,10"
-                    fill="none" stroke="#fbbf24" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="15"  cy="90" r="4" fill="#fbbf24"/>
-                <circle cx="53"  cy="70" r="4" fill="#fbbf24"/>
-                <circle cx="91"  cy="50" r="4" fill="#fbbf24"/>
-                <circle cx="129" cy="35" r="4" fill="#fbbf24"/>
-                <circle cx="167" cy="20" r="4" fill="#fbbf24"/>
-                <circle cx="205" cy="10" r="4" fill="#fbbf24"/>
-                <text x="15"  y="125" fill="#818cf8" font-size="9" text-anchor="middle">Nov</text>
-                <text x="53"  y="125" fill="#818cf8" font-size="9" text-anchor="middle">Dec</text>
-                <text x="91"  y="125" fill="#818cf8" font-size="9" text-anchor="middle">Jan</text>
-                <text x="129" y="125" fill="#818cf8" font-size="9" text-anchor="middle">Feb</text>
-                <text x="167" y="125" fill="#818cf8" font-size="9" text-anchor="middle">Mar</text>
-                <text x="205" y="125" fill="#818cf8" font-size="9" text-anchor="middle">Apr</text>
-            </svg>
-        </div>
-        <div class="ll-stats">
-            <div class="ll-stat">
-                <div class="ll-stat-val">{stat1_val}</div>
-                <div class="ll-stat-lbl">{stat1_lbl}</div>
-            </div>
-            <div class="ll-stat">
-                <div class="ll-stat-val">{stat2_val}</div>
-                <div class="ll-stat-lbl">{stat2_lbl}</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── RIGHT PANEL (form) ──
-    st.markdown("""
-    <div class="login-right">
-        <div class="lr-icon">💳</div>
-        <div class="lr-title">Welcome back</div>
-        <div class="lr-sub">Sign in to your Prime PL account</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Streamlit form inputs (right panel ke andar position nahi hote CSS se,
-    # isliye form ko right side mein rakhne ke liye columns use karo)
-    _, right_col = st.columns([52, 48])
-    with right_col:
-        u = st.text_input("Username", placeholder="Enter your username")
-        p = st.text_input("Password", type="password", placeholder="Enter your password")
-        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-        
-        if st.button("Sign in →", use_container_width=True, type="primary"):
-            if u == USERNAME and p == PASSWORD:
-                st.session_state.login = True
-                st.session_state.attempts = 0
-                st.rerun()
-            else:
-                st.session_state.attempts += 1
-                left = MAX_ATTEMPTS - st.session_state.attempts
-                if left <= 0:
-                    st.session_state.lock_time = time.time()
-                    st.error("🔒 Too many attempts. Locked for 12 hours.")
-                else:
-                    st.warning(f"Invalid credentials. {left} attempt(s) remaining.")
-
-        attempts_left = MAX_ATTEMPTS - st.session_state.attempts
-        st.markdown(f"""
-        <div class="lr-badges">
-            <span class="lr-badge"><span class="lr-dot" style="background:#10b981"></span>{attempts_left} of {MAX_ATTEMPTS} attempts left</span>
-            <span class="lr-badge"><span class="lr-dot" style="background:#f59e0b"></span>12h lockout</span>
-            <span class="lr-badge"><span class="lr-dot" style="background:#6366f1"></span>Auto-refresh on</span>
-        </div>
-        <div class="lr-footer">Prime PL &nbsp;·&nbsp; MyMoneyMantra &nbsp;·&nbsp; {now_l.strftime('%d %b %Y')}</div>
-        """, unsafe_allow_html=True)
-
-    st.markdown('</div></div>', unsafe_allow_html=True)
-    st.stop()
 
 # ─────────────────────────────────────────
 # HELPERS
@@ -547,13 +427,10 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
 # CURRENT MONTH HELPER
 # ─────────────────────────────────────────
 def get_current_month_index(months_list):
-    """Return index of current month in months_list, fallback to last."""
     ist = timezone(timedelta(hours=5, minutes=30))
     now = datetime.now(ist)
-    current_month_str = now.strftime("%B %Y")   # e.g. "April 2026"
-    # also try short form e.g. "Apr-26", "Apr 2026", "April-26"
     candidates = [
-        current_month_str,
+        now.strftime("%B %Y"),
         now.strftime("%b %Y"),
         now.strftime("%b-%y"),
         now.strftime("%B-%Y"),
@@ -563,7 +440,6 @@ def get_current_month_index(months_list):
     for i, m in enumerate(months_list):
         if str(m).strip() in candidates:
             return i
-    # fallback: latest month
     return len(months_list) - 1
 
 # ─────────────────────────────────────────
@@ -595,20 +471,8 @@ def load_targets():
     except Exception as e:
         return pd.DataFrame(), str(e)
 
-df = load_data()
-campaign_df = load_campaign_data()
-target_raw, target_err = load_targets()
-
-months = sorted(df["Disb Month"].dropna().unique())
-verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
-managers = sorted(df["Manager"].dropna().unique())
-latest_month_index = len(months) - 1
-
-# ── Smart current month index ──
-current_month_index = get_current_month_index(months)
-
 # ─────────────────────────────────────────
-# TARGET FETCH FUNCTION (shared)
+# TARGET FETCH FUNCTION
 # ─────────────────────────────────────────
 def get_target_for_manager(mgr_name, month_name, tdf):
     if tdf is None or tdf.empty:
@@ -639,6 +503,174 @@ def get_target_for_manager(mgr_name, month_name, tdf):
         return 0.0
 
 # ─────────────────────────────────────────
+# IST TIME
+# ─────────────────────────────────────────
+ist = timezone(timedelta(hours=5, minutes=30))
+now_ist = datetime.now(ist)
+
+# ─────────────────────────────────────────
+# LOGIN PAGE
+# ─────────────────────────────────────────
+if not st.session_state.login:
+
+    # Lock check
+    if st.session_state.lock_time:
+        elapsed = time.time() - st.session_state.lock_time
+        remaining = LOCK_TIME - elapsed
+        if remaining > 0:
+            h_r, m_r = int(remaining // 3600), int((remaining % 3600) // 60)
+            st.error(f"🔒 Account locked. Try again in {h_r}h {m_r}m.")
+            st.stop()
+        else:
+            st.session_state.attempts = 0
+            st.session_state.lock_time = None
+
+    # Try to load data for live stats on login panel
+    try:
+        _df_login = load_data()
+        _months_login = sorted(_df_login["Disb Month"].dropna().unique())
+        _latest = _months_login[-1] if _months_login else ""
+        _disb_total = _df_login[_df_login["Disb Month"] == _latest]["Disbursed AMT"].sum()
+        _rev_total  = _df_login[_df_login["Disb Month"] == _latest]["Total_Revenue"].sum()
+        _disb_cr    = _disb_total / 10000000
+        _payout_pct = (_rev_total / _disb_total * 100) if _disb_total else 0
+        stat1_val   = f"₹{_disb_cr:.1f}Cr"
+        stat1_lbl   = f"{_latest} Disbursed"
+        stat2_val   = f"{_payout_pct:.1f}%"
+        stat2_lbl   = "Avg Payout %"
+    except Exception:
+        stat1_val, stat1_lbl = "Prime PL", "Dashboard"
+        stat2_val, stat2_lbl = "Live", "Analytics"
+
+    # Outer wrapper
+    st.markdown('<div class="login-outer"><div class="login-split">', unsafe_allow_html=True)
+
+    # ── LEFT PANEL (HTML only, no Streamlit widgets) ──
+    st.markdown(f"""
+    <div class="login-left">
+        <div class="ll-brand">
+            <div class="ll-logo">💼</div>
+            <span class="ll-brandname">Prime PL Dashboard</span>
+        </div>
+        <div class="ll-content">
+            <div class="ll-heading">Track. Analyze.<br>Grow your portfolio.</div>
+            <div class="ll-sub">
+                Real-time disbursement tracking, campaign insights
+                &amp; team targets — all in one place.
+            </div>
+            <svg viewBox="0 0 260 130" width="100%" xmlns="http://www.w3.org/2000/svg"
+                 style="margin-bottom:1.5rem;display:block">
+                <rect x="0"   y="90" width="30" height="38" rx="4" fill="#4f46e5" opacity="0.9"/>
+                <rect x="38"  y="70" width="30" height="58" rx="4" fill="#6366f1" opacity="0.9"/>
+                <rect x="76"  y="50" width="30" height="78" rx="4" fill="#818cf8" opacity="0.9"/>
+                <rect x="114" y="35" width="30" height="93" rx="4" fill="#a5b4fc" opacity="0.9"/>
+                <rect x="152" y="20" width="30" height="108" rx="4" fill="#c7d2fe" opacity="0.9"/>
+                <rect x="190" y="10" width="30" height="118" rx="4" fill="#e0e7ff" opacity="0.9"/>
+                <polyline points="15,90 53,70 91,50 129,35 167,20 205,10"
+                    fill="none" stroke="#fbbf24" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="15"  cy="90" r="4" fill="#fbbf24"/>
+                <circle cx="53"  cy="70" r="4" fill="#fbbf24"/>
+                <circle cx="91"  cy="50" r="4" fill="#fbbf24"/>
+                <circle cx="129" cy="35" r="4" fill="#fbbf24"/>
+                <circle cx="167" cy="20" r="4" fill="#fbbf24"/>
+                <circle cx="205" cy="10" r="4" fill="#fbbf24"/>
+                <text x="15"  y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Nov</text>
+                <text x="53"  y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Dec</text>
+                <text x="91"  y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Jan</text>
+                <text x="129" y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Feb</text>
+                <text x="167" y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Mar</text>
+                <text x="205" y="125" fill="#a5b4fc" font-size="9" text-anchor="middle"
+                      font-family="Inter,sans-serif">Apr</text>
+            </svg>
+        </div>
+        <div class="ll-stats">
+            <div class="ll-stat">
+                <div class="ll-stat-val">{stat1_val}</div>
+                <div class="ll-stat-lbl">{stat1_lbl}</div>
+            </div>
+            <div class="ll-stat">
+                <div class="ll-stat-val">{stat2_val}</div>
+                <div class="ll-stat-lbl">{stat2_lbl}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── RIGHT PANEL header (HTML) ──
+    attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+    st.markdown(f"""
+    <div class="login-right">
+        <div class="lr-icon">💳</div>
+        <div class="lr-title">Welcome back</div>
+        <div class="lr-sub">Sign in to your Prime PL account</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── RIGHT PANEL form (Streamlit widgets in right column) ──
+    _, right_col = st.columns([52, 48])
+    with right_col:
+        u = st.text_input("Username", placeholder="Enter your username", key="login_user")
+        p = st.text_input("Password", type="password", placeholder="Enter your password", key="login_pass")
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
+        if st.button("Sign in →", use_container_width=True, type="primary", key="login_btn"):
+            if u == USERNAME and p == PASSWORD:
+                st.session_state.login = True
+                st.session_state.attempts = 0
+                st.rerun()
+            else:
+                st.session_state.attempts += 1
+                left_att = MAX_ATTEMPTS - st.session_state.attempts
+                if left_att <= 0:
+                    st.session_state.lock_time = time.time()
+                    st.error("🔒 Too many attempts. Locked for 12 hours.")
+                else:
+                    st.warning(f"Invalid credentials. {left_att} attempt(s) remaining.")
+
+        attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+        st.markdown(f"""
+        <div class="lr-badges">
+            <span class="lr-badge">
+                <span class="lr-dot" style="background:#10b981"></span>
+                {attempts_left} of {MAX_ATTEMPTS} attempts left
+            </span>
+            <span class="lr-badge">
+                <span class="lr-dot" style="background:#f59e0b"></span>
+                12h lockout
+            </span>
+            <span class="lr-badge">
+                <span class="lr-dot" style="background:#6366f1"></span>
+                Auto-refresh on
+            </span>
+        </div>
+        <div class="lr-footer">
+            Prime PL &nbsp;·&nbsp; MyMoneyMantra &nbsp;·&nbsp; {now_ist.strftime('%d %b %Y')}
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)   # close login-split
+    st.markdown('</div>', unsafe_allow_html=True)   # close login-outer
+    st.stop()
+
+# ─────────────────────────────────────────
+# LOAD DATA (after login)
+# ─────────────────────────────────────────
+df = load_data()
+campaign_df = load_campaign_data()
+target_raw, target_err = load_targets()
+
+months = sorted(df["Disb Month"].dropna().unique())
+verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
+managers = sorted(df["Manager"].dropna().unique())
+current_month_index = get_current_month_index(months)
+
+# ─────────────────────────────────────────
 # SIDEBAR NAVIGATION
 # ─────────────────────────────────────────
 with st.sidebar:
@@ -658,8 +690,6 @@ with st.sidebar:
 # ─────────────────────────────────────────
 # GREETING
 # ─────────────────────────────────────────
-ist = timezone(timedelta(hours=5, minutes=30))
-now_ist = datetime.now(ist)
 hour = now_ist.hour
 greet = ("Good Morning 🌅" if 5 <= hour < 12
          else "Good Afternoon ☀️" if hour < 16
@@ -750,12 +780,14 @@ if dashboard_type == "🏠 Overview":
         section_header("Campaign-wise Disbursed")
         cs = filtered_df.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
         cs.columns = ["Campaign", "Disbursed AMT"]
-        st.plotly_chart(styled_bar(cs, "Campaign", "Campaign", "Disbursed AMT", "Campaign-wise Disbursed Amount"), use_container_width=True)
+        st.plotly_chart(styled_bar(cs, "Campaign", "Campaign", "Disbursed AMT",
+                                   "Campaign-wise Disbursed Amount"), use_container_width=True)
 
         section_header("Bank-wise Disbursed")
         bs = filtered_df.groupby("Bank")["Disbursed AMT"].sum().reset_index()
         bs.columns = ["Bank", "Disbursed AMT"]
-        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise Disbursed Amount"), use_container_width=True)
+        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT",
+                                   "Bank-wise Disbursed Amount"), use_container_width=True)
 
 
 # ══════════════════════════════════════════
@@ -805,23 +837,27 @@ elif dashboard_type == "👤 Single Manager":
         section_header("Campaign-wise Disbursed")
         cs = f_sm.groupby("Campaign")["Disbursed AMT"].sum().reset_index()
         cs.columns = ["Campaign", "Disbursed AMT"]
-        st.plotly_chart(styled_bar(cs, "Campaign", "Campaign", "Disbursed AMT", "Campaign-wise"), use_container_width=True)
+        st.plotly_chart(styled_bar(cs, "Campaign", "Campaign", "Disbursed AMT",
+                                   "Campaign-wise"), use_container_width=True)
 
         section_header("Bank-wise Disbursed")
         bs = f_sm.groupby("Bank")["Disbursed AMT"].sum().reset_index()
         bs.columns = ["Bank", "Disbursed AMT"]
-        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT", "Bank-wise"), use_container_width=True)
+        st.plotly_chart(styled_bar(bs, "Bank", "Bank", "Disbursed AMT",
+                                   "Bank-wise"), use_container_width=True)
 
         section_header("Caller-wise Disbursed")
         cls = f_sm.groupby("Caller")["Disbursed AMT"].sum().reset_index()
         cls.columns = ["Caller", "Disbursed AMT"]
-        st.plotly_chart(styled_bar(cls, "Caller", "Caller", "Disbursed AMT", "Caller-wise"), use_container_width=True)
+        st.plotly_chart(styled_bar(cls, "Caller", "Caller", "Disbursed AMT",
+                                   "Caller-wise"), use_container_width=True)
 
         section_header("Monthly Trend")
         trend = df[df["Manager"] == sel_mgr].groupby("Disb Month")["Disbursed AMT"].sum().reset_index()
         fig_t = go.Figure(go.Scatter(
             x=trend["Disb Month"], y=trend["Disbursed AMT"]/100000,
-            mode="lines+markers", line=dict(width=2.5, color="#6366f1"), marker=dict(size=8)
+            mode="lines+markers", line=dict(width=2.5, color="#6366f1"),
+            marker=dict(size=8)
         ))
         fig_t.update_layout(template="plotly_white", height=380, yaxis_title="Disbursed (L)",
                              font=dict(family="Inter"), plot_bgcolor="white", paper_bgcolor="white")
@@ -830,7 +866,8 @@ elif dashboard_type == "👤 Single Manager":
         section_header("Raw Data")
         dd = f_sm.dropna(how="all").copy()
         st.dataframe(dd, use_container_width=True, height=300)
-        st.download_button("⬇️ Download CSV", dd.to_csv(index=False), f"{sel_mgr}_{sel_month_sm}.csv", "text/csv")
+        st.download_button("⬇️ Download CSV", dd.to_csv(index=False),
+                           f"{sel_mgr}_{sel_month_sm}.csv", "text/csv")
 
 
 # ══════════════════════════════════════════
@@ -839,12 +876,14 @@ elif dashboard_type == "👤 Single Manager":
 elif dashboard_type == "⚖️ Comparison":
     with st.sidebar.expander("🔧 First Selection", expanded=True):
         m1 = st.selectbox("Month", months, index=current_month_index, key="m1")
-        mgr1 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m1]["Manager"].dropna().unique()), key="mgr1")
+        mgr1 = st.selectbox("Manager",
+                             sorted(df[df["Disb Month"] == m1]["Manager"].dropna().unique()), key="mgr1")
     f1 = df[(df["Disb Month"] == m1) & (df["Manager"] == mgr1)]
 
     with st.sidebar.expander("🔧 Second Selection", expanded=True):
         m2 = st.selectbox("Month", months, index=current_month_index, key="m2")
-        mgr2 = st.selectbox("Manager", sorted(df[df["Disb Month"] == m2]["Manager"].dropna().unique()), key="mgr2")
+        mgr2 = st.selectbox("Manager",
+                             sorted(df[df["Disb Month"] == m2]["Manager"].dropna().unique()), key="mgr2")
     f2 = df[(df["Disb Month"] == m2) & (df["Manager"] == mgr2)]
 
     with st.sidebar.expander("📌 Campaigns — 1", expanded=False):
@@ -872,7 +911,10 @@ elif dashboard_type == "⚖️ Comparison":
     st.success(f"🏆 Winner: **{winner}** with {format_inr(max(d1, d2))}")
 
     col1, col2 = st.columns(2)
-    cards_meta = [("Total Disbursed","#6366f1"),("Total Revenue","#10b981"),("Avg Payout %","#f59e0b"),("Transactions","#ef4444")]
+    cards_meta = [
+        ("Total Disbursed","#6366f1"),("Total Revenue","#10b981"),
+        ("Avg Payout %","#f59e0b"),("Transactions","#ef4444")
+    ]
     vals1 = [format_inr(d1), format_inr(r1), f"{p1:.2f}%", f"{t1:,}"]
     vals2 = [format_inr(d2), format_inr(r2), f"{p2:.2f}%", f"{t2:,}"]
     icons = ["💰","📈","📊","🔁"]
@@ -886,7 +928,10 @@ elif dashboard_type == "⚖️ Comparison":
         for (lbl, clr), val, ico in zip(cards_meta, vals2, icons):
             st.markdown(metric_card(lbl, val, ico, clr), unsafe_allow_html=True)
 
-    insight_strip({f"{lbl1} Bank": tb1, f"{lbl1} Campaign": tc1, f"{lbl2} Bank": tb2, f"{lbl2} Campaign": tc2})
+    insight_strip({
+        f"{lbl1} Bank": tb1, f"{lbl1} Campaign": tc1,
+        f"{lbl2} Bank": tb2, f"{lbl2} Campaign": tc2
+    })
 
     section_header("Head-to-Head Comparison")
     comp = pd.DataFrame({
@@ -926,16 +971,21 @@ elif dashboard_type == "⚖️ Comparison":
                                     mode="lines+markers", name=lbl,
                                     line=dict(width=2.5, color=clr), marker=dict(size=7)))
     fig_tl.update_layout(template="plotly_white", height=400, yaxis_title="Disbursed (L)",
-                          hovermode="x unified", font=dict(family="Inter"), plot_bgcolor="white")
+                          hovermode="x unified", font=dict(family="Inter"),
+                          plot_bgcolor="white", paper_bgcolor="white")
     st.plotly_chart(fig_tl, use_container_width=True)
 
-    for label_x, f_x, fname in [(f"Data — {lbl1}", f1, "mgr1.csv"), (f"Data — {lbl2}", f2, "mgr2.csv")]:
+    for label_x, f_x, fname in [
+        (f"Data — {lbl1}", f1, "mgr1.csv"),
+        (f"Data — {lbl2}", f2, "mgr2.csv")
+    ]:
         section_header(label_x)
         dd = f_x.dropna(how="all").copy()
         for c in ["Disbursed AMT","Total_Revenue","AVG_Payout"]:
             if c in dd.columns:
                 dd[c] = dd[c].round(2)
-        st.dataframe(dd.style.set_properties(**{"text-align": "center"}), use_container_width=True, height=280)
+        st.dataframe(dd.style.set_properties(**{"text-align": "center"}),
+                     use_container_width=True, height=280)
         st.download_button(f"⬇️ {fname}", dd.to_csv(index=False), fname, "text/csv")
 
 
@@ -944,14 +994,17 @@ elif dashboard_type == "⚖️ Comparison":
 # ══════════════════════════════════════════
 elif dashboard_type == "📊 Campaign Performance":
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month = st.selectbox("Month", sorted(df["Disb Month"].dropna().unique()), index=current_month_index)
+        sel_month = st.selectbox("Month",
+                                 sorted(df["Disb Month"].dropna().unique()),
+                                 index=current_month_index)
         temp_df = df[df["Disb Month"] == sel_month]
         camp_list = sorted(temp_df["Campaign"].dropna().unique())
         c1, c2 = st.columns(2)
-        if c1.button("All"): st.session_state.camp_sel = camp_list
+        if c1.button("All"):  st.session_state.camp_sel = camp_list
         if c2.button("Clear"): st.session_state.camp_sel = []
         if "camp_sel" not in st.session_state: st.session_state.camp_sel = camp_list
-        sel_camps = st.multiselect("Campaigns", camp_list, default=st.session_state.camp_sel)
+        sel_camps = st.multiselect("Campaigns", camp_list,
+                                   default=st.session_state.camp_sel)
 
     camp_f = df[df["Disb Month"] == sel_month]
     if sel_camps: camp_f = camp_f[camp_f["Campaign"].isin(sel_camps)]
@@ -984,7 +1037,8 @@ elif dashboard_type == "📊 Campaign Performance":
     section_header("Campaign-wise Disbursed")
     cp_df = cp.reset_index()
     cp_df.columns = ["Campaign", "Disbursed AMT"]
-    st.plotly_chart(styled_bar(cp_df, "Campaign", "Campaign", "Disbursed AMT", "Campaign Performance"), use_container_width=True)
+    st.plotly_chart(styled_bar(cp_df, "Campaign", "Campaign", "Disbursed AMT",
+                               "Campaign Performance"), use_container_width=True)
 
     section_header("Manager Performance Table")
     mgr_agg = camp_f.groupby("Manager").agg(
@@ -995,14 +1049,17 @@ elif dashboard_type == "📊 Campaign Performance":
     mgr_agg["Avg_Payout%"] = (mgr_agg["Total_Revenue"] / mgr_agg["Total_Disbursed"] * 100).round(2)
     mgr_disp = mgr_agg.copy()
     mgr_disp["Total_Disbursed"] = mgr_disp["Total_Disbursed"].apply(format_inr)
-    mgr_disp["Total_Revenue"] = mgr_disp["Total_Revenue"].apply(format_inr)
+    mgr_disp["Total_Revenue"]   = mgr_disp["Total_Revenue"].apply(format_inr)
     st.dataframe(mgr_disp, use_container_width=True, height=320)
 
     pdf_bytes = generate_pdf_bytes(mgr_disp, f"Campaign Performance — {sel_month}")
     c1, c2 = st.columns(2)
-    with c1: st.download_button("⬇️ Download CSV", mgr_disp.to_csv(index=False), "campaign_perf.csv", "text/csv")
+    with c1:
+        st.download_button("⬇️ Download CSV", mgr_disp.to_csv(index=False),
+                           "campaign_perf.csv", "text/csv")
     with c2:
-        if pdf_bytes: st.download_button("📄 Export PDF", pdf_bytes, "campaign_perf.pdf", "application/pdf")
+        if pdf_bytes:
+            st.download_button("📄 Export PDF", pdf_bytes, "campaign_perf.pdf", "application/pdf")
 
     section_header("Best Manager per Campaign")
     bm = camp_f.groupby(["Campaign","Manager"])["Disbursed AMT"].sum().reset_index()
@@ -1024,7 +1081,8 @@ elif dashboard_type == "📊 Campaign Performance":
     section_header("Bank-wise Disbursed")
     bk = camp_f.groupby("Bank")["Disbursed AMT"].sum().reset_index()
     bk.columns = ["Bank","Disbursed AMT"]
-    st.plotly_chart(styled_bar(bk,"Bank","Bank","Disbursed AMT","Bank-wise Performance"), use_container_width=True)
+    st.plotly_chart(styled_bar(bk,"Bank","Bank","Disbursed AMT",
+                               "Bank-wise Performance"), use_container_width=True)
 
     camp_months = sorted(df["Disb Month"].dropna().unique())
     if camp_months.index(sel_month) > 0:
@@ -1034,9 +1092,14 @@ elif dashboard_type == "📊 Campaign Performance":
         section_header("MoM Growth")
         g_col = "#10b981" if growth >= 0 else "#ef4444"
         st.markdown(f"""
-        <div style="background:white;border-radius:12px;padding:16px 20px;border:1px solid #e2e8f0;text-align:center;">
-            <span style="font-size:32px;font-weight:700;color:{g_col}">{'▲' if growth >= 0 else '▼'} {abs(growth):.2f}%</span>
-            <div style="color:#64748b;font-size:13px;margin-top:4px">{sel_month} vs {prev}</div>
+        <div style="background:white;border-radius:12px;padding:16px 20px;
+                    border:1px solid #e2e8f0;text-align:center;">
+            <span style="font-size:32px;font-weight:700;color:{g_col}">
+                {'▲' if growth >= 0 else '▼'} {abs(growth):.2f}%
+            </span>
+            <div style="color:#64748b;font-size:13px;margin-top:4px">
+                {sel_month} vs {prev}
+            </div>
         </div>""", unsafe_allow_html=True)
 
 
@@ -1087,7 +1150,6 @@ elif dashboard_type == "🎯 Target Tracker":
     st.dataframe(pd.DataFrame(preview_data), use_container_width=True, height=250)
 
     section_header("Progress Dashboard")
-
     now_ist2 = datetime.now(timezone(timedelta(hours=5, minutes=30)))
 
     for _, row in mgr_actual.iterrows():
@@ -1119,19 +1181,25 @@ elif dashboard_type == "🎯 Target Tracker":
 
         st.markdown(f"""
         <div class="target-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:4px;">
                 <span style="font-weight:700;font-size:15px;color:#0f172a">{mgr}</span>
-                <span style="font-size:12px;color:#64748b;font-weight:500">{period_label}: <b>{effective_target:.1f}L</b></span>
+                <span style="font-size:12px;color:#64748b;font-weight:500">
+                    {period_label}: <b>{effective_target:.1f}L</b>
+                </span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#475569;margin-bottom:4px;">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;font-size:13px;color:#475569;margin-bottom:4px;">
                 <span>✅ Achieved: <b style="color:#0f172a">{actual_l:.2f}L</b></span>
                 <span>⏳ Remaining: <b style="color:#ef4444">{remaining:.2f}L</b></span>
                 <span>🎯 Full Target: <b style="color:#6366f1">{target_l:.1f}L</b></span>
             </div>
             <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width:{pct:.1f}%;background:{bar_color}"></div>
+                <div class="progress-bar-fill"
+                     style="width:{pct:.1f}%;background:{bar_color}"></div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-top:4px;">
                 <div style="font-size:12px;font-weight:700;color:{bar_color}">{status}</div>
                 <div style="font-size:12px;font-weight:600;color:#94a3b8">{pct:.1f}% complete</div>
             </div>
@@ -1144,25 +1212,32 @@ elif dashboard_type == "🎯 Target Tracker":
     team_pct = (total_actual / total_target * 100) if total_target else 0
 
     col_a, col_b, col_c = st.columns(3)
-    col_a.markdown(metric_card("Team Disbursed", f"{total_actual:.1f}L", "💼", "#6366f1"), unsafe_allow_html=True)
-    col_b.markdown(metric_card("Team Target", f"{total_target:.1f}L", "🎯", "#f59e0b"), unsafe_allow_html=True)
+    col_a.markdown(metric_card("Team Disbursed", f"{total_actual:.1f}L", "💼", "#6366f1"),
+                   unsafe_allow_html=True)
+    col_b.markdown(metric_card("Team Target", f"{total_target:.1f}L", "🎯", "#f59e0b"),
+                   unsafe_allow_html=True)
     col_c.markdown(metric_card("Achievement %", f"{team_pct:.1f}%", "📊",
-                               "#10b981" if team_pct >= 75 else "#ef4444"), unsafe_allow_html=True)
+                               "#10b981" if team_pct >= 75 else "#ef4444"),
+                   unsafe_allow_html=True)
 
     section_header("Manager Target vs Actual (Bar)")
     target_df_plot = mgr_actual.copy()
-    target_df_plot["Target"] = target_df_plot["Manager"].map(lambda m: targets_dict.get(m, 50))
+    target_df_plot["Target"]   = target_df_plot["Manager"].map(lambda m: targets_dict.get(m, 50))
     target_df_plot["Actual_L"] = target_df_plot["Actual"] / 100000
 
     fig_tgt = go.Figure()
-    fig_tgt.add_trace(go.Bar(name="Target", x=target_df_plot["Manager"], y=target_df_plot["Target"],
-                              marker_color="#e2e8f0",
-                              text=[f"{v:.1f}L" for v in target_df_plot["Target"]],
-                              textposition="outside"))
-    fig_tgt.add_trace(go.Bar(name="Actual", x=target_df_plot["Manager"], y=target_df_plot["Actual_L"],
-                              marker_color="#6366f1",
-                              text=[f"{v:.1f}L" for v in target_df_plot["Actual_L"]],
-                              textposition="outside"))
+    fig_tgt.add_trace(go.Bar(
+        name="Target", x=target_df_plot["Manager"], y=target_df_plot["Target"],
+        marker_color="#e2e8f0",
+        text=[f"{v:.1f}L" for v in target_df_plot["Target"]],
+        textposition="outside"
+    ))
+    fig_tgt.add_trace(go.Bar(
+        name="Actual", x=target_df_plot["Manager"], y=target_df_plot["Actual_L"],
+        marker_color="#6366f1",
+        text=[f"{v:.1f}L" for v in target_df_plot["Actual_L"]],
+        textposition="outside"
+    ))
     fig_tgt.update_layout(
         barmode="overlay", template="plotly_white", height=420,
         font=dict(family="Inter", size=12), plot_bgcolor="white",
@@ -1173,25 +1248,23 @@ elif dashboard_type == "🎯 Target Tracker":
 
 
 # ══════════════════════════════════════════
-# 📅 TEAM vs MONTH COMPARISON
+# 📅 TEAM vs MONTH
 # ══════════════════════════════════════════
 elif dashboard_type == "📅 Team vs Month":
     st.title("📅 Team vs Month Comparison")
 
-    # ── IST now ──
     ist_tz = timezone(timedelta(hours=5, minutes=30))
     now_ist_tvm = datetime.now(ist_tz)
 
-    # ── Sidebar Filters ──
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        month1 = st.selectbox("Month 1", months, index=max(0, current_month_index - 1), key="tvm_m1")
+        month1 = st.selectbox("Month 1", months,
+                              index=max(0, current_month_index - 1), key="tvm_m1")
         month2 = st.selectbox("Month 2", months, index=current_month_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
 
         st.markdown("---")
         st.markdown("**📅 Till Date Filter**")
 
-        # ── Determine date range for month2 from data ──
         disb_col = "DISB DATE"
         has_date_col = disb_col in df.columns
 
@@ -1207,7 +1280,8 @@ elif dashboard_type == "📅 Team vs Month":
             min_date_m2 = now_ist_tvm.date().replace(day=1)
             max_date_m2 = now_ist_tvm.date()
 
-        enable_till_date = st.checkbox("Enable Till Date Filter", value=False, key="tvm_till_enable")
+        enable_till_date = st.checkbox("Enable Till Date Filter", value=False,
+                                       key="tvm_till_enable")
 
         if enable_till_date:
             till_date = st.date_input(
@@ -1216,13 +1290,12 @@ elif dashboard_type == "📅 Team vs Month":
                 min_value=min_date_m2,
                 max_value=max_date_m2,
                 key="tvm_till_date",
-                help="Filter Month 2 data up to this date. Useful for MTD comparison."
+                help="Filter Month 2 data up to this date."
             )
             st.caption(f"📊 Showing Month 2 data till: **{till_date.strftime('%d %b %Y')}**")
         else:
             till_date = None
 
-    # ── Reload button ──
     col_ref2, col_info2 = st.columns([1, 5])
     with col_ref2:
         if st.button("🔄 Reload Data"):
@@ -1236,12 +1309,10 @@ elif dashboard_type == "📅 Team vs Month":
         else:
             st.success(f"✅ Target sheet loaded — {len(target_raw)} rows")
 
-    # ── Raw target preview ──
     if not target_raw.empty:
         with st.expander("📋 View Raw Target Sheet", expanded=False):
             st.dataframe(target_raw, use_container_width=True, height=220)
 
-    # ── Filter disbursed data ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
@@ -1249,67 +1320,54 @@ elif dashboard_type == "📅 Team vs Month":
     df_m1 = disb_df[disb_df["Disb Month"] == month1]
     df_m2 = disb_df[disb_df["Disb Month"] == month2]
 
-    # ── Apply Till Date filter on Month 2 ──
     if enable_till_date and till_date is not None and has_date_col:
         df_m2 = df_m2[df_m2[disb_col].notna()]
         df_m2 = df_m2[df_m2[disb_col].dt.date <= till_date]
-
-        # Also apply same day-of-month filter on Month 1 for fair comparison
         same_day = till_date.day
         df_m1 = df_m1[df_m1[disb_col].notna()]
         df_m1 = df_m1[df_m1[disb_col].dt.day <= same_day]
-
         st.info(
             f"📅 **Till Date active:** "
             f"Month 1 ({month1}) filtered till day **{same_day}**, "
             f"Month 2 ({month2}) filtered till **{till_date.strftime('%d %b %Y')}**"
         )
     elif enable_till_date and not has_date_col:
-        st.warning("⚠️ 'DISB DATE' column not found in data. Till Date filter could not be applied.")
+        st.warning("⚠️ 'DISB DATE' column not found. Till Date filter could not be applied.")
 
-    # ── Group actual disbursed ──
     agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
 
     agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
 
-    # ── Merge months ──
     comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
 
     if comp.empty:
         st.warning("No data found for the selected months/vertical.")
         st.stop()
 
-    # ── Map targets (in Lakhs) ──
     comp["M1_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, month1, target_raw)
-    )
+        lambda m: get_target_for_manager(m, month1, target_raw))
     comp["M2_Target_L"] = comp["Manager"].apply(
-        lambda m: get_target_for_manager(m, month2, target_raw)
-    )
+        lambda m: get_target_for_manager(m, month2, target_raw))
 
-    # ── Convert actual to Lakhs ──
     comp["M1_Disb_L"] = (comp["M1_Disb"] / 100000).round(2)
     comp["M2_Disb_L"] = (comp["M2_Disb"] / 100000).round(2)
 
-    # ── Achievement % ──
     comp["M1_Ach%"] = comp.apply(
-        lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1) if r["M1_Target_L"] > 0 else 0.0, axis=1
-    )
+        lambda r: round(r["M1_Disb_L"] / r["M1_Target_L"] * 100, 1)
+        if r["M1_Target_L"] > 0 else 0.0, axis=1)
     comp["M2_Ach%"] = comp.apply(
-        lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1) if r["M2_Target_L"] > 0 else 0.0, axis=1
-    )
+        lambda r: round(r["M2_Disb_L"] / r["M2_Target_L"] * 100, 1)
+        if r["M2_Target_L"] > 0 else 0.0, axis=1)
 
-    # ── MoM Comparison % ──
     comp["MoM%"] = comp.apply(
         lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
-        if r["M1_Disb_L"] > 0 else 0.0, axis=1
-    )
+        if r["M1_Disb_L"] > 0 else 0.0, axis=1)
 
-    comp = comp.sort_values(["Vertical","M2_Disb_L"], ascending=[True, False]).reset_index(drop=True)
+    comp = comp.sort_values(["Vertical","M2_Disb_L"],
+                            ascending=[True, False]).reset_index(drop=True)
 
-    # ── Summary Metric Cards ──
     section_header("Team Summary")
     total_m1d = comp["M1_Disb_L"].sum()
     total_m2d = comp["M2_Disb_L"].sum()
@@ -1317,42 +1375,52 @@ elif dashboard_type == "📅 Team vs Month":
     total_m2t = comp["M2_Target_L"].sum()
     team_m1_ach = round(total_m1d / total_m1t * 100, 1) if total_m1t > 0 else 0.0
     team_m2_ach = round(total_m2d / total_m2t * 100, 1) if total_m2t > 0 else 0.0
-    team_mom = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
+    team_mom    = round((total_m2d - total_m1d) / total_m1d * 100, 1) if total_m1d > 0 else 0.0
 
-    # Till date label for cards
-    m2_label = f"{month2}" + (f" (till {till_date.strftime('%d %b')})" if (enable_till_date and till_date) else "")
-    m1_label = f"{month1}" + (f" (till day {till_date.day})" if (enable_till_date and till_date and has_date_col) else "")
+    m2_label = f"{month2}" + (f" (till {till_date.strftime('%d %b')})"
+                              if (enable_till_date and till_date) else "")
+    m1_label = f"{month1}" + (f" (till day {till_date.day})"
+                              if (enable_till_date and till_date and has_date_col) else "")
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(metric_card(f"{m1_label} Disb", f"{total_m1d:.1f}L", "💰", "#6366f1"), unsafe_allow_html=True)
-    c2.markdown(metric_card(f"{m2_label} Disb", f"{total_m2d:.1f}L", "💼", "#8b5cf6"), unsafe_allow_html=True)
+    c1.markdown(metric_card(f"{m1_label} Disb", f"{total_m1d:.1f}L", "💰", "#6366f1"),
+                unsafe_allow_html=True)
+    c2.markdown(metric_card(f"{m2_label} Disb", f"{total_m2d:.1f}L", "💼", "#8b5cf6"),
+                unsafe_allow_html=True)
     c3.markdown(metric_card(f"{month1} Ach%", f"{team_m1_ach:.1f}%", "📊",
-                            "#10b981" if team_m1_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+                            "#10b981" if team_m1_ach >= 75 else "#ef4444"),
+                unsafe_allow_html=True)
     c4.markdown(metric_card(f"{month2} Ach%", f"{team_m2_ach:.1f}%", "📈",
-                            "#10b981" if team_m2_ach >= 75 else "#ef4444"), unsafe_allow_html=True)
+                            "#10b981" if team_m2_ach >= 75 else "#ef4444"),
+                unsafe_allow_html=True)
 
-    # ── MoM strip ──
     mom_color_strip = "#10b981" if team_mom >= 0 else "#ef4444"
     mom_arrow = "▲" if team_mom >= 0 else "▼"
     st.markdown(f"""
     <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:12px;
-                padding:16px 24px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;">
+                padding:16px 24px;margin:12px 0;display:flex;
+                justify-content:space-between;align-items:center;">
         <div style="color:#94a3b8;font-size:13px;font-weight:600">
-            MoM Team Change: <span style="color:{mom_color_strip};font-size:20px;font-weight:700">
-            {mom_arrow} {abs(team_mom):.1f}%</span>
+            MoM Team Change:
+            <span style="color:{mom_color_strip};font-size:20px;font-weight:700">
+                {mom_arrow} {abs(team_mom):.1f}%
+            </span>
         </div>
         <div style="color:#64748b;font-size:12px">{month1} → {month2}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Main Comparison Table ──
     section_header(f"Manager-wise: {month1} vs {month2}")
 
     def mom_badge(val):
         if val > 0:
-            return f'<span style="background:#d1fae5;color:#065f46;font-weight:700;font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">▲ {val:.1f}%</span>'
+            return (f'<span style="background:#d1fae5;color:#065f46;font-weight:700;'
+                    f'font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">'
+                    f'▲ {val:.1f}%</span>')
         elif val < 0:
-            return f'<span style="background:#fee2e2;color:#991b1b;font-weight:700;font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">▼ {abs(val):.1f}%</span>'
+            return (f'<span style="background:#fee2e2;color:#991b1b;font-weight:700;'
+                    f'font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">'
+                    f'▼ {abs(val):.1f}%</span>')
         else:
             return f'<span style="color:#94a3b8;font-size:12px">0.0%</span>'
 
@@ -1371,54 +1439,57 @@ elif dashboard_type == "📅 Team vs Month":
         bg = "#f8fafc" if i % 2 == 0 else "#ffffff"
         m1t_display = f"{row['M1_Target_L']:.1f}L" if row['M1_Target_L'] > 0 else "—"
         m2t_display = f"{row['M2_Target_L']:.1f}L" if row['M2_Target_L'] > 0 else "—"
-
         rows_html += f"""
         <tr style="background:{bg};border-bottom:1px solid #f1f5f9">
-            <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">{row['Vertical']}</td>
-            <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">{row['Manager']}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#6366f1;font-weight:500">{m1t_display}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">
+                {row['Vertical']}</td>
+            <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">
+                {row['Manager']}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;
+                       color:#6366f1;font-weight:500">{m1t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;
+                       font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
             <td style="padding:11px 14px;text-align:right">
-                <span style="background:{ach_bg(row['M1_Ach%'])};color:{ach_color(row['M1_Ach%'])};
-                             font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
+                <span style="background:{ach_bg(row['M1_Ach%'])};
+                             color:{ach_color(row['M1_Ach%'])};
+                             font-weight:700;font-size:12px;
+                             padding:3px 8px;border-radius:5px">
                     {row['M1_Ach%']:.1f}%
                 </span>
             </td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#8b5cf6;font-weight:500">{m2t_display}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M2_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;
+                       color:#8b5cf6;font-weight:500">{m2t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;
+                       font-weight:600;color:#0f172a">{row['M2_Disb_L']:.2f}L</td>
             <td style="padding:11px 14px;text-align:right">
-                <span style="background:{ach_bg(row['M2_Ach%'])};color:{ach_color(row['M2_Ach%'])};
-                             font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
+                <span style="background:{ach_bg(row['M2_Ach%'])};
+                             color:{ach_color(row['M2_Ach%'])};
+                             font-weight:700;font-size:12px;
+                             padding:3px 8px;border-radius:5px">
                     {row['M2_Ach%']:.1f}%
                 </span>
             </td>
             <td style="padding:11px 14px;text-align:right">{mom_badge(row['MoM%'])}</td>
         </tr>"""
 
-    # Totals row
     rows_html += f"""
     <tr style="background:#1e293b;border-top:2px solid #334155">
         <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">
-            🏢 TOTAL
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#818cf8;font-weight:600">
-            {total_m1t:.1f}L
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
-            {total_m1d:.2f}L
-        </td>
+            🏢 TOTAL</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;
+                   color:#818cf8;font-weight:600">{total_m1t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;
+                   font-weight:700;color:#f8fafc">{total_m1d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m1_ach)};color:{ach_color(team_m1_ach)};
                          font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
                 {team_m1_ach:.1f}%
             </span>
         </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#a78bfa;font-weight:600">
-            {total_m2t:.1f}L
-        </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">
-            {total_m2d:.2f}L
-        </td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;
+                   color:#a78bfa;font-weight:600">{total_m2t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;
+                   font-weight:700;color:#f8fafc">{total_m2d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m2_ach)};color:{ach_color(team_m2_ach)};
                          font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
@@ -1435,50 +1506,37 @@ elif dashboard_type == "📅 Team vs Month":
             <thead>
                 <tr style="background:#0f172a">
                     <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Vertical
-                    </th>
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Vertical</th>
                     <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        Manager
-                    </th>
+                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Manager</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Target
-                    </th>
+                        {month1} Target</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Disb
-                    </th>
+                        {month1} Disb</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Ach%
-                    </th>
+                        {month1} Ach%</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Target
-                    </th>
+                        {month2} Target</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Disb
-                    </th>
+                        {month2} Disb</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Ach%
-                    </th>
+                        {month2} Ach%</th>
                     <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
                                color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        MoM %
-                    </th>
+                        MoM %</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>
         </table>
-    </div>
-    """
+    </div>"""
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # ── Bar Chart: Target vs Actual ──
     section_header(f"Target vs Actual — {month1} & {month2}")
     fig_bar = go.Figure()
     fig_bar.add_trace(go.Bar(
@@ -1511,16 +1569,13 @@ elif dashboard_type == "📅 Team vs Month":
     fig_bar.update_traces(cliponaxis=False)
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── MoM % Bar Chart ──
     section_header("MoM Change % per Manager")
     mom_colors = ["#10b981" if v >= 0 else "#ef4444" for v in comp["MoM%"]]
     fig_mom = go.Figure(go.Bar(
-        x=comp["Manager"],
-        y=comp["MoM%"],
+        x=comp["Manager"], y=comp["MoM%"],
         marker_color=mom_colors,
         text=[f"{'▲' if v >= 0 else '▼'} {abs(v):.1f}%" for v in comp["MoM%"]],
-        textposition="outside",
-        marker_line_width=0,
+        textposition="outside", marker_line_width=0,
     ))
     fig_mom.add_hline(y=0, line_dash="dash", line_color="#94a3b8", line_width=1.5)
     fig_mom.update_layout(
@@ -1532,7 +1587,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_mom.update_traces(cliponaxis=False)
     st.plotly_chart(fig_mom, use_container_width=True)
 
-    # ── Achievement % Comparison Chart ──
     section_header("Achievement % Comparison")
     fig_ach = go.Figure()
     fig_ach.add_trace(go.Bar(
@@ -1557,7 +1611,6 @@ elif dashboard_type == "📅 Team vs Month":
     fig_ach.update_traces(cliponaxis=False)
     st.plotly_chart(fig_ach, use_container_width=True)
 
-    # ── Download ──
     st.markdown("<br>", unsafe_allow_html=True)
     export_df = comp[[
         "Vertical","Manager",
@@ -1571,18 +1624,11 @@ elif dashboard_type == "📅 Team vs Month":
     ]
     col_dl1, col_dl2 = st.columns([1, 5])
     with col_dl1:
-        st.download_button(
-            "⬇️ Download CSV",
-            export_df.to_csv(index=False),
-            "team_vs_month.csv",
-            "text/csv"
-        )
+        st.download_button("⬇️ Download CSV", export_df.to_csv(index=False),
+                           "team_vs_month.csv", "text/csv")
     with col_dl2:
-        pdf_bytes_tvm = generate_pdf_bytes(export_df, f"Team vs Month — {month1} vs {month2}")
+        pdf_bytes_tvm = generate_pdf_bytes(export_df,
+                                           f"Team vs Month — {month1} vs {month2}")
         if pdf_bytes_tvm:
-            st.download_button(
-                "📄 Export PDF",
-                pdf_bytes_tvm,
-                "team_vs_month.pdf",
-                "application/pdf"
-            )
+            st.download_button("📄 Export PDF", pdf_bytes_tvm,
+                               "team_vs_month.pdf", "application/pdf")
