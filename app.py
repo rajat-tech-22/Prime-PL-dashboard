@@ -567,11 +567,10 @@ if not st.session_state.login:
     [data-testid="stHeader"]  { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     footer { display: none !important; }
-    .stApp { background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%) !important; }
-    [data-testid="stAppViewContainer"] > .main > .block-container {
-        padding: 3rem 1rem 2rem !important;
-        max-width: 480px !important;
-        margin: 0 auto !important;
+
+    /* Full page dark background */
+    .stApp {
+        background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%) !important;
     }
     .stApp::before {
         content: '';
@@ -588,180 +587,219 @@ if not st.session_state.login:
         border-radius: 50%; pointer-events: none; z-index: 0;
     }
 
-    /* ── UPGRADED INPUT STYLING ── */
-    [data-testid="stAppViewContainer"] > .main > .block-container > div > div {
-        background: white;
-        border-radius: 0 0 24px 24px;
-        padding: 0 2rem 1.8rem !important;
-        margin-top: -1px;
+    /* Center the block container, narrow width */
+    [data-testid="stAppViewContainer"] > .main > .block-container {
+        padding: 2rem 1rem 2rem !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
         position: relative; z-index: 2;
     }
+
+    /* Remove white background from streamlit's inner wrapper */
+    [data-testid="stAppViewContainer"] > .main > .block-container > div > div {
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    /* ── Compact text inputs ── */
     [data-testid="stAppViewContainer"] .stTextInput > div > div > input {
-        border-radius: 10px !important;
-        border: 1.5px solid #e2e8f0 !important;
-        padding: 12px 14px !important;
-        font-size: 14px !important;
-        transition: border-color 0.2s !important;
+        border-radius: 8px !important;
+        border: 1.5px solid rgba(255,255,255,0.15) !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        background: rgba(255,255,255,0.07) !important;
+        color: #f1f5f9 !important;
+        transition: border-color 0.2s, background 0.2s !important;
+        height: 38px !important;
+    }
+    [data-testid="stAppViewContainer"] .stTextInput > div > div > input::placeholder {
+        color: rgba(255,255,255,0.35) !important;
     }
     [data-testid="stAppViewContainer"] .stTextInput > div > div > input:focus {
         border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+        background: rgba(99,102,241,0.12) !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.18) !important;
     }
     [data-testid="stAppViewContainer"] .stTextInput label {
-        font-size: 12px !important;
+        font-size: 11px !important;
         font-weight: 600 !important;
-        color: #374151 !important;
+        color: rgba(255,255,255,0.55) !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.06em !important;
+        margin-bottom: 3px !important;
     }
+
+    /* ── Sign in button ── */
     [data-testid="stAppViewContainer"] .stButton > button {
         background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
         color: white !important;
         border: none !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         font-weight: 700 !important;
-        font-size: 15px !important;
-        padding: 0.7rem 1rem !important;
+        font-size: 14px !important;
+        padding: 0.55rem 1rem !important;
         letter-spacing: 0.02em !important;
+        box-shadow: 0 4px 16px rgba(99,102,241,0.4) !important;
         transition: opacity 0.2s, transform 0.15s !important;
-        box-shadow: 0 4px 16px rgba(99,102,241,0.35) !important;
+        margin-top: 4px !important;
     }
     [data-testid="stAppViewContainer"] .stButton > button:hover {
-        opacity: 0.93 !important;
+        opacity: 0.92 !important;
         transform: translateY(-1px) !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # ── CARD BANNER ──
+    # ── TOP: Logo + Brand (centered, above image) ──
     st.markdown(f"""
-    <div class="login-card">
-      <div class="login-card-banner">
-        <svg style="position:absolute;top:0;right:0;width:180px;height:180px;opacity:0.12"
-             viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="140" cy="40"  r="80"  fill="#a5b4fc"/>
-          <circle cx="30"  cy="150" r="60"  fill="#818cf8"/>
-          <rect x="60" y="20" width="40" height="40" rx="6" fill="#c7d2fe"
-                transform="rotate(25,80,40)"/>
-        </svg>
-        <div class="login-banner-brand">
-          <div class="login-banner-logo">💼</div>
-          <span class="login-banner-name">Prime PL Dashboard</span>
-        </div>
-        <div class="login-banner-title">Track. Analyze.<br>Grow your portfolio.</div>
-        <div class="login-banner-sub">Real-time disbursement · Campaign insights · Team targets</div>
-        <svg viewBox="0 0 380 100" width="100%" xmlns="http://www.w3.org/2000/svg"
-             style="display:block;margin-bottom:1.2rem">
-          <rect x="0"   y="62" width="42" height="36" rx="5" fill="#3730a3" opacity="0.85"/>
-          <rect x="52"  y="48" width="42" height="50" rx="5" fill="#4338ca" opacity="0.9"/>
-          <rect x="104" y="34" width="42" height="64" rx="5" fill="#4f46e5" opacity="0.9"/>
-          <rect x="156" y="22" width="42" height="76" rx="5" fill="#6366f1" opacity="0.9"/>
-          <rect x="208" y="12" width="42" height="86" rx="5" fill="#818cf8" opacity="0.9"/>
-          <rect x="260" y="4"  width="42" height="94" rx="5" fill="#a5b4fc" opacity="0.9"/>
-          <polyline points="21,62 73,48 125,34 177,22 229,12 281,4"
-            fill="none" stroke="#fbbf24" stroke-width="3"
+    <div style="text-align:center; margin-bottom: 20px; position:relative; z-index:2;">
+
+      <!-- Brand row -->
+      <div style="display:inline-flex; align-items:center; gap:10px;
+                  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14);
+                  border-radius:40px; padding:8px 18px; margin-bottom:16px;">
+        <span style="font-size:18px;">💼</span>
+        <span style="font-size:13px; font-weight:600; color:#e0e7ff; letter-spacing:0.02em;">
+          Prime PL Dashboard
+        </span>
+      </div>
+
+      <!-- Title -->
+      <div style="font-size:24px; font-weight:700; color:#fff; line-height:1.3; margin-bottom:6px;">
+        Track. Analyze.<br>
+        <span style="color:#a5b4fc;">Grow your portfolio.</span>
+      </div>
+      <div style="font-size:12px; color:#7c8cba; margin-bottom:20px;">
+        Real-time disbursement &nbsp;·&nbsp; Campaign insights &nbsp;·&nbsp; Team targets
+      </div>
+
+      <!-- ── CENTERED CHART IMAGE ── -->
+      <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                  border-radius: 18px; padding: 18px 20px 10px; margin: 0 auto 20px;
+                  max-width: 380px;">
+        <svg viewBox="0 0 340 110" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Bars -->
+          <rect x="10"  y="72" width="36" height="36" rx="5" fill="#3730a3" opacity="0.85"/>
+          <rect x="58"  y="58" width="36" height="50" rx="5" fill="#4338ca" opacity="0.9"/>
+          <rect x="106" y="42" width="36" height="66" rx="5" fill="#4f46e5" opacity="0.9"/>
+          <rect x="154" y="26" width="36" height="82" rx="5" fill="#6366f1" opacity="0.9"/>
+          <rect x="202" y="14" width="36" height="94" rx="5" fill="#818cf8" opacity="0.9"/>
+          <rect x="250" y="4"  width="36" height="104" rx="5" fill="#a5b4fc" opacity="0.9"/>
+          <!-- Trend line -->
+          <polyline points="28,72 76,58 124,42 172,26 220,14 268,4"
+            fill="none" stroke="#fbbf24" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="21"  cy="62" r="5" fill="#fbbf24"/>
-          <circle cx="73"  cy="48" r="5" fill="#fbbf24"/>
-          <circle cx="125" cy="34" r="5" fill="#fbbf24"/>
-          <circle cx="177" cy="22" r="5" fill="#fbbf24"/>
-          <circle cx="229" cy="12" r="5" fill="#fbbf24"/>
-          <circle cx="281" cy="4"  r="5" fill="#fbbf24"/>
-          <text x="21"  y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Nov</text>
-          <text x="73"  y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Dec</text>
-          <text x="125" y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Jan</text>
-          <text x="177" y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Feb</text>
-          <text x="229" y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Mar</text>
-          <text x="281" y="98" fill="#818cf8" font-size="10" text-anchor="middle"
-                font-family="Inter,sans-serif" font-weight="500">Apr</text>
+          <circle cx="28"  cy="72" r="4.5" fill="#fbbf24"/>
+          <circle cx="76"  cy="58" r="4.5" fill="#fbbf24"/>
+          <circle cx="124" cy="42" r="4.5" fill="#fbbf24"/>
+          <circle cx="172" cy="26" r="4.5" fill="#fbbf24"/>
+          <circle cx="220" cy="14" r="4.5" fill="#fbbf24"/>
+          <circle cx="268" cy="4"  r="4.5" fill="#fbbf24"/>
+          <!-- X labels -->
+          <text x="28"  y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Nov</text>
+          <text x="76"  y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Dec</text>
+          <text x="124" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Jan</text>
+          <text x="172" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Feb</text>
+          <text x="220" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Mar</text>
+          <text x="268" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Apr</text>
         </svg>
-        <div class="login-banner-stats">
-          <div class="login-banner-stat">
-            <div class="login-banner-stat-val">{stat1_val}</div>
-            <div class="login-banner-stat-lbl">{stat1_lbl}</div>
+
+        <!-- Stat pills row -->
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap;">
+          <div style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.3);
+                      border-radius:8px; padding:7px 14px; text-align:center; min-width:90px;">
+            <div style="font-size:14px; font-weight:700; color:#fff;">{stat1_val}</div>
+            <div style="font-size:10px; color:#a5b4fc;">{stat1_lbl}</div>
           </div>
-          <div class="login-banner-stat">
-            <div class="login-banner-stat-val">{stat2_val}</div>
-            <div class="login-banner-stat-lbl">{stat2_lbl}</div>
+          <div style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.3);
+                      border-radius:8px; padding:7px 14px; text-align:center; min-width:90px;">
+            <div style="font-size:14px; font-weight:700; color:#fff;">{stat2_val}</div>
+            <div style="font-size:10px; color:#a5b4fc;">{stat2_lbl}</div>
           </div>
-          <div class="login-banner-stat">
-            <div class="login-banner-stat-val">{now_ist.strftime('%d %b')}</div>
-            <div class="login-banner-stat-lbl">Today (IST)</div>
+          <div style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.3);
+                      border-radius:8px; padding:7px 14px; text-align:center; min-width:90px;">
+            <div style="font-size:14px; font-weight:700; color:#fff;">{now_ist.strftime('%d %b')}</div>
+            <div style="font-size:10px; color:#a5b4fc;">Today (IST)</div>
           </div>
         </div>
       </div>
-      <div class="login-form-area">
-        <div class="login-form-heading">Welcome back 👋</div>
-        <div class="login-form-sub">Sign in to your Prime PL account</div>
+
+      <!-- ── COMPACT FORM CARD (directly below image) ── -->
+      <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+                  border-radius:16px; padding:18px 22px 16px; max-width:340px; margin:0 auto;
+                  text-align:left;">
+        <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:2px;">Welcome back 👋</div>
+        <div style="font-size:12px; color:#7c8cba; margin-bottom:14px;">Sign in to your Prime PL account</div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── FORM INPUTS ──
-    u = st.text_input("Username", placeholder="Enter your username", key="login_user")
-    p = st.text_input("Password", type="password", placeholder="Enter your password", key="login_pass")
+    # ── Compact column layout to narrow the inputs ──
+    _, col_form, _ = st.columns([1, 4, 1])
+    with col_form:
+        u = st.text_input("Username", placeholder="Enter username", key="login_user",
+                          label_visibility="visible")
+        p = st.text_input("Password", type="password", placeholder="Enter password",
+                          key="login_pass", label_visibility="visible")
 
-    # ── PASSWORD TOGGLE ──
-    st.markdown("""
-    <script>
-    function togglePwd() {
-        const inputs = window.parent.document.querySelectorAll('input[type="password"], input[aria-label*="assword"]');
-        inputs.forEach(inp => {
-            inp.type = inp.type === 'password' ? 'text' : 'password';
-        });
-    }
-    </script>
-    <div style="margin-top:-6px; margin-bottom:8px;">
-      <button onclick="togglePwd()" style="
-        background: none; border: none; cursor: pointer;
-        color: #6366f1; font-size: 12px; font-weight: 600;
-        padding: 2px 4px; font-family: Inter, sans-serif;
-        letter-spacing: 0.02em;">
-        👁 Show / Hide password
-      </button>
-    </div>
-    """, unsafe_allow_html=True)
+        # Password toggle
+        st.markdown("""
+        <script>
+        function togglePwd() {
+            const inputs = window.parent.document.querySelectorAll(
+                'input[type="password"], input[aria-label*="assword"]');
+            inputs.forEach(inp => {
+                inp.type = inp.type === 'password' ? 'text' : 'password';
+            });
+        }
+        </script>
+        <div style="margin-top:-8px; margin-bottom:6px;">
+          <button onclick="togglePwd()" style="
+            background:none; border:none; cursor:pointer;
+            color:rgba(165,180,252,0.8); font-size:11px; font-weight:600;
+            padding:2px 0; font-family:Inter,sans-serif; letter-spacing:0.02em;">
+            👁 Show / Hide password
+          </button>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-
-    if st.button("Sign in  →", use_container_width=True, key="login_btn"):
-        if u == USERNAME and p == PASSWORD:
-            st.session_state.login = True
-            st.session_state.attempts = 0
-            st.rerun()
-        else:
-            st.session_state.attempts += 1
-            left_att = MAX_ATTEMPTS - st.session_state.attempts
-            if left_att <= 0:
-                st.session_state.lock_time = time.time()
-                st.error("🔒 Too many attempts. Account locked for 12 hours.")
+        if st.button("Sign in  →", use_container_width=True, key="login_btn"):
+            if u == USERNAME and p == PASSWORD:
+                st.session_state.login = True
+                st.session_state.attempts = 0
+                st.rerun()
             else:
-                st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
+                st.session_state.attempts += 1
+                left_att = MAX_ATTEMPTS - st.session_state.attempts
+                if left_att <= 0:
+                    st.session_state.lock_time = time.time()
+                    st.error("🔒 Too many attempts. Account locked for 12 hours.")
+                else:
+                    st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
 
     attempts_left = MAX_ATTEMPTS - st.session_state.attempts
     dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
     st.markdown(f"""
-    <div class="login-info-row">
-        <span class="login-info-chip">
+    <div style="max-width:340px; margin:10px auto 0;">
+      <div class="login-info-row" style="justify-content:center;">
+        <span class="login-info-chip" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12);color:#94a3b8;">
             <span class="login-info-dot" style="background:{dot_color}"></span>
             {attempts_left}/{MAX_ATTEMPTS} attempts left
         </span>
-        <span class="login-info-chip">
+        <span class="login-info-chip" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12);color:#94a3b8;">
             <span class="login-info-dot" style="background:#f59e0b"></span>
             12h lockout
         </span>
-        <span class="login-info-chip">
+        <span class="login-info-chip" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12);color:#94a3b8;">
             <span class="login-info-dot" style="background:#6366f1"></span>
             Auto-refresh on
         </span>
-    </div>
-    <div class="login-footer-txt">
+      </div>
+      <div style="text-align:center; font-size:11px; color:#475569;
+                  margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.07);">
         Prime PL &nbsp;·&nbsp; MyMoneyMantra &nbsp;·&nbsp; {now_ist.strftime('%d %b %Y  %I:%M %p')} IST
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
