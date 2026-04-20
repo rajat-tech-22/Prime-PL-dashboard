@@ -403,23 +403,67 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
         return b""
 
 # ─────────────────────────────────────────
-# CURRENT MONTH HELPER
+# ✅ UPGRADED: CURRENT MONTH HELPER
+# Handles all possible month formats robustly
 # ─────────────────────────────────────────
 def get_current_month_index(months_list):
+    if not months_list:
+        return 0
     ist = timezone(timedelta(hours=5, minutes=30))
     now = datetime.now(ist)
-    candidates = [
-        now.strftime("%B %Y"),
-        now.strftime("%b %Y"),
-        now.strftime("%b-%y"),
-        now.strftime("%B-%Y"),
-        now.strftime("%m-%Y"),
-        now.strftime("%Y-%m"),
-    ]
+
+    # Generate all possible format candidates for current month
+    candidates = set([
+        now.strftime("%B %Y"),    # "April 2025"
+        now.strftime("%b %Y"),    # "Apr 2025"
+        now.strftime("%b-%y"),    # "Apr-25"
+        now.strftime("%B-%Y"),    # "April-2025"
+        now.strftime("%m-%Y"),    # "04-2025"
+        now.strftime("%Y-%m"),    # "2025-04"
+        now.strftime("%b-%Y"),    # "Apr-2025"
+        now.strftime("%B %y"),    # "April 25"
+        now.strftime("%m/%Y"),    # "04/2025"
+        now.strftime("%b/%Y"),    # "Apr/2025"
+        now.strftime("%B/%Y"),    # "April/2025"
+        now.strftime("%Y/%m"),    # "2025/04"
+        now.strftime("%d-%b-%Y"), # "01-Apr-2025" edge case
+        now.strftime("%b %Y").upper(),   # "APR 2025"
+        now.strftime("%B %Y").upper(),   # "APRIL 2025"
+        now.strftime("%b %Y").lower(),   # "apr 2025"
+    ])
+
+    # Try exact match first (case-insensitive strip)
     for i, m in enumerate(months_list):
-        if str(m).strip() in candidates:
+        m_str = str(m).strip()
+        if m_str in candidates or m_str.lower() in {c.lower() for c in candidates}:
             return i
+
+    # Fallback: try partial match on month number + year
+    month_num = now.strftime("%m")
+    year_4    = now.strftime("%Y")
+    year_2    = now.strftime("%y")
+
+    for i, m in enumerate(months_list):
+        m_str = str(m).strip()
+        # Check if both month number/abbr AND year appear in string
+        has_year  = year_4 in m_str or year_2 in m_str
+        has_month = (
+            month_num in m_str
+            or now.strftime("%b").lower() in m_str.lower()
+            or now.strftime("%B").lower() in m_str.lower()
+        )
+        if has_year and has_month:
+            return i
+
+    # Last resort: return last month in list
     return len(months_list) - 1
+
+
+# ─────────────────────────────────────────
+# IST TIME
+# ─────────────────────────────────────────
+ist = timezone(timedelta(hours=5, minutes=30))
+now_ist = datetime.now(ist)
 
 # ─────────────────────────────────────────
 # DATA LOADING
@@ -481,14 +525,9 @@ def get_target_for_manager(mgr_name, month_name, tdf):
     except:
         return 0.0
 
-# ─────────────────────────────────────────
-# IST TIME
-# ─────────────────────────────────────────
-ist = timezone(timedelta(hours=5, minutes=30))
-now_ist = datetime.now(ist)
 
 # ─────────────────────────────────────────
-# LOGIN PAGE
+# ✅ UPGRADED LOGIN PAGE
 # ─────────────────────────────────────────
 if not st.session_state.login:
 
@@ -534,7 +573,6 @@ if not st.session_state.login:
         max-width: 480px !important;
         margin: 0 auto !important;
     }
-    /* Floating orbs in background */
     .stApp::before {
         content: '';
         position: fixed; top: -120px; right: -120px;
@@ -549,10 +587,53 @@ if not st.session_state.login:
         background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
         border-radius: 50%; pointer-events: none; z-index: 0;
     }
+
+    /* ── UPGRADED INPUT STYLING ── */
+    [data-testid="stAppViewContainer"] > .main > .block-container > div > div {
+        background: white;
+        border-radius: 0 0 24px 24px;
+        padding: 0 2rem 1.8rem !important;
+        margin-top: -1px;
+        position: relative; z-index: 2;
+    }
+    [data-testid="stAppViewContainer"] .stTextInput > div > div > input {
+        border-radius: 10px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        transition: border-color 0.2s !important;
+    }
+    [data-testid="stAppViewContainer"] .stTextInput > div > div > input:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+    }
+    [data-testid="stAppViewContainer"] .stTextInput label {
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+    [data-testid="stAppViewContainer"] .stButton > button {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        padding: 0.7rem 1rem !important;
+        letter-spacing: 0.02em !important;
+        transition: opacity 0.2s, transform 0.15s !important;
+        box-shadow: 0 4px 16px rgba(99,102,241,0.35) !important;
+    }
+    [data-testid="stAppViewContainer"] .stButton > button:hover {
+        opacity: 0.93 !important;
+        transform: translateY(-1px) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # ── CARD BANNER (full HTML — no widgets here) ──
+    # ── CARD BANNER ──
     st.markdown(f"""
     <div class="login-card">
       <div class="login-card-banner">
@@ -621,59 +702,31 @@ if not st.session_state.login:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── FORM INPUTS — pure Streamlit, no columns, no HTML wrappers ──
-    # Custom styling to make inputs fit inside card look
-    st.markdown("""
-    <style>
-    [data-testid="stAppViewContainer"] > .main > .block-container > div > div {
-        background: white;
-        border-radius: 0 0 24px 24px;
-        padding: 0 2rem 1.8rem !important;
-        margin-top: -1px;
-        position: relative; z-index: 2;
-    }
-    [data-testid="stAppViewContainer"] .stTextInput > div > div > input {
-        border-radius: 10px !important;
-        border: 1.5px solid #e2e8f0 !important;
-        padding: 12px 14px !important;
-        font-size: 14px !important;
-        transition: border-color 0.2s !important;
-    }
-    [data-testid="stAppViewContainer"] .stTextInput > div > div > input:focus {
-        border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
-    }
-    [data-testid="stAppViewContainer"] .stTextInput label {
-        font-size: 12px !important;
-        font-weight: 600 !important;
-        color: #374151 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
-    }
-    [data-testid="stAppViewContainer"] .stButton > button {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        padding: 0.7rem 1rem !important;
-        letter-spacing: 0.02em !important;
-        transition: opacity 0.2s, transform 0.15s !important;
-        box-shadow: 0 4px 16px rgba(99,102,241,0.35) !important;
-    }
-    [data-testid="stAppViewContainer"] .stButton > button:hover {
-        opacity: 0.93 !important;
-        transform: translateY(-1px) !important;
-    }
-    [data-testid="stAppViewContainer"] .stButton > button:active {
-        transform: translateY(0) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
+    # ── FORM INPUTS ──
     u = st.text_input("Username", placeholder="Enter your username", key="login_user")
     p = st.text_input("Password", type="password", placeholder="Enter your password", key="login_pass")
+
+    # ── PASSWORD TOGGLE ──
+    st.markdown("""
+    <script>
+    function togglePwd() {
+        const inputs = window.parent.document.querySelectorAll('input[type="password"], input[aria-label*="assword"]');
+        inputs.forEach(inp => {
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        });
+    }
+    </script>
+    <div style="margin-top:-6px; margin-bottom:8px;">
+      <button onclick="togglePwd()" style="
+        background: none; border: none; cursor: pointer;
+        color: #6366f1; font-size: 12px; font-weight: 600;
+        padding: 2px 4px; font-family: Inter, sans-serif;
+        letter-spacing: 0.02em;">
+        👁 Show / Hide password
+      </button>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 
     if st.button("Sign in  →", use_container_width=True, key="login_btn"):
@@ -691,10 +744,11 @@ if not st.session_state.login:
                 st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
 
     attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+    dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
     st.markdown(f"""
     <div class="login-info-row">
         <span class="login-info-chip">
-            <span class="login-info-dot" style="background:#10b981"></span>
+            <span class="login-info-dot" style="background:{dot_color}"></span>
             {attempts_left}/{MAX_ATTEMPTS} attempts left
         </span>
         <span class="login-info-chip">
@@ -713,6 +767,7 @@ if not st.session_state.login:
 
     st.stop()
 
+
 # ─────────────────────────────────────────
 # LOAD DATA (after login)
 # ─────────────────────────────────────────
@@ -720,6 +775,7 @@ df = load_data()
 campaign_df = load_campaign_data()
 target_raw, target_err = load_targets()
 
+# ✅ months + current_month_index calculated ONCE here, used everywhere
 months = sorted(df["Disb Month"].dropna().unique())
 verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
 managers = sorted(df["Manager"].dropna().unique())
@@ -745,7 +801,9 @@ with st.sidebar:
 # ─────────────────────────────────────────
 # GREETING
 # ─────────────────────────────────────────
-hour = now_ist.hour
+ist_tz = timezone(timedelta(hours=5, minutes=30))
+now_ist2 = datetime.now(ist_tz)
+hour = now_ist2.hour
 greet = ("Good Morning 🌅" if 5 <= hour < 12
          else "Good Afternoon ☀️" if hour < 16
          else "Good Evening 🌇" if hour < 20
@@ -756,7 +814,7 @@ st.markdown(f"""
             border-radius: 16px; padding: 20px 28px; margin-bottom: 24px; color: white;">
     <div style="font-size: 22px; font-weight: 700;">{greet}, Welcome to Prime PL!</div>
     <div style="font-size: 13px; opacity: 0.85; margin-top: 4px;">
-        {now_ist.strftime("%A, %d %B %Y  •  %I:%M %p")} IST
+        {now_ist2.strftime("%A, %d %B %Y  •  %I:%M %p")} IST
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -769,6 +827,7 @@ if dashboard_type == "🏠 Overview":
     st.title("Overview — All Managers")
 
     with st.sidebar.expander("🔧 Filters", expanded=True):
+        # ✅ index=current_month_index — current month auto-selected
         selected_month = st.selectbox("Month", months, index=current_month_index)
         selected_vertical = st.selectbox("Vertical", verticals)
 
@@ -850,6 +909,7 @@ if dashboard_type == "🏠 Overview":
 # ══════════════════════════════════════════
 elif dashboard_type == "👤 Single Manager":
     with st.sidebar.expander("🔧 Filters", expanded=True):
+        # ✅ index=current_month_index
         sel_month_sm = st.selectbox("Month", months, index=current_month_index, key="sm_month")
         mgr_list = sorted(df[df["Disb Month"] == sel_month_sm]["Manager"].dropna().unique())
         sel_mgr = st.selectbox("Manager", mgr_list, key="sm_mgr")
@@ -930,6 +990,7 @@ elif dashboard_type == "👤 Single Manager":
 # ══════════════════════════════════════════
 elif dashboard_type == "⚖️ Comparison":
     with st.sidebar.expander("🔧 First Selection", expanded=True):
+        # ✅ index=current_month_index for both
         m1 = st.selectbox("Month", months, index=current_month_index, key="m1")
         mgr1 = st.selectbox("Manager",
                              sorted(df[df["Disb Month"] == m1]["Manager"].dropna().unique()), key="mgr1")
@@ -1049,9 +1110,8 @@ elif dashboard_type == "⚖️ Comparison":
 # ══════════════════════════════════════════
 elif dashboard_type == "📊 Campaign Performance":
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month = st.selectbox("Month",
-                                 sorted(df["Disb Month"].dropna().unique()),
-                                 index=current_month_index)
+        # ✅ index=current_month_index — uses global months list
+        sel_month = st.selectbox("Month", months, index=current_month_index)
         temp_df = df[df["Disb Month"] == sel_month]
         camp_list = sorted(temp_df["Campaign"].dropna().unique())
         c1, c2 = st.columns(2)
@@ -1139,9 +1199,8 @@ elif dashboard_type == "📊 Campaign Performance":
     st.plotly_chart(styled_bar(bk,"Bank","Bank","Disbursed AMT",
                                "Bank-wise Performance"), use_container_width=True)
 
-    camp_months = sorted(df["Disb Month"].dropna().unique())
-    if camp_months.index(sel_month) > 0:
-        prev = camp_months[camp_months.index(sel_month) - 1]
+    if months.index(sel_month) > 0:
+        prev = months[months.index(sel_month) - 1]
         prev_t = df[df["Disb Month"] == prev]["Disbursed AMT"].sum()
         growth = ((td - prev_t) / prev_t * 100) if prev_t else 0
         section_header("MoM Growth")
@@ -1165,6 +1224,7 @@ elif dashboard_type == "🎯 Target Tracker":
     st.title("🎯 Target Tracker")
 
     with st.sidebar.expander("🔧 Filter", expanded=True):
+        # ✅ index=current_month_index
         sel_month = st.selectbox("Month", months, index=current_month_index)
         period = st.radio("Period", ["Monthly", "Weekly"])
 
@@ -1205,7 +1265,7 @@ elif dashboard_type == "🎯 Target Tracker":
     st.dataframe(pd.DataFrame(preview_data), use_container_width=True, height=250)
 
     section_header("Progress Dashboard")
-    now_ist2 = datetime.now(timezone(timedelta(hours=5, minutes=30)))
+    now_tracker = datetime.now(timezone(timedelta(hours=5, minutes=30)))
 
     for _, row in mgr_actual.iterrows():
         mgr = row["Manager"]
@@ -1213,7 +1273,7 @@ elif dashboard_type == "🎯 Target Tracker":
         target_l = targets_dict.get(mgr, 50)
 
         if period == "Weekly":
-            day_of_month = now_ist2.day
+            day_of_month = now_tracker.day
             week_num = (day_of_month - 1) // 7 + 1
             weeks_passed = min(week_num, 4)
             effective_target = (target_l / 4) * weeks_passed
@@ -1308,13 +1368,15 @@ elif dashboard_type == "🎯 Target Tracker":
 elif dashboard_type == "📅 Team vs Month":
     st.title("📅 Team vs Month Comparison")
 
-    ist_tz = timezone(timedelta(hours=5, minutes=30))
-    now_ist_tvm = datetime.now(ist_tz)
+    ist_tz2 = timezone(timedelta(hours=5, minutes=30))
+    now_ist_tvm = datetime.now(ist_tz2)
 
     with st.sidebar.expander("🔧 Filters", expanded=True):
+        # ✅ Month 1 = previous month, Month 2 = current month (auto)
         month1 = st.selectbox("Month 1", months,
                               index=max(0, current_month_index - 1), key="tvm_m1")
-        month2 = st.selectbox("Month 2", months, index=current_month_index, key="tvm_m2")
+        month2 = st.selectbox("Month 2", months,
+                              index=current_month_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
 
         st.markdown("---")
