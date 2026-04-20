@@ -22,89 +22,89 @@ st_autorefresh(interval=60 * 1000, key="refresh")
 # ─────────────────────────────────────────
 # GLOBAL CSS
 # ─────────────────────────────────────────
-# st.markdown("""
-# <style>
-# @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-# html, body, [class*="css"] {
-#     font-family: 'Inter', sans-serif !important;
-# }
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
 
-# [data-testid="stSidebar"] {
-#     background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
-# }
-# [data-testid="stSidebar"] * { color: #e2e8f0 !important; }
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
 
-# [data-testid="stSidebar"] .stRadio > label,
-# [data-testid="stSidebar"] .stSelectbox label,
-# [data-testid="stSidebar"] .stMultiSelect label,
-# [data-testid="stSidebar"] .stNumberInput label {
-#     color: #cbd5e1 !important;
-#     font-size: 12px !important;
-#     text-transform: uppercase;
-#     letter-spacing: 0.05em;
-#     font-weight: 600 !important;
-# }
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stMultiSelect label,
+[data-testid="stSidebar"] .stNumberInput label {
+    color: #cbd5e1 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600 !important;
+}
 
-# [data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
-# [data-testid="stSidebar"] .stSelectbox input,
-# [data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
-# [data-testid="stSidebar"] .stMultiSelect input,
-# [data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
-# [data-testid="stSidebar"] div[data-baseweb="select"] span,
-# [data-testid="stSidebar"] div[data-baseweb="select"] div {
-#     color: #000000 !important;
-#     font-weight: 500 !important;
-# }
+[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stSelectbox input,
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stMultiSelect input,
+[data-testid="stSidebar"] [data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-baseweb="select"] div {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
 
-# [data-testid="stSidebar"] div[data-baseweb="select"] > div {
-#     background-color: #ffffff !important;
-#     border-radius: 8px !important;
-#     border: 1px solid #334155 !important;
-# }
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    border: 1px solid #334155 !important;
+}
 
-# [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
-# [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {
-#     color: #e2e8f0 !important;
-#     font-size: 14px !important;
-# }
-# [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover p {
-#     color: #ffffff !important;
-# }
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover p {
+    color: #ffffff !important;
+}
 
-# [data-testid="stSidebar"] span[data-baseweb="tag"] {
-#     background-color: #e0e7ff !important;
-# }
-# [data-testid="stSidebar"] span[data-baseweb="tag"] span {
-#     color: #1e1b4b !important;
-#     font-weight: 600 !important;
-# }
+[data-testid="stSidebar"] span[data-baseweb="tag"] {
+    background-color: #e0e7ff !important;
+}
+[data-testid="stSidebar"] span[data-baseweb="tag"] span {
+    color: #1e1b4b !important;
+    font-weight: 600 !important;
+}
 
-# [data-testid="stSidebar"] .streamlit-expanderHeader p {
-#     color: #f1f5f9 !important;
-#     font-weight: 600 !important;
-# }
-# [data-testid="stSidebar"] details {
-#     background: rgba(255,255,255,0.05) !important;
-#     border-radius: 10px !important;
-#     border: 1px solid rgba(255,255,255,0.08) !important;
-#     margin-bottom: 8px !important;
-# }
+[data-testid="stSidebar"] .streamlit-expanderHeader p {
+    color: #f1f5f9 !important;
+    font-weight: 600 !important;
+}
+[data-testid="stSidebar"] details {
+    background: rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    margin-bottom: 8px !important;
+}
 
-# [data-testid="stSidebar"] h1,
-# [data-testid="stSidebar"] h2,
-# [data-testid="stSidebar"] h3 { color: #f8fafc !important; }
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 { color: #f8fafc !important; }
 
-# [data-testid="stSidebar"] .stButton > button {
-#     background: #ef4444 !important;
-#     color: white !important;
-#     border: none !important;
-#     border-radius: 8px !important;
-#     width: 100%;
-# }
-# [data-testid="stSidebar"] .stButton > button:hover { background: #dc2626 !important; }
+[data-testid="stSidebar"] .stButton > button {
+    background: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    width: 100%;
+}
+[data-testid="stSidebar"] .stButton > button:hover { background: #dc2626 !important; }
 
-# .stApp { background-color: #f8fafc; }
+.stApp { background-color: #f8fafc; }
 
 /* ── LOGIN PAGE ── */
 [data-testid="stAppViewContainer"] > .main > .block-container {
