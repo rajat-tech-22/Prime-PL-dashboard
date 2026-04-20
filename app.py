@@ -273,7 +273,7 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 /* Primary button override for login */
 [data-testid="stMain"] .stButton > button[kind="primary"] {
     background: #6366f1 !important;
-    color: Black !important;
+    color: white !important;
     border: none !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
@@ -655,7 +655,7 @@ if not st.session_state.login:
     st.markdown(f"""
     <div style="text-align:center; margin-bottom: 20px; position:relative; z-index:2;">
 
-      <!-- Brand row -->
+      
       <div style="display:inline-flex; align-items:center; gap:10px;
                   background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14);
                   border-radius:40px; padding:8px 18px; margin-bottom:16px;">
@@ -665,7 +665,7 @@ if not st.session_state.login:
         </span>
       </div>
 
-      <!-- Title -->
+      
       <div style="font-size:24px; font-weight:700; color:#fff; line-height:1.3; margin-bottom:6px;">
         Track. Analyze.<br>
         <span style="color:#a5b4fc;">Grow your portfolio.</span>
@@ -674,19 +674,19 @@ if not st.session_state.login:
         Real-time disbursement &nbsp;·&nbsp; Campaign insights &nbsp;·&nbsp; Team targets
       </div>
 
-      <!-- ── CENTERED CHART IMAGE ── -->
+      
       <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
                   border-radius: 18px; padding: 18px 20px 10px; margin: 0 auto 20px;
                   max-width: 380px;">
         <svg viewBox="0 0 340 110" width="100%" xmlns="http://www.w3.org/2000/svg">
-          <!-- Bars -->
+          
           <rect x="10"  y="72" width="36" height="36" rx="5" fill="#3730a3" opacity="0.85"/>
           <rect x="58"  y="58" width="36" height="50" rx="5" fill="#4338ca" opacity="0.9"/>
           <rect x="106" y="42" width="36" height="66" rx="5" fill="#4f46e5" opacity="0.9"/>
           <rect x="154" y="26" width="36" height="82" rx="5" fill="#6366f1" opacity="0.9"/>
           <rect x="202" y="14" width="36" height="94" rx="5" fill="#818cf8" opacity="0.9"/>
           <rect x="250" y="4"  width="36" height="104" rx="5" fill="#a5b4fc" opacity="0.9"/>
-          <!-- Trend line -->
+          
           <polyline points="28,72 76,58 124,42 172,26 220,14 268,4"
             fill="none" stroke="#fbbf24" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round"/>
@@ -696,7 +696,7 @@ if not st.session_state.login:
           <circle cx="172" cy="26" r="4.5" fill="#fbbf24"/>
           <circle cx="220" cy="14" r="4.5" fill="#fbbf24"/>
           <circle cx="268" cy="4"  r="4.5" fill="#fbbf24"/>
-          <!-- X labels -->
+          
           <text x="28"  y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Nov</text>
           <text x="76"  y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Dec</text>
           <text x="124" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Jan</text>
@@ -705,7 +705,7 @@ if not st.session_state.login:
           <text x="268" y="104" fill="#818cf8" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Apr</text>
         </svg>
 
-        <!-- Stat pills row -->
+        
         <div style="display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap;">
           <div style="background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.3);
                       border-radius:8px; padding:7px 14px; text-align:center; min-width:90px;">
@@ -725,7 +725,7 @@ if not st.session_state.login:
         </div>
       </div>
 
-      <!-- ── COMPACT FORM CARD (directly below image) ── -->
+      
       <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
                   border-radius:16px; padding:18px 22px 16px; max-width:340px; margin:0 auto;
                   text-align:left;">
