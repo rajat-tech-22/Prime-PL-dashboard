@@ -544,186 +544,58 @@ if not st.session_state.login:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    # Live stats
-    try:
-        _df_login = load_data()
-        _months_login = sorted(_df_login["Disb Month"].dropna().unique())
-        _latest = _months_login[-1] if _months_login else ""
-        _disb_total = _df_login[_df_login["Disb Month"] == _latest]["Disbursed AMT"].sum()
-        _rev_total  = _df_login[_df_login["Disb Month"] == _latest]["Total_Revenue"].sum()
-        _disb_cr    = round(_disb_total / 10000000, 1)
-        _payout_pct = round((_rev_total / _disb_total * 100) if _disb_total else 0, 1)
-        s1v = "Rs." + str(_disb_cr) + "Cr"
-        s1l = str(_latest) + " Disbursed"
-        s2v = str(_payout_pct) + "%"
-        s2l = "Avg Payout"
-    except Exception:
-        s1v, s1l, s2v, s2l = "Prime PL", "Dashboard", "Live", "Analytics"
-
-    today_str     = now_ist.strftime("%d %b")
-    time_str      = now_ist.strftime("%d %b %Y  %I:%M %p")
-    attempts_left = MAX_ATTEMPTS - st.session_state.attempts
-    dot_color     = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
-
-    # Hide sidebar/toolbar
+    # Hide sidebar and header
     st.markdown(
         "<style>"
         "[data-testid='stSidebar']{display:none!important;}"
         "[data-testid='stHeader']{display:none!important;}"
         "[data-testid='stToolbar']{display:none!important;}"
         "footer{display:none!important;}"
-        ".stApp{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 45%,#312e81 75%,#4c1d95 100%)!important;min-height:100vh;}"
-        "[data-testid='stAppViewContainer']>.main>.block-container{padding:0!important;max-width:100%!important;}"
-        "[data-testid='stAppViewContainer']>.main>.block-container>div>div{background:transparent!important;padding:0!important;}"
+        ".stApp{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#312e81 100%)!important;}"
+        "[data-testid='stAppViewContainer']>.main>.block-container{"
+        "padding:4rem 1rem 2rem!important;max-width:420px!important;margin:0 auto!important;}"
+        ".stTextInput label{color:#a5b4fc!important;font-size:12px!important;"
+        "font-weight:600!important;text-transform:uppercase!important;letter-spacing:0.06em!important;}"
+        ".stTextInput input{background:rgba(255,255,255,0.07)!important;"
+        "border:1.5px solid rgba(255,255,255,0.15)!important;border-radius:10px!important;"
+        "color:#f1f5f9!important;font-size:14px!important;padding:12px 14px!important;}"
+        ".stTextInput input:focus{border-color:#6366f1!important;"
+        "box-shadow:0 0 0 3px rgba(99,102,241,0.2)!important;}"
+        ".stTextInput input::placeholder{color:rgba(255,255,255,0.25)!important;}"
+        ".stButton>button{background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;"
+        "color:white!important;border:none!important;border-radius:12px!important;"
+        "font-weight:700!important;font-size:15px!important;"
+        "box-shadow:0 4px 20px rgba(99,102,241,0.4)!important;}"
         "</style>",
         unsafe_allow_html=True
     )
 
-    # Read submitted values from query params trick — use session state instead
-    if "luser" not in st.session_state: st.session_state.luser = ""
-    if "lpass" not in st.session_state: st.session_state.lpass = ""
-
-    # Build the full-page two-column HTML
-    chart_html = (
-        "<svg viewBox='0 0 300 100' width='100%' xmlns='http://www.w3.org/2000/svg'>"
-        "<rect x='5'  y='64' width='32' height='34' rx='4' fill='#3730a3' opacity='0.85'/>"
-        "<rect x='50' y='52' width='32' height='46' rx='4' fill='#4338ca' opacity='0.9'/>"
-        "<rect x='95' y='38' width='32' height='60' rx='4' fill='#4f46e5' opacity='0.9'/>"
-        "<rect x='140' y='24' width='32' height='74' rx='4' fill='#6366f1' opacity='0.9'/>"
-        "<rect x='185' y='12' width='32' height='86' rx='4' fill='#818cf8' opacity='0.9'/>"
-        "<rect x='230' y='2'  width='32' height='96' rx='4' fill='#a5b4fc' opacity='0.9'/>"
-        "<polyline points='21,64 66,52 111,38 156,24 201,12 246,2' fill='none' stroke='#fbbf24' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"
-        "<circle cx='21'  cy='64' r='4' fill='#fbbf24'/><circle cx='66'  cy='52' r='4' fill='#fbbf24'/>"
-        "<circle cx='111' cy='38' r='4' fill='#fbbf24'/><circle cx='156' cy='24' r='4' fill='#fbbf24'/>"
-        "<circle cx='201' cy='12' r='4' fill='#fbbf24'/><circle cx='246' cy='2'  r='4' fill='#fbbf24'/>"
-        "<text x='21'  y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Nov</text>"
-        "<text x='66'  y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Dec</text>"
-        "<text x='111' y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Jan</text>"
-        "<text x='156' y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Feb</text>"
-        "<text x='201' y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Mar</text>"
-        "<text x='246' y='95' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Apr</text>"
-        "</svg>"
+    # Logo + title
+    st.markdown(
+        "<div style='text-align:center;margin-bottom:2rem;'>"
+        "<div style='width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);"
+        "border-radius:16px;display:flex;align-items:center;justify-content:center;"
+        "margin:0 auto 14px;font-size:26px;box-shadow:0 8px 24px rgba(99,102,241,0.4);'>&#x1F4BC;</div>"
+        "<div style='font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;'>Prime PL Dashboard</div>"
+        "<div style='font-size:13px;color:#7c8cba;'>MyMoneyMantra &nbsp;&middot;&nbsp; Real-time Analytics</div>"
+        "</div>",
+        unsafe_allow_html=True
     )
 
-    ps = "flex:1;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);border-radius:10px;padding:10px 14px;text-align:center;"
-
-    page_html = (
-        "<style>"
-        "html,body{margin:0;padding:0;height:100%;}"
-        ".lp-wrap{display:flex;min-height:100vh;width:100%;font-family:'Inter',sans-serif;}"
-        ".lp-left{flex:1;display:flex;flex-direction:column;justify-content:center;"
-        "padding:3rem 2.5rem;border-right:1px solid rgba(255,255,255,0.08);"
-        "background:rgba(255,255,255,0.02);box-sizing:border-box;}"
-        ".lp-right{flex:1;display:flex;flex-direction:column;justify-content:center;"
-        "padding:3rem 2.5rem;box-sizing:border-box;}"
-        ".lp-brand{display:inline-flex;align-items:center;gap:8px;"
-        "background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);"
-        "border-radius:30px;padding:6px 14px;margin-bottom:22px;}"
-        ".lp-title{font-size:32px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:10px;}"
-        ".lp-sub{font-size:13px;color:#7c8cba;margin-bottom:26px;line-height:1.7;}"
-        ".lp-chart{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);"
-        "border-radius:14px;padding:16px 14px 10px;margin-bottom:18px;}"
-        ".lp-stats{display:flex;gap:8px;}"
-        ".lp-heading{font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;}"
-        ".lp-subheading{font-size:13px;color:#7c8cba;margin-bottom:28px;}"
-        ".lp-label{font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);"
-        "text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;}"
-        ".lp-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);"
-        "border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;"
-        "color:#f1f5f9;font-size:14px;padding:11px 14px;margin-bottom:16px;"
-        "font-family:Inter,sans-serif;outline:none;transition:border 0.2s,background 0.2s;}"
-        ".lp-input:focus{border-color:#6366f1;background:rgba(99,102,241,0.08);}"
-        ".lp-input::placeholder{color:rgba(255,255,255,0.25);}"
-        ".lp-toggle{background:none;border:none;cursor:pointer;"
-        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;"
-        "padding:0;margin-top:-10px;margin-bottom:14px;display:block;"
-        "font-family:Inter,sans-serif;}"
-        ".lp-btn{width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);"
-        "color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;"
-        "cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.45);"
-        "font-family:Inter,sans-serif;letter-spacing:0.02em;"
-        "transition:opacity 0.2s,transform 0.15s;}"
-        ".lp-btn:hover{opacity:0.9;transform:translateY(-1px);}"
-        ".lp-chip{display:inline-flex;align-items:center;gap:5px;"
-        "background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;}"
-        ".lp-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}"
-        ".lp-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;margin-bottom:10px;}"
-        ".lp-footer{font-size:11px;color:#475569;padding-top:8px;"
-        "border-top:1px solid rgba(255,255,255,0.06);}"
-        "@media(max-width:700px){.lp-wrap{flex-direction:column;}"
-        ".lp-left{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);}}"
-        "</style>"
-        "<div class='lp-wrap'>"
-        # LEFT
-        "<div class='lp-left'>"
-        "<div class='lp-brand'>"
-        "<span style='font-size:16px;'>&#x1F4BC;</span>"
-        "<span style='font-size:12px;font-weight:600;color:#c7d2fe;'>Prime PL Dashboard</span>"
-        "</div>"
-        "<div class='lp-title'>Track.<br>Analyze.<br><span style='color:#a5b4fc;'>Grow.</span></div>"
-        "<div class='lp-sub'>Real-time disbursement<br>Campaign insights &amp; Team targets</div>"
-        "<div class='lp-chart'>" + chart_html + "</div>"
-        "<div class='lp-stats'>"
-        "<div style='" + ps + "'>"
-        "<div style='font-size:15px;font-weight:700;color:#fff;'>" + s1v + "</div>"
-        "<div style='font-size:10px;color:#a5b4fc;margin-top:3px;'>" + s1l + "</div>"
-        "</div>"
-        "<div style='" + ps + "'>"
-        "<div style='font-size:15px;font-weight:700;color:#fff;'>" + s2v + "</div>"
-        "<div style='font-size:10px;color:#a5b4fc;margin-top:3px;'>" + s2l + "</div>"
-        "</div>"
-        "<div style='" + ps + "'>"
-        "<div style='font-size:15px;font-weight:700;color:#fff;'>" + today_str + "</div>"
-        "<div style='font-size:10px;color:#a5b4fc;margin-top:3px;'>Today IST</div>"
-        "</div>"
-        "</div>"
-        "</div>"
-        # RIGHT — HTML form with hidden Streamlit submit
-        "<div class='lp-right'>"
-        "<div class='lp-heading'>Welcome back &#x1F44B;</div>"
-        "<div class='lp-subheading'>Sign in to your Prime PL account</div>"
-        "<div class='lp-label'>Username</div>"
-        "<input class='lp-input' id='lp_u' type='text' placeholder='Enter your username' autocomplete='username'/>"
-        "<div class='lp-label'>Password</div>"
-        "<input class='lp-input' id='lp_p' type='password' placeholder='Enter your password' autocomplete='current-password'/>"
-        "<button class='lp-toggle' onclick='var e=document.getElementById(\"lp_p\");e.type=e.type===\"password\"?\"text\":\"password\"'>&#x1F441; Show / Hide password</button>"
-        "<button class='lp-btn' onclick='submitLogin()'>Sign in &nbsp;&#x2192;</button>"
-        "<div class='lp-chips'>"
-        "<span class='lp-chip'><span class='lp-dot' style='background:" + dot_color + ";'></span>" + str(attempts_left) + "/" + str(MAX_ATTEMPTS) + " attempts left</span>"
-        "<span class='lp-chip'><span class='lp-dot' style='background:#f59e0b;'></span>12h lockout</span>"
-        "<span class='lp-chip'><span class='lp-dot' style='background:#6366f1;'></span>Auto-refresh</span>"
-        "</div>"
-        "<div class='lp-footer'>Prime PL &nbsp;&middot;&nbsp; MyMoneyMantra &nbsp;&middot;&nbsp; " + time_str + " IST</div>"
-        "</div>"
-        "</div>"
-        "<script>"
-        "function submitLogin(){"
-        "var u=document.getElementById('lp_u').value;"
-        "var p=document.getElementById('lp_p').value;"
-        "var su=window.parent.document.querySelector('input[aria-label=\"lp_user_hidden\"]');"
-        "var sp=window.parent.document.querySelector('input[aria-label=\"lp_pass_hidden\"]');"
-        "if(su&&sp){"
-        "var nv=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value');"
-        "nv.set.call(su,u);su.dispatchEvent(new Event('input',{bubbles:true}));"
-        "nv.set.call(sp,p);sp.dispatchEvent(new Event('input',{bubbles:true}));"
-        "setTimeout(function(){var btn=window.parent.document.querySelector('button[data-testid=\"stButton\"]');if(btn)btn.click();},200);"
-        "}}"
-        "document.getElementById('lp_p').addEventListener('keydown',function(e){if(e.key==='Enter')submitLogin();});"
-        "document.getElementById('lp_u').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lp_p').focus();});"
-        "</script>"
+    # Login card
+    st.markdown(
+        "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
+        "border-radius:20px;padding:28px 28px 20px;'>"
+        "<div style='font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;'>Welcome back &#x1F44B;</div>"
+        "<div style='font-size:13px;color:#64748b;margin-bottom:20px;'>Sign in to continue</div>"
+        "</div>",
+        unsafe_allow_html=True
     )
 
-    st.markdown(page_html, unsafe_allow_html=True)
+    u = st.text_input("Username", placeholder="Enter your username", key="login_user")
+    p = st.text_input("Password", type="password", placeholder="Enter your password", key="login_pass")
 
-    # Hidden Streamlit inputs + button (invisible, triggered by JS)
-    st.markdown("<div style='position:absolute;opacity:0;pointer-events:none;height:1px;overflow:hidden;'>", unsafe_allow_html=True)
-    u = st.text_input("lp_user_hidden", key="lp_u_key", label_visibility="visible")
-    p = st.text_input("lp_pass_hidden", key="lp_p_key", label_visibility="visible")
-    do_login = st.button("LOGIN_TRIGGER", key="lp_btn_key")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if do_login:
+    if st.button("Sign in  →", use_container_width=True, key="login_btn"):
         if u == USERNAME and p == PASSWORD:
             st.session_state.login = True
             st.session_state.attempts = 0
@@ -737,11 +609,31 @@ if not st.session_state.login:
             else:
                 st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
 
+    attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+    dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
+
+    st.markdown(
+        "<div style='text-align:center;margin-top:16px;'>"
+        "<div style='display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;'>"
+        "<span style='background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);"
+        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;display:inline-flex;align-items:center;gap:5px;'>"
+        "<span style='width:6px;height:6px;border-radius:50%;background:" + dot_color + ";display:inline-block;'></span>"
+        + str(attempts_left) + "/" + str(MAX_ATTEMPTS) + " attempts left</span>"
+        "<span style='background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);"
+        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;'>&#x1F512; 12h lockout</span>"
+        "</div>"
+        "<div style='font-size:11px;color:#334155;'>"
+        "Prime PL &nbsp;&middot;&nbsp; " + now_ist.strftime("%d %b %Y  %I:%M %p") + " IST"
+        "</div></div>",
+        unsafe_allow_html=True
+    )
+
     st.stop()
 
 
 # ─────────────────────────────────────────
 # LOAD DATA (after login)
+
 
 # ─────────────────────────────────────────
 df = load_data()
