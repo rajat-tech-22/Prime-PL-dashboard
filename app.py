@@ -273,7 +273,7 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
 /* Primary button override for login */
 [data-testid="stMain"] .stButton > button[kind="primary"] {
     background: #6366f1 !important;
-    color: white !important;
+    color: Black !important;
     border: none !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
