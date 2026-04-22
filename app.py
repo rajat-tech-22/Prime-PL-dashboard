@@ -538,29 +538,29 @@ if not st.session_state.login:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    # Live stats for banner
-    try:
-        _df_login = load_data()
-        _months_login = sorted(_df_login["Disb Month"].dropna().unique())
-        _latest = _months_login[-1] if _months_login else ""
-        _disb_total = _df_login[_df_login["Disb Month"] == _latest]["Disbursed AMT"].sum()
-        _rev_total  = _df_login[_df_login["Disb Month"] == _latest]["Total_Revenue"].sum()
-        _disb_cr    = _disb_total / 10000000
-        _payout_pct = (_rev_total / _disb_total * 100) if _disb_total else 0
-        stat1_val = "Rs." + str(round(_disb_cr, 1)) + "Cr"
-        stat1_lbl = str(_latest) + " Disbursed"
-        stat2_val = str(round(_payout_pct, 1)) + "%"
-        stat2_lbl = "Avg Payout"
-    except Exception:
-        stat1_val = "Prime PL"
-        stat1_lbl = "Dashboard"
-        stat2_val = "Live"
-        stat2_lbl = "Analytics"
+    # # Live stats for banner
+    # try:
+    #     _df_login = load_data()
+    #     _months_login = sorted(_df_login["Disb Month"].dropna().unique())
+    #     _latest = _months_login[-1] if _months_login else ""
+    #     _disb_total = _df_login[_df_login["Disb Month"] == _latest]["Disbursed AMT"].sum()
+    #     _rev_total  = _df_login[_df_login["Disb Month"] == _latest]["Total_Revenue"].sum()
+    #     _disb_cr    = _disb_total / 10000000
+    #     _payout_pct = (_rev_total / _disb_total * 100) if _disb_total else 0
+    #     stat1_val = "Rs." + str(round(_disb_cr, 1)) + "Cr"
+    #     stat1_lbl = str(_latest) + " Disbursed"
+    #     stat2_val = str(round(_payout_pct, 1)) + "%"
+    #     stat2_lbl = "Avg Payout"
+    # except Exception:
+    #     stat1_val = "Prime PL"
+    #     stat1_lbl = "Dashboard"
+    #     stat2_val = "Live"
+    #     stat2_lbl = "Analytics"
 
-    today_str = now_ist.strftime("%d %b")
-    time_str  = now_ist.strftime("%d %b %Y  %I:%M %p")
-    attempts_left = MAX_ATTEMPTS - st.session_state.attempts
-    dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
+    # today_str = now_ist.strftime("%d %b")
+    # time_str  = now_ist.strftime("%d %b %Y  %I:%M %p")
+    # attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+    # dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
 
     # ── Hide sidebar/header, full page styling ──
     st.markdown("""
