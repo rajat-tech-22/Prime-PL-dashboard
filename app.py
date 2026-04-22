@@ -1366,12 +1366,24 @@ elif dashboard_type == "📅 Team vs Month":
     now_ist_tvm = datetime.now(ist_tz2)
 
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        # ✅ Month 1 = previous month, Month 2 = current month (auto)
-        month1 = st.selectbox("Month 1", months,
-                              index=max(0, current_month_index - 1), key="tvm_m1")
-        month2 = st.selectbox("Month 2", months,
-                              index=current_month_index, key="tvm_m2")
+        # Auto default: m1 = last month, m2 = current month
+        auto_m2_index = current_month_index
+        auto_m1_index = max(0, current_month_index - 1)
+
+        month1 = st.selectbox("Month 1 (Prev)", months, index=auto_m1_index, key="tvm_m1")
+        month2 = st.selectbox("Month 2 (Current)", months, index=auto_m2_index, key="tvm_m2")
         sel_vertical_tvm = st.selectbox("Vertical", verticals, key="tvm_vert")
+
+        # Campaign filter — both months combined
+        all_camps_tvm = sorted(
+            df[df["Disb Month"].isin([month1, month2])]["Campaign"].dropna().unique()
+        )
+        sel_camps_tvm = st.multiselect(
+            "Campaigns",
+            all_camps_tvm,
+            default=all_camps_tvm,
+            key="tvm_camps"
+        )
 
         st.markdown("---")
         st.markdown("**📅 Till Date Filter**")
@@ -1391,8 +1403,7 @@ elif dashboard_type == "📅 Team vs Month":
             min_date_m2 = now_ist_tvm.date().replace(day=1)
             max_date_m2 = now_ist_tvm.date()
 
-        enable_till_date = st.checkbox("Enable Till Date Filter", value=False,
-                                       key="tvm_till_enable")
+        enable_till_date = st.checkbox("Enable Till Date Filter", value=False, key="tvm_till_enable")
 
         if enable_till_date:
             till_date = st.date_input(
@@ -1424,37 +1435,64 @@ elif dashboard_type == "📅 Team vs Month":
         with st.expander("📋 View Raw Target Sheet", expanded=False):
             st.dataframe(target_raw, use_container_width=True, height=220)
 
+    # ── Base filter ──
     disb_df = df.copy()
     if sel_vertical_tvm != "All":
         disb_df = disb_df[disb_df["Vertical"] == sel_vertical_tvm]
+    if sel_camps_tvm:
+        disb_df = disb_df[disb_df["Campaign"].isin(sel_camps_tvm)]
 
-    df_m1 = disb_df[disb_df["Disb Month"] == month1]
-    df_m2 = disb_df[disb_df["Disb Month"] == month2]
+    df_m1 = disb_df[disb_df["Disb Month"] == month1].copy()
+    df_m2 = disb_df[disb_df["Disb Month"] == month2].copy()
 
-    if enable_till_date and till_date is not None and has_date_col:
-        df_m2 = df_m2[df_m2[disb_col].notna()]
-        df_m2 = df_m2[df_m2[disb_col].dt.date <= till_date]
-        same_day = till_date.day
-        df_m1 = df_m1[df_m1[disb_col].notna()]
-        df_m1 = df_m1[df_m1[disb_col].dt.day <= same_day]
-        st.info(
-            f"📅 **Till Date active:** "
-            f"Month 1 ({month1}) filtered till day **{same_day}**, "
-            f"Month 2 ({month2}) filtered till **{till_date.strftime('%d %b %Y')}**"
-        )
+    # ── Till Date Filter ──
+    if enable_till_date and has_date_col:
+        m2_valid = df_m2[disb_col].dropna()
+        if m2_valid.empty:
+            st.info(f"📅 No dates found in {month2} — showing all available data.")
+        else:
+            if till_date is None:
+                till_date = m2_valid.max().date()
+
+            m2_filtered = df_m2[df_m2[disb_col].notna()]
+            m2_filtered = m2_filtered[m2_filtered[disb_col].dt.date <= till_date]
+            if m2_filtered.empty:
+                till_date = m2_valid.max().date()
+                m2_filtered = df_m2[df_m2[disb_col].notna()]
+                m2_filtered = m2_filtered[m2_filtered[disb_col].dt.date <= till_date]
+                st.warning(f"⚠️ No data till selected date — showing till last available: {till_date.strftime('%d %b %Y')}")
+
+            df_m2 = m2_filtered
+            same_day = till_date.day
+
+            m1_valid = df_m1[disb_col].dropna()
+            if not m1_valid.empty:
+                df_m1_filtered = df_m1[df_m1[disb_col].notna()]
+                df_m1_filtered = df_m1_filtered[df_m1_filtered[disb_col].dt.day <= same_day]
+                if df_m1_filtered.empty:
+                    st.info(f"ℹ️ {month1} had no data till day {same_day} — showing full month.")
+                else:
+                    df_m1 = df_m1_filtered
+
+            st.info(
+                f"📅 **Till Date active:** "
+                f"Month 1 ({month1}) filtered till day **{same_day}**, "
+                f"Month 2 ({month2}) filtered till **{till_date.strftime('%d %b %Y')}**"
+            )
     elif enable_till_date and not has_date_col:
         st.warning("⚠️ 'DISB DATE' column not found. Till Date filter could not be applied.")
 
-    agg_m1 = df_m1.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
+    # ── Aggregation ──
+    agg_m1 = df_m1.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m1.rename(columns={"Disbursed AMT": "M1_Disb"}, inplace=True)
 
-    agg_m2 = df_m2.groupby(["Vertical","Manager"])["Disbursed AMT"].sum().reset_index()
+    agg_m2 = df_m2.groupby(["Vertical", "Manager"])["Disbursed AMT"].sum().reset_index()
     agg_m2.rename(columns={"Disbursed AMT": "M2_Disb"}, inplace=True)
 
-    comp = pd.merge(agg_m1, agg_m2, on=["Vertical","Manager"], how="outer").fillna(0)
+    comp = pd.merge(agg_m1, agg_m2, on=["Vertical", "Manager"], how="outer").fillna(0)
 
     if comp.empty:
-        st.warning("No data found for the selected months/vertical.")
+        st.warning("No data found for the selected months/vertical/campaigns.")
         st.stop()
 
     comp["M1_Target_L"] = comp["Manager"].apply(
@@ -1476,9 +1514,10 @@ elif dashboard_type == "📅 Team vs Month":
         lambda r: round((r["M2_Disb_L"] - r["M1_Disb_L"]) / r["M1_Disb_L"] * 100, 1)
         if r["M1_Disb_L"] > 0 else 0.0, axis=1)
 
-    comp = comp.sort_values(["Vertical","M2_Disb_L"],
+    comp = comp.sort_values(["Vertical", "M2_Disb_L"],
                             ascending=[True, False]).reset_index(drop=True)
 
+    # ── Team Summary ──
     section_header("Team Summary")
     total_m1d = comp["M1_Disb_L"].sum()
     total_m2d = comp["M2_Disb_L"].sum()
@@ -1521,6 +1560,7 @@ elif dashboard_type == "📅 Team vs Month":
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Manager Table ──
     section_header(f"Manager-wise: {month1} vs {month2}")
 
     def mom_badge(val):
@@ -1552,31 +1592,21 @@ elif dashboard_type == "📅 Team vs Month":
         m2t_display = f"{row['M2_Target_L']:.1f}L" if row['M2_Target_L'] > 0 else "—"
         rows_html += f"""
         <tr style="background:{bg};border-bottom:1px solid #f1f5f9">
-            <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">
-                {row['Vertical']}</td>
-            <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">
-                {row['Manager']}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;
-                       color:#6366f1;font-weight:500">{m1t_display}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;
-                       font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;font-size:13px;color:#64748b;font-weight:500">{row['Vertical']}</td>
+            <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#0f172a">{row['Manager']}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#6366f1;font-weight:500">{m1t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M1_Disb_L']:.2f}L</td>
             <td style="padding:11px 14px;text-align:right">
-                <span style="background:{ach_bg(row['M1_Ach%'])};
-                             color:{ach_color(row['M1_Ach%'])};
-                             font-weight:700;font-size:12px;
-                             padding:3px 8px;border-radius:5px">
+                <span style="background:{ach_bg(row['M1_Ach%'])};color:{ach_color(row['M1_Ach%'])};
+                    font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
                     {row['M1_Ach%']:.1f}%
                 </span>
             </td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;
-                       color:#8b5cf6;font-weight:500">{m2t_display}</td>
-            <td style="padding:11px 14px;font-size:13px;text-align:right;
-                       font-weight:600;color:#0f172a">{row['M2_Disb_L']:.2f}L</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;color:#8b5cf6;font-weight:500">{m2t_display}</td>
+            <td style="padding:11px 14px;font-size:13px;text-align:right;font-weight:600;color:#0f172a">{row['M2_Disb_L']:.2f}L</td>
             <td style="padding:11px 14px;text-align:right">
-                <span style="background:{ach_bg(row['M2_Ach%'])};
-                             color:{ach_color(row['M2_Ach%'])};
-                             font-weight:700;font-size:12px;
-                             padding:3px 8px;border-radius:5px">
+                <span style="background:{ach_bg(row['M2_Ach%'])};color:{ach_color(row['M2_Ach%'])};
+                    font-weight:700;font-size:12px;padding:3px 8px;border-radius:5px">
                     {row['M2_Ach%']:.1f}%
                 </span>
             </td>
@@ -1585,25 +1615,20 @@ elif dashboard_type == "📅 Team vs Month":
 
     rows_html += f"""
     <tr style="background:#1e293b;border-top:2px solid #334155">
-        <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">
-            🏢 TOTAL</td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;
-                   color:#818cf8;font-weight:600">{total_m1t:.1f}L</td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;
-                   font-weight:700;color:#f8fafc">{total_m1d:.2f}L</td>
+        <td colspan="2" style="padding:13px 14px;font-size:13px;font-weight:700;color:#f8fafc">🏢 TOTAL</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#818cf8;font-weight:600">{total_m1t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">{total_m1d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m1_ach)};color:{ach_color(team_m1_ach)};
-                         font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
+                font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
                 {team_m1_ach:.1f}%
             </span>
         </td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;
-                   color:#a78bfa;font-weight:600">{total_m2t:.1f}L</td>
-        <td style="padding:13px 14px;font-size:13px;text-align:right;
-                   font-weight:700;color:#f8fafc">{total_m2d:.2f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;color:#a78bfa;font-weight:600">{total_m2t:.1f}L</td>
+        <td style="padding:13px 14px;font-size:13px;text-align:right;font-weight:700;color:#f8fafc">{total_m2d:.2f}L</td>
         <td style="padding:13px 14px;text-align:right">
             <span style="background:{ach_bg(team_m2_ach)};color:{ach_color(team_m2_ach)};
-                         font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
+                font-weight:700;font-size:13px;padding:4px 10px;border-radius:5px">
                 {team_m2_ach:.1f}%
             </span>
         </td>
@@ -1616,31 +1641,15 @@ elif dashboard_type == "📅 Team vs Month":
         <table style="width:100%;border-collapse:collapse;font-family:'Inter',sans-serif">
             <thead>
                 <tr style="background:#0f172a">
-                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Vertical</th>
-                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Manager</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Target</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Disb</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month1} Ach%</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Target</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Disb</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        {month2} Ach%</th>
-                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;
-                               color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">
-                        MoM %</th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Vertical</th>
+                    <th style="padding:13px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em">Manager</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Target</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Disb</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#818cf8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month1} Ach%</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Target</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Disb</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#a78bfa;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">{month2} Ach%</th>
+                    <th style="padding:13px 14px;text-align:right;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap">MoM %</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>
@@ -1648,6 +1657,7 @@ elif dashboard_type == "📅 Team vs Month":
     </div>"""
     st.markdown(table_html, unsafe_allow_html=True)
 
+    # ── Charts ──
     section_header(f"Target vs Actual — {month1} & {month2}")
     fig_bar = go.Figure()
     fig_bar.add_trace(go.Bar(
@@ -1722,14 +1732,15 @@ elif dashboard_type == "📅 Team vs Month":
     fig_ach.update_traces(cliponaxis=False)
     st.plotly_chart(fig_ach, use_container_width=True)
 
+    # ── Download ──
     st.markdown("<br>", unsafe_allow_html=True)
     export_df = comp[[
-        "Vertical","Manager",
-        "M1_Target_L","M1_Disb_L","M1_Ach%",
-        "M2_Target_L","M2_Disb_L","M2_Ach%","MoM%"
+        "Vertical", "Manager",
+        "M1_Target_L", "M1_Disb_L", "M1_Ach%",
+        "M2_Target_L", "M2_Disb_L", "M2_Ach%", "MoM%"
     ]].copy()
     export_df.columns = [
-        "Vertical","Manager",
+        "Vertical", "Manager",
         f"{month1} Target(L)", f"{month1} Disb(L)", f"{month1} Ach%",
         f"{month2} Target(L)", f"{month2} Disb(L)", f"{month2} Ach%", "MoM%"
     ]
@@ -1738,8 +1749,7 @@ elif dashboard_type == "📅 Team vs Month":
         st.download_button("⬇️ Download CSV", export_df.to_csv(index=False),
                            "team_vs_month.csv", "text/csv")
     with col_dl2:
-        pdf_bytes_tvm = generate_pdf_bytes(export_df,
-                                           f"Team vs Month — {month1} vs {month2}")
+        pdf_bytes_tvm = generate_pdf_bytes(export_df, f"Team vs Month — {month1} vs {month2}")
         if pdf_bytes_tvm:
             st.download_button("📄 Export PDF", pdf_bytes_tvm,
                                "team_vs_month.pdf", "application/pdf")
