@@ -704,7 +704,7 @@ if not st.session_state.login:
         + chart_svg + stats_row +
         "</div>"
     )
-    st.markdown(unsafe_allow_html=True)
+    st.markdown(chart_card,unsafe_allow_html=True)
     
 
     # ── Inputs (no extra columns needed — block-container already 320px) ──
