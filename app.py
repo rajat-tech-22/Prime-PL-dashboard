@@ -571,7 +571,7 @@ if not st.session_state.login:
         "footer{display:none!important;}"
         ".stApp{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%)!important;}"
         "[data-testid='stAppViewContainer']>.main>.block-container{"
-        "padding:2rem 1rem!important;max-width:380px!important;margin:0 auto!important;}"
+        "padding:2rem 1rem!important;max-width:340px!important;margin:0 auto!important;}"
         "[data-testid='stAppViewContainer']>.main>.block-container>div>div{"
         "background:transparent!important;padding:0!important;border-radius:0!important;}"
         # FIX 1: Input text color changed from #f1f5f9 (white) to #000000 (black)
@@ -625,7 +625,7 @@ if not st.session_state.login:
 
     # ── CHART IMAGE — FIX 3: max-width:100% to match login box width ──
     chart_svg = (
-        "<svg viewBox='0 0 300 95' width='80%' xmlns='http://www.w3.org/2000/svg'>"
+        "<svg viewBox='0 0 300 95' width='60%' xmlns='http://www.w3.org/2000/svg'>"
         "<rect x='5'  y='62' width='32' height='32' rx='4' fill='#3730a3' opacity='0.85'/>"
         "<rect x='50' y='50' width='32' height='44' rx='4' fill='#4338ca' opacity='0.9'/>"
         "<rect x='95' y='36' width='32' height='58' rx='4' fill='#4f46e5' opacity='0.9'/>"
@@ -675,7 +675,7 @@ if not st.session_state.login:
     # FIX 3: Changed max-width from 400px to 100% so chart card matches login box width
     chart_card = (
         "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:16px;padding:12px 16px 10px;margin:0 auto 12px;max-width:100%;'>"
+        "border-radius:12px;padding:8px 12px 8px;margin:0 auto 8px;max-width:100%;'>"
         + chart_svg + stats_row +
         "</div>"
     )
@@ -684,7 +684,7 @@ if not st.session_state.login:
     # ── FORM CARD heading ──
     st.markdown(
         "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:16px;padding:12px 16px 4px;max-width:100%;margin:0 auto;'>"
+        "border-radius:16px;padding:10px 14px 2px;max-width:80%;margin:0 auto;'>"
         "<div style='font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;'>Welcome back &#x1F44B;</div>"
         "<div style='font-size:12px;color:#7c8cba;margin-bottom:4px;'>Sign in to your account</div>"
         "</div>",
@@ -692,7 +692,7 @@ if not st.session_state.login:
     )
 
     # FIX 4: Column ratio changed from [1,6,1] to [0.5,7,0.5] for wider input area
-    _, col_mid, _ = st.columns([0.3, 7, 0.3])
+    _, col_mid, _ = st.columns([0.2, 6, 0.2])
     with col_mid:
         u = st.text_input("Username", placeholder="Enter username", key="login_user")
         p = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
