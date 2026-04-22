@@ -562,70 +562,96 @@ if not st.session_state.login:
     attempts_left = MAX_ATTEMPTS - st.session_state.attempts
     dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
 
-    # Hide sidebar/header
-    st.markdown(
-        "<style>"
-        "[data-testid='stSidebar']{display:none!important;}"
-        "[data-testid='stHeader']{display:none!important;}"
-        "[data-testid='stToolbar']{display:none!important;}"
-        "footer{display:none!important;}"
-        ".stApp{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%)!important;}"
-        "[data-testid='stAppViewContainer']>.main>.block-container{"
-        "padding:2rem 1rem!important;max-width:280px!important;margin:0 auto!important;}"
-        "[data-testid='stAppViewContainer']>.main>.block-container>div>div{"
-        "background:transparent!important;padding:0!important;border-radius:0!important;}"
-        # FIX 1: Input text color changed from #f1f5f9 (white) to #000000 (black)
-        "[data-testid='stAppViewContainer'] .stTextInput>div>div>input{"
-        "border-radius:8px!important;border:1.5px solid rgba(255,255,255,0.15)!important;"
-        "padding:8px 12px!important;font-size:13px!important;"
-        "background:rgba(255,255,255,0.92)!important;color:#000000!important;height:38px!important;}"
-        "[data-testid='stAppViewContainer'] .stTextInput>div>div>input:focus{"
-        "border-color:#6366f1!important;box-shadow:0 0 0 3px rgba(99,102,241,0.2)!important;"
-        "background:#ffffff!important;}"
-        "[data-testid='stAppViewContainer'] .stTextInput label{"
-        "font-size:11px!important;font-weight:600!important;"
-        "color:rgba(255,255,255,0.5)!important;text-transform:uppercase!important;"
-        "letter-spacing:0.06em!important;}"
-        # FIX 2: Placeholder text color changed to dark/readable
-        "[data-testid='stAppViewContainer'] .stTextInput>div>div>input::placeholder{"
-        "color:rgba(0,0,0,0.4)!important;}"
-        "[data-testid='stAppViewContainer'] .stButton>button{"
-        "background:linear-gradient(135deg,#6366f1,#8b5cf6)!important;"
-        "color:white!important;border:none!important;border-radius:10px!important;"
-        "font-weight:700!important;font-size:14px!important;padding:0.55rem 1rem!important;"
-        "box-shadow:0 4px 16px rgba(99,102,241,0.4)!important;margin-top:4px!important;}"
-        "</style>",
-        unsafe_allow_html=True
-    )
+    # ── Hide sidebar/header, full page styling ──
+    st.markdown("""
+    <style>
+    [data-testid='stSidebar']{display:none!important;}
+    [data-testid='stHeader']{display:none!important;}
+    [data-testid='stToolbar']{display:none!important;}
+    footer{display:none!important;}
 
-    # ── BRAND PILL ──
-    st.markdown(
-        "<div style='text-align:center;margin-bottom:14px;'>"
-        "<span style='display:inline-flex;align-items:center;gap:8px;"
-        "background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);"
-        "border-radius:40px;padding:7px 16px;'>"
-        "<span style='font-size:16px;'>&#x1F4BC;</span>"
-        "<span style='font-size:13px;font-weight:600;color:#e0e7ff;'>Prime PL Dashboard</span>"
-        "</span></div>",
-        unsafe_allow_html=True
-    )
+    .stApp {
+        background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%) !important;
+        min-height: 100vh;
+    }
 
-    # ── TITLE ──
-    st.markdown(
-        "<div style='text-align:center;margin-bottom:18px;'>"
-        "<div style='font-size:22px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:5px;'>"
-        "Track. Analyze.<br>"
-        "<span style='color:#a5b4fc;'>Grow your portfolio.</span>"
-        "</div>"
-        "<div style='font-size:12px;color:#7c8cba;'>"
-        "Real-time disbursement &nbsp;&middot;&nbsp; Campaign insights &nbsp;&middot;&nbsp; Team targets"
-        "</div></div>",
-        unsafe_allow_html=True
-    )
+    /* Center the entire block-container */
+    [data-testid='stAppViewContainer'] > .main > .block-container {
+        max-width: 320px !important;
+        margin: 0 auto !important;
+        padding: 1.5rem 0.5rem !important;
+    }
 
-    # ── CHART IMAGE — FIX 3: max-width:100% to match login box width ──
+    /* Input styling */
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input {
+        border-radius: 8px !important;
+        border: 1.5px solid rgba(255,255,255,0.15) !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        background: rgba(255,255,255,0.92) !important;
+        color: #000000 !important;
+        height: 38px !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+        background: #ffffff !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput label {
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        color: rgba(255,255,255,0.5) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input::placeholder {
+        color: rgba(0,0,0,0.4) !important;
+    }
+
+    /* Sign in button */
+    [data-testid='stAppViewContainer'] .stButton > button {
+        background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        padding: 0.55rem 1rem !important;
+        box-shadow: 0 4px 16px rgba(99,102,241,0.4) !important;
+        margin-top: 4px !important;
+        width: 100% !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── Brand Pill ──
+    st.markdown("""
+    <div style="text-align:center;margin-bottom:12px;">
+        <span style="display:inline-flex;align-items:center;gap:8px;
+            background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+            border-radius:40px;padding:6px 14px;">
+            <span style="font-size:15px;">💼</span>
+            <span style="font-size:12px;font-weight:600;color:#e0e7ff;">Prime PL Dashboard</span>
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Title ──
+    st.markdown(f"""
+    <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:19px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:4px;">
+            Track. Analyze.<br>
+            <span style="color:#a5b4fc;">Grow your portfolio.</span>
+        </div>
+        <div style="font-size:11px;color:#7c8cba;">
+            Real-time disbursement &nbsp;·&nbsp; Campaign insights &nbsp;·&nbsp; Team targets
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Chart SVG — 50% width, centered ──
     chart_svg = (
-        "<svg viewBox='0 0 300 95' width='40%' xmlns='http://www.w3.org/2000/svg'>"
+        "<svg viewBox='0 0 300 95' width='50%' style='display:block;margin:0 auto 6px;' xmlns='http://www.w3.org/2000/svg'>"
         "<rect x='5'  y='62' width='32' height='32' rx='4' fill='#3730a3' opacity='0.85'/>"
         "<rect x='50' y='50' width='32' height='44' rx='4' fill='#4338ca' opacity='0.9'/>"
         "<rect x='95' y='36' width='32' height='58' rx='4' fill='#4f46e5' opacity='0.9'/>"
@@ -652,111 +678,105 @@ if not st.session_state.login:
 
     pill_style = (
         "background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);"
-        "border-radius:8px;padding:6px 12px;text-align:center;min-width:85px;"
+        "border-radius:8px;padding:5px 10px;text-align:center;min-width:70px;"
     )
 
     stats_row = (
-        "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap;'>"
+        "<div style='display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;'>"
         "<div style='" + pill_style + "'>"
-        "<div style='font-size:13px;font-weight:700;color:#fff;'>" + stat1_val + "</div>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat1_val + "</div>"
         "<div style='font-size:10px;color:#a5b4fc;'>" + stat1_lbl + "</div>"
         "</div>"
         "<div style='" + pill_style + "'>"
-        "<div style='font-size:13px;font-weight:700;color:#fff;'>" + stat2_val + "</div>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat2_val + "</div>"
         "<div style='font-size:10px;color:#a5b4fc;'>" + stat2_lbl + "</div>"
         "</div>"
         "<div style='" + pill_style + "'>"
-        "<div style='font-size:13px;font-weight:700;color:#fff;'>" + today_str + "</div>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + today_str + "</div>"
         "<div style='font-size:10px;color:#a5b4fc;'>Today IST</div>"
         "</div>"
         "</div>"
     )
 
-    # FIX 3: Changed max-width from 400px to 100% so chart card matches login box width
     chart_card = (
         "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:12px;padding:8px 12px 8px;margin:0 auto 8px;max-width:100%;'>"
+        "border-radius:14px;padding:12px 14px 10px;margin:0 auto 12px;'>"
         + chart_svg + stats_row +
         "</div>"
     )
     st.markdown(chart_card, unsafe_allow_html=True)
 
-    # ── FORM CARD heading ──
+    # ── Form Card Heading ──
+    st.markdown("""
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+        border-radius:14px;padding:14px 16px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
+        <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Inputs (no extra columns needed — block-container already 320px) ──
+    u = st.text_input("Username", placeholder="Enter username", key="login_user")
+    p = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
+
     st.markdown(
-        "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:16px;padding:10px 14px 2px;max-width:80%;margin:0 auto;'>"
-        "<div style='font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;'>Welcome back &#x1F44B;</div>"
-        "<div style='font-size:12px;color:#7c8cba;margin-bottom:4px;'>Sign in to your account</div>"
-        "</div>",
+        "<div style='margin-top:-6px;margin-bottom:6px;'>"
+        "<button onclick=\"(function(){"
+        "var i=window.parent.document.querySelector('input[type=password]');"
+        "if(i)i.type=i.type==='password'?'text':'password';"
+        "})()\" style='background:none;border:none;cursor:pointer;"
+        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;"
+        "padding:0;font-family:Inter,sans-serif;'>"
+        "👁 Show / Hide password"
+        "</button></div>",
         unsafe_allow_html=True
     )
 
-    # FIX 4: Column ratio changed from [1,6,1] to [0.5,7,0.5] for wider input area
-    _, col_mid, _ = st.columns([0.2, 6, 0.2])
-    with col_mid:
-        u = st.text_input("Username", placeholder="Enter username", key="login_user")
-        p = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
-
-        st.markdown(
-            "<div style='margin-top:-6px;margin-bottom:6px;'>"
-            "<button onclick=\"(function(){"
-            "var i=window.parent.document.querySelector('input[type=password]');"
-            "if(i)i.type=i.type==='password'?'text':'password';"
-            "})()\" style='background:none;border:none;cursor:pointer;"
-            "color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;"
-            "padding:0;font-family:Inter,sans-serif;'>"
-            "&#x1F441; Show / Hide password"
-            "</button></div>",
-            unsafe_allow_html=True
-        )
-
-        if st.button("Sign in  \u2192", use_container_width=True, key="login_btn"):
-            if u == USERNAME and p == PASSWORD:
-                st.session_state.login = True
-                st.session_state.attempts = 0
-                st.rerun()
+    if st.button("Sign in  →", use_container_width=True, key="login_btn"):
+        if u == USERNAME and p == PASSWORD:
+            st.session_state.login = True
+            st.session_state.attempts = 0
+            st.rerun()
+        else:
+            st.session_state.attempts += 1
+            left_att = MAX_ATTEMPTS - st.session_state.attempts
+            if left_att <= 0:
+                st.session_state.lock_time = time.time()
+                st.error("🔒 Too many attempts. Account locked for 12 hours.")
             else:
-                st.session_state.attempts += 1
-                left_att = MAX_ATTEMPTS - st.session_state.attempts
-                if left_att <= 0:
-                    st.session_state.lock_time = time.time()
-                    st.error("🔒 Too many attempts. Account locked for 12 hours.")
-                else:
-                    st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
+                st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
 
-    # ── FOOTER CHIPS ──
+    # ── Footer Chips ──
     chips_html = (
-        "<div style='max-width:100%;margin:10px auto 0;text-align:center;'>"
+        "<div style='text-align:center;margin-top:10px;'>"
         "<div style='display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;'>"
-        "<span style='display:inline-flex;align-items:center;gap:5px;"
+        "<span style='display:inline-flex;align-items:center;gap:4px;"
         "background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;'>"
-        "<span style='width:6px;height:6px;border-radius:50%;background:" + dot_color + ";display:inline-block;'></span>"
+        "border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'>"
+        "<span style='width:5px;height:5px;border-radius:50%;background:" + dot_color + ";display:inline-block;'></span>"
         + str(attempts_left) + "/" + str(MAX_ATTEMPTS) + " attempts left"
         "</span>"
-        "<span style='display:inline-flex;align-items:center;gap:5px;"
+        "<span style='display:inline-flex;align-items:center;gap:4px;"
         "background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;'>"
-        "<span style='width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;'></span>"
+        "border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'>"
+        "<span style='width:5px;height:5px;border-radius:50%;background:#f59e0b;display:inline-block;'></span>"
         "12h lockout"
         "</span>"
-        "<span style='display:inline-flex;align-items:center;gap:5px;"
+        "<span style='display:inline-flex;align-items:center;gap:4px;"
         "background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);"
-        "border-radius:20px;padding:3px 10px;font-size:11px;color:#94a3b8;'>"
-        "<span style='width:6px;height:6px;border-radius:50%;background:#6366f1;display:inline-block;'></span>"
+        "border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'>"
+        "<span style='width:5px;height:5px;border-radius:50%;background:#6366f1;display:inline-block;'></span>"
         "Auto-refresh on"
         "</span>"
         "</div>"
-        "<div style='font-size:11px;color:#475569;padding-top:8px;"
+        "<div style='font-size:10px;color:#475569;padding-top:8px;"
         "border-top:1px solid rgba(255,255,255,0.06);'>"
-        "Prime PL &nbsp;&middot;&nbsp; MyMoneyMantra &nbsp;&middot;&nbsp; " + time_str + " IST"
+        "Prime PL &nbsp;·&nbsp; MyMoneyMantra &nbsp;·&nbsp; " + time_str + " IST"
         "</div></div>"
     )
     st.markdown(chips_html, unsafe_allow_html=True)
 
     st.stop()
-
-
 # ─────────────────────────────────────────
 # LOAD DATA (after login)
 # ─────────────────────────────────────────
