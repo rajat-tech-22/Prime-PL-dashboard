@@ -706,14 +706,14 @@ if not st.session_state.login:
     )
     st.markdown(chart_card, unsafe_allow_html=True)
 
-    # ── Form Card Heading ──
-    st.markdown("""
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-        border-radius:14px;padding:14px 16px 4px;">
-        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
-        <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # # ── Form Card Heading ──
+    # st.markdown("""
+    # <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    #     border-radius:14px;padding:14px 16px 4px;">
+    #     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
+    #     <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
+    # </div>
+    # """, unsafe_allow_html=True)
 
     # ── Inputs (no extra columns needed — block-container already 320px) ──
     u = st.text_input("Username", placeholder="Enter username", key="login_user")
