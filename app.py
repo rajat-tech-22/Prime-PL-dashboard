@@ -106,92 +106,6 @@ html, body, [class*="css"] {
 
 .stApp { background-color: #f8fafc; }
 
-/* ── LOGIN PAGE ── */
-[data-testid="stAppViewContainer"] > .main > .block-container {
-    padding: 0 !important;
-    max-width: 100% !important;
-}
-.login-bg {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #4c1d95 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    position: relative;
-    overflow: hidden;
-}
-.login-card {
-    background: white;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 440px;
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.35);
-    position: relative;
-    z-index: 2;
-}
-.login-card-banner {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
-    padding: 2rem 2rem 1.5rem;
-    position: relative;
-    overflow: hidden;
-}
-.login-banner-brand {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 1.4rem;
-}
-.login-banner-logo {
-    width: 38px; height: 38px;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-}
-.login-banner-name { font-size: 14px; font-weight: 600; color: #e0e7ff; }
-.login-banner-title { font-size: 22px; font-weight: 700; color: #fff; line-height:1.3; margin-bottom: 6px; }
-.login-banner-sub { font-size: 12px; color: #a5b4fc; margin-bottom: 1.2rem; }
-.login-banner-stats {
-    display: flex; gap: 10px;
-}
-.login-banner-stat {
-    flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    padding: 10px 12px;
-}
-.login-banner-stat-val { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 1px; }
-.login-banner-stat-lbl { font-size: 10px; color: #a5b4fc; }
-.login-form-area {
-    padding: 1.8rem 2rem 1.5rem;
-    background: white;
-}
-.login-form-heading { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.login-form-sub { font-size: 13px; color: #64748b; margin-bottom: 1.5rem; }
-.login-info-row {
-    display: flex; gap: 8px; flex-wrap: wrap;
-    margin-top: 1rem; margin-bottom: 0.5rem;
-}
-.login-info-chip {
-    display: flex; align-items: center; gap: 5px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 11px; color: #64748b;
-}
-.login-info-dot { width: 6px; height: 6px; border-radius: 50%; }
-.login-footer-txt {
-    text-align: center;
-    font-size: 11px; color: #94a3b8;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #f1f5f9;
-}
-
-/* ── DASHBOARD STYLES ── */
 .metric-card {
     background: white;
     border-radius: 16px;
@@ -269,20 +183,6 @@ h3 { color: #334155 !important; font-weight: 600 !important; }
     font-weight: 600 !important;
 }
 .stDownloadButton > button:hover { background: #4f46e5 !important; }
-
-/* Primary button override for login */
-[data-testid="stMain"] .stButton > button[kind="primary"] {
-    background: #6366f1 !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    font-size: 15px !important;
-    padding: 0.6rem 1rem !important;
-}
-[data-testid="stMain"] .stButton > button[kind="primary"]:hover {
-    background: #4f46e5 !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -403,49 +303,47 @@ def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
         return b""
 
 # ─────────────────────────────────────────
-# ✅ UPGRADED: CURRENT MONTH HELPER
+# CURRENT MONTH HELPER — YYYY/MM/DD aware
 # ─────────────────────────────────────────
 def get_current_month_index(months_list):
     if not months_list:
         return 0
+
     ist = timezone(timedelta(hours=5, minutes=30))
     now = datetime.now(ist)
 
-    candidates = set([
-        now.strftime("%B %Y"),
-        now.strftime("%b %Y"),
-        now.strftime("%b-%y"),
-        now.strftime("%B-%Y"),
-        now.strftime("%m-%Y"),
-        now.strftime("%Y-%m"),
-        now.strftime("%b-%Y"),
-        now.strftime("%B %y"),
-        now.strftime("%m/%Y"),
-        now.strftime("%b/%Y"),
-        now.strftime("%B/%Y"),
-        now.strftime("%Y/%m"),
-        now.strftime("%d-%b-%Y"),
-        now.strftime("%b %Y").upper(),
-        now.strftime("%B %Y").upper(),
-        now.strftime("%b %Y").lower(),
-    ])
+    # Try all common formats including YYYY/MM/DD
+    all_formats = [
+        "%Y/%m/%d", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y",
+        "%B %Y", "%b %Y", "%b-%y", "%b-%Y", "%m-%Y",
+        "%Y-%m", "%B-%Y", "%m/%Y", "%b/%Y", "%B/%Y",
+        "%Y/%m", "%B %y", "%b %y", "%d-%b-%Y",
+    ]
 
     for i, m in enumerate(months_list):
         m_str = str(m).strip()
-        if m_str in candidates or m_str.lower() in {c.lower() for c in candidates}:
-            return i
+        for fmt in all_formats:
+            try:
+                parsed = datetime.strptime(m_str, fmt)
+                if parsed.month == now.month and parsed.year == now.year:
+                    return i
+            except:
+                continue
 
-    month_num = now.strftime("%m")
-    year_4    = now.strftime("%Y")
-    year_2    = now.strftime("%y")
+    # Fallback: string matching
+    cur_year_4     = str(now.year)
+    cur_year_2     = str(now.year)[-2:]
+    cur_month_abbr = now.strftime("%b").lower()
+    cur_month_full = now.strftime("%B").lower()
+    cur_mm         = now.strftime("%m")
 
     for i, m in enumerate(months_list):
-        m_str = str(m).strip()
-        has_year  = year_4 in m_str or year_2 in m_str
+        m_str = str(m).strip().lower()
+        has_year  = cur_year_4 in m_str or cur_year_2 in m_str
         has_month = (
-            month_num in m_str
-            or now.strftime("%b").lower() in m_str.lower()
-            or now.strftime("%B").lower() in m_str.lower()
+            cur_month_abbr in m_str
+            or cur_month_full in m_str
+            or cur_mm in m_str
         )
         if has_year and has_month:
             return i
@@ -467,8 +365,28 @@ def load_data():
     url = "https://docs.google.com/spreadsheets/d/1I1ql5NwFafbWXYkVOvv0yvMM9GKnJ5954R4zif2owGI/export?format=csv"
     df = pd.read_csv(url)
     df.replace("null", None, inplace=True)
+
     if "DISB DATE" in df.columns:
         df["DISB DATE"] = pd.to_datetime(df["DISB DATE"], errors="coerce")
+
+    # ── Disb Month: agar date format hai to Month-Year mein convert karo ──
+    if "Disb Month" in df.columns:
+        sample_series = df["Disb Month"].dropna()
+        if not sample_series.empty:
+            sample_str = str(sample_series.iloc[0]).strip()
+            is_date_fmt = False
+            for fmt in ["%Y/%m/%d", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"]:
+                try:
+                    datetime.strptime(sample_str, fmt)
+                    is_date_fmt = True
+                    break
+                except:
+                    continue
+            if is_date_fmt:
+                df["Disb Month"] = pd.to_datetime(
+                    df["Disb Month"], errors="coerce"
+                ).dt.strftime("%b %Y")
+
     return df
 
 @st.cache_data(ttl=60)
@@ -489,7 +407,7 @@ def load_targets():
         return pd.DataFrame(), str(e)
 
 # ─────────────────────────────────────────
-# TARGET FETCH FUNCTION
+# TARGET FETCH
 # ─────────────────────────────────────────
 def get_target_for_manager(mgr_name, month_name, tdf):
     if tdf is None or tdf.empty:
@@ -525,7 +443,6 @@ def get_target_for_manager(mgr_name, month_name, tdf):
 # ─────────────────────────────────────────
 if not st.session_state.login:
 
-    # Lock check
     if st.session_state.lock_time:
         elapsed = time.time() - st.session_state.lock_time
         remaining = LOCK_TIME - elapsed
@@ -538,7 +455,6 @@ if not st.session_state.login:
             st.session_state.attempts = 0
             st.session_state.lock_time = None
 
-    # Live stats for banner
     try:
         _df_login = load_data()
         _months_login = sorted(_df_login["Disb Month"].dropna().unique())
@@ -562,7 +478,6 @@ if not st.session_state.login:
     attempts_left = MAX_ATTEMPTS - st.session_state.attempts
     dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
 
-    # ── Hide sidebar/header, full page styling ──
     st.markdown("""
     <style>
     [data-testid='stSidebar']{display:none!important;}
@@ -574,15 +489,11 @@ if not st.session_state.login:
         background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%) !important;
         min-height: 100vh;
     }
-
-    /* Center the entire block-container */
     [data-testid='stAppViewContainer'] > .main > .block-container {
         max-width: 320px !important;
         margin: 0 auto !important;
         padding: 1.5rem 0.5rem !important;
     }
-
-    /* Input styling */
     [data-testid='stAppViewContainer'] .stTextInput > div > div > input {
         border-radius: 8px !important;
         border: 1.5px solid rgba(255,255,255,0.15) !important;
@@ -607,8 +518,6 @@ if not st.session_state.login:
     [data-testid='stAppViewContainer'] .stTextInput > div > div > input::placeholder {
         color: rgba(0,0,0,0.4) !important;
     }
-
-    /* Sign in button */
     [data-testid='stAppViewContainer'] .stButton > button {
         background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
         color: white !important;
@@ -624,7 +533,7 @@ if not st.session_state.login:
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Brand Pill ──
+    # Brand Pill
     st.markdown("""
     <div style="text-align:center;margin-bottom:12px;">
         <span style="display:inline-flex;align-items:center;gap:8px;
@@ -636,7 +545,7 @@ if not st.session_state.login:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Title ──
+    # Title
     st.markdown(f"""
     <div style="text-align:center;margin-bottom:14px;">
         <div style="font-size:19px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:4px;">
@@ -649,7 +558,7 @@ if not st.session_state.login:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Chart SVG — 50% width, centered ──
+    # Chart SVG — 50% width centered
     chart_svg = (
         "<svg viewBox='0 0 300 95' width='50%' style='display:block;margin:0 auto 6px;' xmlns='http://www.w3.org/2000/svg'>"
         "<rect x='5'  y='62' width='32' height='32' rx='4' fill='#3730a3' opacity='0.85'/>"
@@ -704,10 +613,17 @@ if not st.session_state.login:
         + chart_svg + stats_row +
         "</div>"
     )
-    st.markdown(chart_card,unsafe_allow_html=True)
-    
+    st.markdown(chart_card, unsafe_allow_html=True)
 
-    # ── Inputs (no extra columns needed — block-container already 320px) ──
+    # Form heading
+    st.markdown("""
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+        border-radius:14px;padding:14px 16px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
+        <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     u = st.text_input("Username", placeholder="Enter username", key="login_user")
     p = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
 
@@ -717,7 +633,7 @@ if not st.session_state.login:
         "var i=window.parent.document.querySelector('input[type=password]');"
         "if(i)i.type=i.type==='password'?'text':'password';"
         "})()\" style='background:none;border:none;cursor:pointer;"
-        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:300;"
+        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;"
         "padding:0;font-family:Inter,sans-serif;'>"
         "👁 Show / Hide password"
         "</button></div>",
@@ -738,7 +654,6 @@ if not st.session_state.login:
             else:
                 st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
 
-    # ── Footer Chips ──
     chips_html = (
         "<div style='text-align:center;margin-top:10px;'>"
         "<div style='display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;'>"
@@ -769,6 +684,8 @@ if not st.session_state.login:
     st.markdown(chips_html, unsafe_allow_html=True)
 
     st.stop()
+
+
 # ─────────────────────────────────────────
 # LOAD DATA (after login)
 # ─────────────────────────────────────────
@@ -1356,6 +1273,7 @@ elif dashboard_type == "🎯 Target Tracker":
     )
     st.plotly_chart(fig_tgt, use_container_width=True)
 
+
 # ══════════════════════════════════════════
 # 📅 TEAM vs MONTH
 # ══════════════════════════════════════════
@@ -1366,7 +1284,7 @@ elif dashboard_type == "📅 Team vs Month":
     now_ist_tvm = datetime.now(ist_tz2)
 
     with st.sidebar.expander("🔧 Filters", expanded=True):
-        # Auto default: m1 = last month, m2 = current month
+        # Auto: m1 = last month, m2 = current month
         auto_m2_index = current_month_index
         auto_m1_index = max(0, current_month_index - 1)
 
@@ -1573,7 +1491,7 @@ elif dashboard_type == "📅 Team vs Month":
                     f'font-size:12px;padding:3px 9px;border-radius:5px;white-space:nowrap">'
                     f'▼ {abs(val):.1f}%</span>')
         else:
-            return f'<span style="color:#94a3b8;font-size:12px">0.0%</span>'
+            return f'<span style="color:#94a3b8;font-size:12px">—</span>'
 
     def ach_color(val):
         if val >= 90: return "#065f46"
