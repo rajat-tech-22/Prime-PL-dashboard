@@ -681,22 +681,22 @@ if not st.session_state.login:
         "border-radius:8px;padding:5px 10px;text-align:center;min-width:70px;"
     )
 
-    # stats_row = (
-    #     "<div style='display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;'>"
-    #     "<div style='" + pill_style + "'>"
-    #     "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat1_val + "</div>"
-    #     "<div style='font-size:10px;color:#a5b4fc;'>" + stat1_lbl + "</div>"
-    #     "</div>"
-    #     "<div style='" + pill_style + "'>"
-    #     "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat2_val + "</div>"
-    #     "<div style='font-size:10px;color:#a5b4fc;'>" + stat2_lbl + "</div>"
-    #     "</div>"
-    #     "<div style='" + pill_style + "'>"
-    #     "<div style='font-size:12px;font-weight:700;color:#fff;'>" + today_str + "</div>"
-    #     "<div style='font-size:10px;color:#a5b4fc;'>Today IST</div>"
-    #     "</div>"
-    #     "</div>"
-    # )
+    stats_row = (
+        "<div style='display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;'>"
+        "<div style='" + pill_style + "'>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat1_val + "</div>"
+        "<div style='font-size:10px;color:#a5b4fc;'>" + stat1_lbl + "</div>"
+        "</div>"
+        "<div style='" + pill_style + "'>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + stat2_val + "</div>"
+        "<div style='font-size:10px;color:#a5b4fc;'>" + stat2_lbl + "</div>"
+        "</div>"
+        "<div style='" + pill_style + "'>"
+        "<div style='font-size:12px;font-weight:700;color:#fff;'>" + today_str + "</div>"
+        "<div style='font-size:10px;color:#a5b4fc;'>Today IST</div>"
+        "</div>"
+        "</div>"
+    )
 
     chart_card = (
         "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
