@@ -571,7 +571,7 @@ if not st.session_state.login:
         "footer{display:none!important;}"
         ".stApp{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%)!important;}"
         "[data-testid='stAppViewContainer']>.main>.block-container{"
-        "padding:2rem 1rem!important;max-width:340px!important;margin:0 auto!important;}"
+        "padding:2rem 1rem!important;max-width:280px!important;margin:0 auto!important;}"
         "[data-testid='stAppViewContainer']>.main>.block-container>div>div{"
         "background:transparent!important;padding:0!important;border-radius:0!important;}"
         # FIX 1: Input text color changed from #f1f5f9 (white) to #000000 (black)
@@ -625,7 +625,7 @@ if not st.session_state.login:
 
     # ── CHART IMAGE — FIX 3: max-width:100% to match login box width ──
     chart_svg = (
-        "<svg viewBox='0 0 300 95' width='60%' xmlns='http://www.w3.org/2000/svg'>"
+        "<svg viewBox='0 0 300 95' width='40%' xmlns='http://www.w3.org/2000/svg'>"
         "<rect x='5'  y='62' width='32' height='32' rx='4' fill='#3730a3' opacity='0.85'/>"
         "<rect x='50' y='50' width='32' height='44' rx='4' fill='#4338ca' opacity='0.9'/>"
         "<rect x='95' y='36' width='32' height='58' rx='4' fill='#4f46e5' opacity='0.9'/>"
