@@ -698,22 +698,14 @@ if not st.session_state.login:
         "</div>"
     )
 
-    # chart_card = (
-    #     "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
-    #     "border-radius:14px;padding:12px 14px 10px;margin:0 auto 12px;'>"
-    #     + chart_svg + stats_row +
-    #     "</div>"
-    # )
-    # st.markdown(chart_card, unsafe_allow_html=True)
-
-    # # ── Form Card Heading ──
-    # st.markdown("""
-    # <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-    #     border-radius:14px;padding:14px 16px 4px;">
-    #     <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
-    #     <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
-    # </div>
-    # """, unsafe_allow_html=True)
+    chart_card = (
+        "<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);"
+        "border-radius:14px;padding:12px 14px 10px;margin:0 auto 12px;'>"
+        + chart_svg + stats_row +
+        "</div>"
+    )
+    st.markdown(unsafe_allow_html=True)
+    
 
     # ── Inputs (no extra columns needed — block-container already 320px) ──
     u = st.text_input("Username", placeholder="Enter username", key="login_user")
@@ -725,7 +717,7 @@ if not st.session_state.login:
         "var i=window.parent.document.querySelector('input[type=password]');"
         "if(i)i.type=i.type==='password'?'text':'password';"
         "})()\" style='background:none;border:none;cursor:pointer;"
-        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;"
+        "color:rgba(165,180,252,0.8);font-size:11px;font-weight:300;"
         "padding:0;font-family:Inter,sans-serif;'>"
         "👁 Show / Hide password"
         "</button></div>",
