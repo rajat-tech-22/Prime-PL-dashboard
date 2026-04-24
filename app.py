@@ -555,7 +555,7 @@ with st.sidebar:
         ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison",
          "📊 Campaign Performance", "🎯 Target Tracker",
          "📅 Team vs Month", "🏆 Leaderboard",
-         "📈 Advanced Analytics", "🔔 Alerts & Notifications","⚡ Velocity Tracker"],
+         "📈 Advanced Analytics", "🔔 Alerts & Notifications"],
         label_visibility="collapsed"
     )
     st.markdown("---")
