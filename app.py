@@ -1494,3 +1494,14 @@ elif dashboard_type == "🔔 Alerts & Notifications":
         pdf_ds = generate_pdf_bytes(mgr_ds[["Manager","Disbursed_fmt","Revenue_fmt","Txns","Ach%"]], f"Daily Summary — {sel_month_ds}")
         if pdf_ds:
             st.download_button("📄 Export PDF", pdf_ds, "daily_summary.pdf", "application/pdf")
+
+elif dashboard_type == "⚡ Velocity Tracker":
+    days_in_month = 30
+    days_elapsed = now_ist.day
+    days_remaining = days_in_month - days_elapsed
+    
+    for _, row in mgr_actual.iterrows():
+        target_l = get_target_for_manager(row["Manager"], sel_month, target_raw) or 50
+        actual_l = row["Actual"] / 100000
+        current_rate = actual_l / days_elapsed  # L/day
+        needed_rate = (target_l - actual_l) / days_remaining if days_remaining > 0 else 0
