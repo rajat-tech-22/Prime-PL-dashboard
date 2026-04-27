@@ -536,10 +536,9 @@ with st.sidebar:
     dashboard_type = st.radio(
         "Navigation",
         ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison",
-         "📊 Campaign Performance", "🎯 Target Tracker",
-         "📅 Team vs Month", "🏆 Leaderboard",
-         "📈 Advanced Analytics", "🔬 Deep Analysis",   # ← NEW
-         "🔔 Alerts & Notifications"],
+         "🎯 Target Tracker", "📅 Team vs Month",
+         "🏆 Leaderboard", "📈 Advanced Analytics",
+         "🔬 Deep Analysis"],
         label_visibility="collapsed"
     )
     st.markdown("---")
@@ -715,51 +714,6 @@ elif dashboard_type == "⚖️ Comparison":
         fig.update_layout(barmode="group",template="plotly_white",xaxis_tickangle=-30,height=400,font=dict(family="Inter"),plot_bgcolor=PLOT_BG,paper_bgcolor=PAPER_BG)
         st.plotly_chart(fig,use_container_width=True)
 
-
-# ══════════════════════════════════════════
-# 📊 CAMPAIGN PERFORMANCE
-# ══════════════════════════════════════════
-elif dashboard_type == "📊 Campaign Performance":
-    with st.sidebar.expander("🔧 Filters", expanded=True):
-        sel_month = st.selectbox("Month", months, index=current_month_index)
-        temp_df   = df[df["Disb Month"]==sel_month]
-        camp_list = sorted(temp_df["Campaign"].dropna().unique())
-        c1,c2 = st.columns(2)
-        if c1.button("All"):   st.session_state.camp_sel = camp_list
-        if c2.button("Clear"): st.session_state.camp_sel = []
-        if "camp_sel" not in st.session_state: st.session_state.camp_sel = camp_list
-        sel_camps = st.multiselect("Campaigns", camp_list, default=st.session_state.camp_sel)
-    camp_f = df[df["Disb Month"]==sel_month]
-    if sel_camps: camp_f = camp_f[camp_f["Campaign"].isin(sel_camps)]
-    st.title("Campaign Performance")
-    if camp_f.empty: st.warning("No data."); st.stop()
-    cp = camp_f.groupby("Campaign")["Disbursed AMT"].sum()
-    top_c = cp.idxmax()
-    st.success(f"🏆 Top Campaign: **{top_c}** — {format_inr(cp.max())}")
-    td=camp_f["Disbursed AMT"].sum(); tr=camp_f["Total_Revenue"].sum()
-    ap=(tr/td*100) if td else 0
-    top_mgr = camp_f.groupby("Manager")["Disbursed AMT"].sum().idxmax()
-    cols = st.columns(4)
-    for col,(lbl,val,ico,clr) in zip(cols,[("Total Disbursed",format_inr(td),"💰","#6366f1"),
-        ("Total Revenue",format_inr(tr),"📈","#10b981"),("Avg Payout %",f"{ap:.2f}%","📊","#f59e0b"),
-        ("Best Manager",top_mgr,"🏆","#8b5cf6")]):
-        col.markdown(metric_card(lbl,val,ico,clr),unsafe_allow_html=True)
-    section_header("Campaign-wise Disbursed")
-    cp_df = cp.reset_index(); cp_df.columns = ["Campaign","Disbursed AMT"]
-    st.plotly_chart(styled_bar(cp_df,"Campaign","Campaign","Disbursed AMT","Campaign Performance"),use_container_width=True)
-    section_header("Manager Performance Table")
-    mgr_agg = camp_f.groupby("Manager").agg(Total_Disbursed=("Disbursed AMT","sum"),
-        Total_Revenue=("Total_Revenue","sum"),Transactions=("Manager","count")).reset_index()
-    mgr_agg["Avg_Payout%"] = (mgr_agg["Total_Revenue"]/mgr_agg["Total_Disbursed"]*100).round(2)
-    mgr_disp = mgr_agg.copy()
-    mgr_disp["Total_Disbursed"] = mgr_disp["Total_Disbursed"].apply(format_inr)
-    mgr_disp["Total_Revenue"]   = mgr_disp["Total_Revenue"].apply(format_inr)
-    st.dataframe(mgr_disp,use_container_width=True,height=320)
-    c1,c2 = st.columns(2)
-    with c1: st.download_button("⬇️ Download CSV",mgr_disp.to_csv(index=False),"campaign_perf.csv","text/csv")
-    section_header("Bank-wise Disbursed")
-    bk = camp_f.groupby("Bank")["Disbursed AMT"].sum().reset_index(); bk.columns=["Bank","Disbursed AMT"]
-    st.plotly_chart(styled_bar(bk,"Bank","Bank","Disbursed AMT","Bank-wise Performance"),use_container_width=True)
 
 
 # ══════════════════════════════════════════
@@ -1232,8 +1186,9 @@ elif dashboard_type == "📈 Advanced Analytics":
             </div>""", unsafe_allow_html=True)
 
 
+
 # ══════════════════════════════════════════
-# 🔬 DEEP ANALYSIS  ← NEW SECTION
+# 🔬 DEEP ANALYSIS  — Screenshot style
 # ══════════════════════════════════════════
 elif dashboard_type == "🔬 Deep Analysis":
     st.title("🔬 Deep Analysis")
@@ -1246,232 +1201,248 @@ elif dashboard_type == "🔬 Deep Analysis":
     if sel_vert_da != "All":
         da_df = da_df[da_df["Vertical"] == sel_vert_da]
 
-    # ── Build all analysis data ──
-    # Monthly trend (sorted by month index)
     all_months_sorted = sorted(df["Disb Month"].dropna().unique())
 
-    trend_data = []
+    # Monthly trend
+    trend_rows = []
     for i, m in enumerate(all_months_sorted):
         mdf = da_df[da_df["Disb Month"] == m]
-        td = mdf["Disbursed AMT"].sum()
-        tr = mdf["Total_Revenue"].sum()
-        tgt = get_target_for_manager("__team__", m, target_raw)  # will return 0 for team
-        trend_data.append({
-            "month": m, "idx": i,
-            "disb_l": round(td / 100000, 1),
-            "rev_l": round(tr / 100000, 2),
-            "txns": len(mdf),
-        })
-    trend_df = pd.DataFrame(trend_data)
+        td_ = mdf["Disbursed AMT"].sum()
+        tr_ = mdf["Total_Revenue"].sum()
+        trend_rows.append({"month": m, "idx": i, "disb_l": round(td_/100000,1),
+                           "rev_l": round(tr_/100000,2), "txns": len(mdf)})
+    trend_df = pd.DataFrame(trend_rows)
     trend_df["mom_pct"] = trend_df["disb_l"].pct_change().mul(100).round(1).fillna(0)
 
-    # Forecasting — linear regression
+    # Forecast
     if len(trend_df) >= 3:
-        x_vals = np.arange(len(trend_df))
-        y_vals = trend_df["disb_l"].values
-        coeffs = np.polyfit(x_vals, y_vals, 1)
-        slope = round(float(coeffs[0]), 1)
-        next1 = round(float(coeffs[0] * len(trend_df) + coeffs[1]), 1)
-        next2 = round(float(coeffs[0] * (len(trend_df)+1) + coeffs[1]), 1)
+        x_v = np.arange(len(trend_df)); y_v = trend_df["disb_l"].values
+        coeffs_ = np.polyfit(x_v, y_v, 1)
+        slope_ = round(float(coeffs_[0]), 1)
+        next1_ = round(float(coeffs_[0]*len(trend_df) + coeffs_[1]), 1)
+        next2_ = round(float(coeffs_[0]*(len(trend_df)+1) + coeffs_[1]), 1)
     else:
-        slope = 0; next1 = 0; next2 = 0
+        slope_ = 0; next1_ = 0; next2_ = 0
 
-    # Current month data
-    cur_df = da_df[da_df["Disb Month"] == sel_month_da]
-    prev_month = all_months_sorted[all_months_sorted.index(sel_month_da) - 1] if all_months_sorted.index(sel_month_da) > 0 else sel_month_da
-    prev_df = da_df[da_df["Disb Month"] == prev_month]
-
+    cur_df  = da_df[da_df["Disb Month"] == sel_month_da]
+    prev_m  = all_months_sorted[all_months_sorted.index(sel_month_da)-1] if all_months_sorted.index(sel_month_da) > 0 else sel_month_da
+    prev_df = da_df[da_df["Disb Month"] == prev_m]
     cur_disb = cur_df["Disbursed AMT"].sum()
     prev_disb = prev_df["Disbursed AMT"].sum()
     cur_rev   = cur_df["Total_Revenue"].sum()
-    mom_overall = round((cur_disb - prev_disb) / prev_disb * 100, 1) if prev_disb else 0
+    cur_txns  = len(cur_df)
+    avg_payout = round((cur_rev/cur_disb*100) if cur_disb else 0, 2)
+    mom_overall = round((cur_disb-prev_disb)/prev_disb*100, 1) if prev_disb else 0
 
-    # Manager performance
-    mgr_cur  = cur_df.groupby("Manager")["Disbursed AMT"].sum().reset_index().sort_values("Disbursed AMT", ascending=False)
-    mgr_prev = prev_df.groupby("Manager")["Disbursed AMT"].sum().rename("prev_disb")
-    mgr_rev  = cur_df.groupby("Manager")["Total_Revenue"].sum()
-    mgr_txns = cur_df.groupby("Manager").size().rename("txns")
-    mgr_full = mgr_cur.set_index("Manager").join(mgr_prev).join(mgr_rev).join(mgr_txns).fillna(0).reset_index()
-    mgr_full["disb_l"]   = (mgr_full["Disbursed AMT"] / 100000).round(1)
-    mgr_full["rev_l"]    = (mgr_full["Total_Revenue"] / 100000).round(2)
-    mgr_full["prev_l"]   = (mgr_full["prev_disb"] / 100000).round(1)
-    mgr_full["mom"]      = mgr_full.apply(lambda r: round((r.disb_l - r.prev_l) / r.prev_l * 100, 1) if r.prev_l > 0 else 0, axis=1)
-    mgr_full["payout"]   = (mgr_full["rev_l"] / mgr_full["disb_l"] * 100).round(2)
-    mgr_full["tgt_l"]    = mgr_full["Manager"].apply(lambda m: get_target_for_manager(m, sel_month_da, target_raw) or 50)
-    mgr_full["ach_pct"]  = (mgr_full["disb_l"] / mgr_full["tgt_l"] * 100).round(1)
+    # Manager aggregates
+    mgr_cur   = cur_df.groupby("Manager")["Disbursed AMT"].sum()
+    mgr_prev  = prev_df.groupby("Manager")["Disbursed AMT"].sum().rename("prev")
+    mgr_rev2  = cur_df.groupby("Manager")["Total_Revenue"].sum()
+    mgr_txns2 = cur_df.groupby("Manager").size().rename("txns")
+    mgr_full  = pd.DataFrame({"disb": mgr_cur}).join(mgr_prev).join(mgr_rev2).join(mgr_txns2).fillna(0)
+    mgr_full["disb_l"]  = (mgr_full["disb"]/100000).round(1)
+    mgr_full["prev_l"]  = (mgr_full["prev"]/100000).round(1)
+    mgr_full["rev_l"]   = (mgr_full["Total_Revenue"]/100000).round(2)
+    mgr_full["mom"]     = mgr_full.apply(lambda r: round((r.disb_l-r.prev_l)/r.prev_l*100,1) if r.prev_l>0 else 0, axis=1)
+    mgr_full["payout"]  = (mgr_full["rev_l"]/mgr_full["disb_l"]*100).round(2)
+    mgr_full["tgt_l"]   = mgr_full.index.map(lambda m: get_target_for_manager(m, sel_month_da, target_raw) or 50)
+    mgr_full["ach_pct"] = (mgr_full["disb_l"]/mgr_full["tgt_l"]*100).round(1)
+    mgr_full = mgr_full.sort_values("disb_l", ascending=False).reset_index()
 
     # Campaign & Bank
-    camp_df = cur_df.groupby("Campaign")["Disbursed AMT"].sum().reset_index().sort_values("Disbursed AMT", ascending=False)
-    camp_df["disb_l"] = (camp_df["Disbursed AMT"] / 100000).round(1)
-    camp_df["share"]  = (camp_df["Disbursed AMT"] / camp_df["Disbursed AMT"].sum() * 100).round(1)
-    camp_txns = cur_df.groupby("Campaign").size().rename("txns").reset_index()
-    camp_df = camp_df.merge(camp_txns, on="Campaign")
+    camp_g = cur_df.groupby("Campaign").agg(disb=("Disbursed AMT","sum"), txns=("Disbursed AMT","count")).reset_index()
+    camp_g["disb_l"] = (camp_g["disb"]/100000).round(1)
+    camp_g["share"]  = (camp_g["disb"]/camp_g["disb"].sum()*100).round(1)
+    camp_g = camp_g.sort_values("disb_l", ascending=False).reset_index(drop=True)
 
-    bank_df = cur_df.groupby("Bank")["Disbursed AMT"].sum().reset_index().sort_values("Disbursed AMT", ascending=False)
-    bank_df["disb_l"] = (bank_df["Disbursed AMT"] / 100000).round(1)
-    bank_df["share"]  = (bank_df["Disbursed AMT"] / bank_df["Disbursed AMT"].sum() * 100).round(1)
-    bank_txns = cur_df.groupby("Bank").size().rename("txns").reset_index()
-    bank_df = bank_df.merge(bank_txns, on="Bank")
+    bank_g = cur_df.groupby("Bank").agg(disb=("Disbursed AMT","sum"), txns=("Disbursed AMT","count")).reset_index()
+    bank_g["disb_l"] = (bank_g["disb"]/100000).round(1)
+    bank_g["share"]  = (bank_g["disb"]/bank_g["disb"].sum()*100).round(1)
+    bank_g = bank_g.sort_values("disb_l", ascending=False).reset_index(drop=True)
 
-    # ── KPI Row ──
-    cols4 = st.columns(4)
-    mom_clr_kpi = "#10b981" if mom_overall >= 0 else "#ef4444"
-    cols4[0].markdown(metric_card("Total Disbursed", format_inr(cur_disb), "💰", "#6366f1"), unsafe_allow_html=True)
-    cols4[1].markdown(metric_card("Total Revenue", format_inr(cur_rev), "📈", "#10b981"), unsafe_allow_html=True)
-    cols4[2].markdown(metric_card("MoM Growth", f"{'▲' if mom_overall>=0 else '▼'} {abs(mom_overall)}%", "📊", mom_clr_kpi), unsafe_allow_html=True)
-    cols4[3].markdown(metric_card("Transactions", f"{len(cur_df):,}", "🔁", "#f59e0b"), unsafe_allow_html=True)
+    # KPI cards — dark style like screenshot
+    mom_arrow = "▲" if mom_overall >= 0 else "▼"
+    mom_col   = "#4ade80" if mom_overall >= 0 else "#f87171"
+    txn_arrow = "▲" if cur_txns >= len(prev_df) else "▼"
+    txn_col   = "#4ade80" if cur_txns >= len(prev_df) else "#f87171"
+    rev_arrow = "▲" if cur_rev >= prev_df["Total_Revenue"].sum() else "▼"
 
-    # ── Build JSON for JS charts ──
-    chart_json = json.dumps({
-        "months":       list(trend_df["month"]),
-        "disb_l":       list(trend_df["disb_l"]),
-        "rev_l":        list(trend_df["rev_l"]),
-        "mom_pct":      list(trend_df["mom_pct"]),
-        "txns":         list(trend_df["txns"].astype(int)),
-        "forecast_months": list(trend_df["month"]) + ["Next Month", "Month +2"],
+    st.markdown(f"""
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      <div style="background:#1e293b;border-radius:14px;padding:18px 20px;border:1px solid #334155;">
+        <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.06em;margin-bottom:6px;">Apr disbursed</div>
+        <div style="font-size:26px;font-weight:700;color:#f1f5f9;">₹{cur_disb/100000:.0f}L</div>
+        <div style="font-size:12px;margin-top:4px;color:{mom_col};">{mom_arrow} {abs(mom_overall)}% vs {prev_m}</div>
+      </div>
+      <div style="background:#1e293b;border-radius:14px;padding:18px 20px;border:1px solid #334155;">
+        <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.06em;margin-bottom:6px;">Apr revenue</div>
+        <div style="font-size:26px;font-weight:700;color:#f1f5f9;">₹{cur_rev/100000:.1f}L</div>
+        <div style="font-size:12px;margin-top:4px;color:{rev_arrow and '#4ade80'};">{rev_arrow} vs {prev_m}</div>
+      </div>
+      <div style="background:#1e293b;border-radius:14px;padding:18px 20px;border:1px solid #334155;">
+        <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.06em;margin-bottom:6px;">Avg payout %</div>
+        <div style="font-size:26px;font-weight:700;color:#f1f5f9;">{avg_payout}%</div>
+        <div style="font-size:12px;margin-top:4px;color:#94a3b8;">across all banks</div>
+      </div>
+      <div style="background:#1e293b;border-radius:14px;padding:18px 20px;border:1px solid #334155;">
+        <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.06em;margin-bottom:6px;">Total txns</div>
+        <div style="font-size:26px;font-weight:700;color:#f1f5f9;">{cur_txns}</div>
+        <div style="font-size:12px;margin-top:4px;color:{txn_col};">{txn_arrow} {abs(cur_txns-len(prev_df))} vs {prev_m}</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Build JSON for interactive charts
+    import json as _json
+    best_idx  = int(trend_df["disb_l"].idxmax())
+    worst_idx = int(trend_df["disb_l"].idxmin())
+
+    chart_data = _json.dumps({
+        "months":      list(trend_df["month"]),
+        "disb_l":      list(trend_df["disb_l"]),
+        "rev_l":       list(trend_df["rev_l"]),
+        "mom_pct":     list(trend_df["mom_pct"]),
+        "txns":        [int(x) for x in trend_df["txns"]],
+        "best_month":  trend_df.iloc[best_idx]["month"],
+        "worst_month": trend_df.iloc[worst_idx]["month"],
+        "best_val":    trend_df.iloc[best_idx]["disb_l"],
+        "worst_val":   trend_df.iloc[worst_idx]["disb_l"],
+        "avg_mom":     round(float(trend_df["mom_pct"][1:].mean()), 1),
+        "slope":       slope_,
+        "forecast_months": list(trend_df["month"]) + ["Next Month","Month +2"],
         "forecast_actual": list(trend_df["disb_l"]) + [None, None],
-        "forecast_line":   [None]*(len(trend_df)-1) + [trend_df["disb_l"].iloc[-1], next1, next2],
-        "slope": slope, "next1": next1, "next2": next2,
-        "mgr_names":   list(mgr_full["Manager"]),
-        "mgr_disb":    list(mgr_full["disb_l"]),
-        "mgr_rev":     list(mgr_full["rev_l"]),
-        "mgr_txns":    list(mgr_full["txns"].astype(int)),
-        "mgr_payout":  list(mgr_full["payout"]),
-        "mgr_prev":    list(mgr_full["prev_l"]),
-        "mgr_mom":     list(mgr_full["mom"]),
-        "mgr_tgt":     list(mgr_full["tgt_l"]),
-        "mgr_ach":     list(mgr_full["ach_pct"]),
-        "camp_names":  list(camp_df["Campaign"]),
-        "camp_disb":   list(camp_df["disb_l"]),
-        "camp_share":  list(camp_df["share"]),
-        "camp_txns":   list(camp_df["txns"].astype(int)),
-        "bank_names":  list(bank_df["Bank"]),
-        "bank_disb":   list(bank_df["disb_l"]),
-        "bank_share":  list(bank_df["share"]),
-        "bank_txns":   list(bank_df["txns"].astype(int)),
-        "sel_month":   sel_month_da,
-        "prev_month":  prev_month,
+        "forecast_line":   [None]*(len(trend_df)-1) + [float(trend_df["disb_l"].iloc[-1]), next1_, next2_],
+        "next1": next1_, "next2": next2_,
+        "mgr_names":  list(mgr_full["Manager"]),
+        "mgr_disb":   list(mgr_full["disb_l"]),
+        "mgr_prev":   list(mgr_full["prev_l"]),
+        "mgr_rev":    list(mgr_full["rev_l"]),
+        "mgr_txns":   [int(x) for x in mgr_full["txns"]],
+        "mgr_payout": list(mgr_full["payout"]),
+        "mgr_mom":    list(mgr_full["mom"]),
+        "mgr_tgt":    list(mgr_full["tgt_l"]),
+        "mgr_ach":    list(mgr_full["ach_pct"]),
+        "camp_names": list(camp_g["Campaign"]),
+        "camp_disb":  list(camp_g["disb_l"]),
+        "camp_share": list(camp_g["share"]),
+        "camp_txns":  [int(x) for x in camp_g["txns"]],
+        "bank_names": list(bank_g["Bank"]),
+        "bank_disb":  list(bank_g["disb_l"]),
+        "bank_share": list(bank_g["share"]),
+        "bank_txns":  [int(x) for x in bank_g["txns"]],
+        "sel_month":  sel_month_da,
+        "prev_month": prev_m,
     })
 
-    # ── Render interactive HTML dashboard ──
-    html_dashboard = f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
+    html_deep = """
+<!DOCTYPE html><html><head><meta charset="utf-8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-*{{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',sans-serif;}}
-body{{background:transparent;color:#0f172a;}}
-.tabs{{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}}
-.tab{{padding:7px 16px;font-size:12px;font-weight:600;border-radius:8px;
-  border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;transition:all .15s;}}
-.tab.on{{background:#6366f1;border-color:#6366f1;color:#fff;}}
-.pane{{display:none;}}.pane.on{{display:block;}}
-.krow{{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;}}
-.kc{{background:#f8fafc;border-radius:10px;padding:12px 14px;border:1px solid #e2e8f0;}}
-.kl{{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-weight:600;}}
-.kv{{font-size:20px;font-weight:700;color:#0f172a;}}
-.ksub{{font-size:11px;margin-top:2px;}}
-.panel{{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px;}}
-.plabel{{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;}}
-.two{{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}}
-.insight{{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:14px 18px;
-  display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px;}}
-.ins{{color:#fff;font-size:12px;}}
-.ins b{{display:block;font-size:10px;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px;}}
-.tbl{{width:100%;border-collapse:collapse;font-size:12px;}}
-.tbl th{{padding:8px 10px;background:#f1f5f9;color:#64748b;font-weight:600;text-align:left;
-  border-bottom:1px solid #e2e8f0;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}}
-.tbl td{{padding:8px 10px;border-bottom:1px solid #f1f5f9;color:#0f172a;}}
-.tbl tr:last-child td{{border-bottom:none;}}
-.badge{{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;}}
-.bg{{background:#dcfce7;color:#166534;}}.br{{background:#fee2e2;color:#991b1b;}}.ba{{background:#fef9c3;color:#854d0e;}}.bb{{background:#e0e7ff;color:#3730a3;}}
-.bar-mini{{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:4px;}}
-.fbox{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}}
-.fc{{background:#f8fafc;border-radius:10px;padding:14px;text-align:center;border:1px solid #e2e8f0;}}
-.fc .fl{{font-size:11px;color:#94a3b8;margin-bottom:4px;font-weight:600;text-transform:uppercase;}}
-.fc .fv{{font-size:20px;font-weight:700;}}
-</style>
-</head>
-<body>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter','Segoe UI',sans-serif;}
+body{background:#0f172a;color:#f1f5f9;}
+.info-strip{background:#1e293b;border-radius:10px;padding:12px 18px;margin-bottom:14px;
+  display:flex;flex-wrap:wrap;gap:20px;align-items:center;border:1px solid #334155;}
+.info-item{font-size:12px;color:#94a3b8;}
+.info-item b{color:#f1f5f9;}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{padding:7px 18px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;
+  border:1.5px solid #334155;background:#1e293b;color:#94a3b8;transition:all .15s;}
+.tab.on{background:#6366f1;border-color:#6366f1;color:#fff;}
+.pane{display:none;}.pane.on{display:block;}
+.panel{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:15px 18px;margin-bottom:12px;}
+.plabel{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 10px;background:#0f172a;color:#64748b;font-weight:600;text-align:left;
+  border-bottom:1px solid #334155;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+.tbl td{padding:8px 10px;border-bottom:1px solid #1e293b;color:#e2e8f0;}
+.tbl tr:hover td{background:#263148;}
+.tbl tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.bg{background:rgba(74,222,128,.15);color:#4ade80;}
+.br{background:rgba(248,113,113,.15);color:#f87171;}
+.ba{background:rgba(251,191,36,.15);color:#fbbf24;}
+.bb{background:rgba(99,102,241,.15);color:#818cf8;}
+.bw{background:rgba(148,163,184,.1);color:#94a3b8;}
+.bar-bg{display:inline-block;height:5px;border-radius:3px;background:#334155;width:80px;vertical-align:middle;}
+.bar-f{display:inline-block;height:5px;border-radius:3px;vertical-align:top;}
+.fc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.fc{background:#0f172a;border-radius:10px;padding:14px;text-align:center;border:1px solid #334155;}
+.fc .fl{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.05em;margin-bottom:4px;}
+.fc .fv{font-size:22px;font-weight:700;}
+</style></head><body>
+<div class="info-strip" id="info-strip"></div>
 <div class="tabs">
-  <button class="tab on" onclick="sw('trend',this)">📈 Trends</button>
-  <button class="tab" onclick="sw('managers',this)">👥 Managers</button>
-  <button class="tab" onclick="sw('mom',this)">📅 MoM</button>
-  <button class="tab" onclick="sw('forecast',this)">🔮 Forecast</button>
-  <button class="tab" onclick="sw('campaigns',this)">🚀 Campaigns</button>
-  <button class="tab" onclick="sw('banks',this)">🏦 Banks</button>
-  <button class="tab" onclick="sw('heatmap',this)">🔥 Heatmap</button>
+  <button class="tab on" onclick="sw('trend',this)">Trends</button>
+  <button class="tab" onclick="sw('managers',this)">Managers</button>
+  <button class="tab" onclick="sw('mom',this)">MoM</button>
+  <button class="tab" onclick="sw('forecast',this)">Forecast</button>
+  <button class="tab" onclick="sw('campaigns',this)">Campaigns</button>
+  <button class="tab" onclick="sw('banks',this)">Banks</button>
 </div>
 
 <!-- TRENDS -->
 <div id="p-trend" class="pane on">
-  <div class="insight" id="trend-insight"></div>
   <div class="panel">
-    <div class="plabel">Monthly disbursed vs trend line (₹L)</div>
-    <div style="position:relative;height:230px"><canvas id="trendC" role="img" aria-label="Monthly disbursement trend chart">Monthly trend data.</canvas></div>
+    <div class="plabel">Monthly disbursed vs target (₹L)</div>
+    <div style="position:relative;height:220px"><canvas id="tC"></canvas></div>
   </div>
   <div class="two">
     <div class="panel">
-      <div class="plabel">MoM growth %</div>
-      <div style="position:relative;height:170px"><canvas id="momBarC" role="img" aria-label="Month over month growth bar chart">MoM growth rates.</canvas></div>
+      <div class="plabel">MoM growth % each month</div>
+      <div style="position:relative;height:170px"><canvas id="momBC"></canvas></div>
     </div>
     <div class="panel">
       <div class="plabel">Revenue trend (₹L)</div>
-      <div style="position:relative;height:170px"><canvas id="revC" role="img" aria-label="Revenue trend chart">Revenue trend data.</canvas></div>
+      <div style="position:relative;height:170px"><canvas id="revC"></canvas></div>
     </div>
-  </div>
-  <div class="panel">
-    <div class="plabel">Transactions per month</div>
-    <div style="position:relative;height:150px"><canvas id="txnC" role="img" aria-label="Transactions per month chart">Transaction counts by month.</canvas></div>
   </div>
 </div>
 
 <!-- MANAGERS -->
 <div id="p-managers" class="pane">
   <div class="panel">
-    <div class="plabel">Disbursed by manager — <span id="mgr-month-lbl"></span> (₹L)</div>
-    <div style="position:relative;height:250px"><canvas id="mgrC" role="img" aria-label="Manager disbursement horizontal bar chart">Manager disbursement comparison.</canvas></div>
+    <div class="plabel" id="mgr-lbl"></div>
+    <div style="position:relative;height:260px"><canvas id="mgrC"></canvas></div>
   </div>
   <div class="panel">
     <div class="plabel">Manager performance table</div>
     <div style="overflow-x:auto">
     <table class="tbl">
-      <thead><tr><th>#</th><th>Manager</th><th>Disbursed</th><th>Revenue</th><th>Txns</th><th>Payout%</th><th>Target</th><th>Ach%</th></tr></thead>
+      <thead><tr><th>#</th><th>Manager</th><th>Disbursed</th><th>Revenue</th><th>Txns</th><th>Payout</th><th>Target</th><th>Ach%</th></tr></thead>
       <tbody id="mgr-tbl"></tbody>
-    </table>
-    </div>
+    </table></div>
   </div>
 </div>
 
-<!-- MoM -->
+<!-- MOM -->
 <div id="p-mom" class="pane">
   <div class="panel">
-    <div class="plabel" id="mom-lbl">Mar vs Apr — manager comparison (₹L)</div>
-    <div style="position:relative;height:260px"><canvas id="momC" role="img" aria-label="Month over month grouped bar chart by manager">MoM grouped comparison chart.</canvas></div>
+    <div class="plabel" id="mom-lbl"></div>
+    <div style="position:relative;height:260px"><canvas id="momC"></canvas></div>
   </div>
   <div class="panel">
     <div class="plabel">MoM change detail</div>
     <div style="overflow-x:auto">
     <table class="tbl">
-      <thead><tr><th>Manager</th><th>Prev (L)</th><th>Curr (L)</th><th>Change (L)</th><th>MoM %</th></tr></thead>
+      <thead><tr><th>Manager</th><th>Prev (L)</th><th>Current (L)</th><th>Change</th><th>MoM %</th></tr></thead>
       <tbody id="mom-tbl"></tbody>
-    </table>
-    </div>
+    </table></div>
   </div>
 </div>
 
 <!-- FORECAST -->
 <div id="p-forecast" class="pane">
-  <div class="fbox" id="fbox"></div>
+  <div class="fc-grid" id="fc-grid"></div>
   <div class="panel">
-    <div class="plabel">Disbursement trajectory + forecast (₹L)</div>
-    <div style="position:relative;height:240px"><canvas id="fcastC" role="img" aria-label="Forecast line chart with actual and projected data">Forecast trajectory chart.</canvas></div>
+    <div class="plabel">Disbursement trajectory + forecast</div>
+    <div style="position:relative;height:240px"><canvas id="fC"></canvas></div>
   </div>
   <div class="panel">
-    <div class="plabel">Forecast basis</div>
-    <table class="tbl" id="fcast-tbl"><thead><tr><th>Month</th><th>Type</th><th>Amount (L)</th></tr></thead><tbody id="ftbl"></tbody></table>
+    <div class="plabel">Forecast table</div>
+    <table class="tbl"><thead><tr><th>Month</th><th>Type</th><th>Amount (L)</th></tr></thead>
+    <tbody id="ftbl"></tbody></table>
   </div>
 </div>
 
@@ -1480,19 +1451,17 @@ body{{background:transparent;color:#0f172a;}}
   <div class="two">
     <div class="panel">
       <div class="plabel">Campaign disbursed (₹L)</div>
-      <div style="position:relative;height:210px"><canvas id="campBarC" role="img" aria-label="Campaign disbursement bar chart">Campaign bar chart.</canvas></div>
+      <div style="position:relative;height:210px"><canvas id="cbC"></canvas></div>
     </div>
     <div class="panel">
       <div class="plabel">Campaign revenue share</div>
-      <div style="position:relative;height:210px"><canvas id="campDonutC" role="img" aria-label="Campaign donut chart">Campaign revenue share.</canvas></div>
+      <div style="position:relative;height:210px"><canvas id="cdC"></canvas></div>
     </div>
   </div>
   <div class="panel">
     <div class="plabel">Campaign breakdown</div>
-    <table class="tbl">
-      <thead><tr><th>#</th><th>Campaign</th><th>Disbursed</th><th>Txns</th><th>Share%</th><th>Bar</th></tr></thead>
-      <tbody id="camp-tbl"></tbody>
-    </table>
+    <table class="tbl"><thead><tr><th>#</th><th>Campaign</th><th>Disbursed</th><th>Txns</th><th>Share%</th><th>Bar</th></tr></thead>
+    <tbody id="camp-tbl"></tbody></table>
   </div>
 </div>
 
@@ -1501,485 +1470,197 @@ body{{background:transparent;color:#0f172a;}}
   <div class="two">
     <div class="panel">
       <div class="plabel">Bank disbursed (₹L)</div>
-      <div style="position:relative;height:210px"><canvas id="bankBarC" role="img" aria-label="Bank disbursement bar chart">Bank bar chart.</canvas></div>
+      <div style="position:relative;height:210px"><canvas id="bbC"></canvas></div>
     </div>
     <div class="panel">
       <div class="plabel">Bank share</div>
-      <div style="position:relative;height:210px"><canvas id="bankDonutC" role="img" aria-label="Bank share donut chart">Bank share donut.</canvas></div>
+      <div style="position:relative;height:210px"><canvas id="bdC"></canvas></div>
     </div>
   </div>
   <div class="panel">
     <div class="plabel">Bank breakdown</div>
-    <table class="tbl">
-      <thead><tr><th>#</th><th>Bank</th><th>Disbursed</th><th>Txns</th><th>Share%</th><th>Bar</th></tr></thead>
-      <tbody id="bank-tbl"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- HEATMAP -->
-<div id="p-heatmap" class="pane">
-  <div class="panel">
-    <div class="plabel">Manager × Campaign disbursed (₹L)</div>
-    <div style="overflow-x:auto"><canvas id="heatC" role="img" aria-label="Manager by campaign heatmap">Manager-campaign heatmap.</canvas></div>
+    <table class="tbl"><thead><tr><th>#</th><th>Bank</th><th>Disbursed</th><th>Txns</th><th>Share%</th><th>Bar</th></tr></thead>
+    <tbody id="bank-tbl"></tbody></table>
   </div>
 </div>
 
 <script>
-const D = {json_data};
-const PAL = ["#6366f1","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6","#f97316","#06b6d4"];
+const D = """ + chart_data + """;
+const P = ["#6366f1","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6","#f97316","#06b6d4"];
 
-function sw(id, btn) {{
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+// Info strip
+document.getElementById('info-strip').innerHTML =
+  `<div class="info-item"><b>Best month:</b> ${D.best_month} (₹${D.best_val}L)</div>
+   <div class="info-item"><b>Weakest month:</b> ${D.worst_month} (₹${D.worst_val}L)</div>
+   <div class="info-item"><b>Overall growth:</b> +${(((D.disb_l[D.disb_l.length-1]-D.disb_l[0])/D.disb_l[0])*100).toFixed(1)}% in ${D.months.length} months</div>
+   <div class="info-item"><b>Avg MoM growth:</b> +${D.avg_mom}%</div>`;
+
+function sw(id, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   btn.classList.add('on');
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
-  document.getElementById('p-' + id).classList.add('on');
-  setTimeout(() => buildChart(id), 40);
-}}
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  setTimeout(()=>build(id), 40);
+}
+const built={};
+function build(id){if(built[id])return;built[id]=true;
+  if(id==='trend')     buildTrend();
+  if(id==='managers')  buildMgr();
+  if(id==='mom')       buildMom();
+  if(id==='forecast')  buildFcast();
+  if(id==='campaigns') buildCamp();
+  if(id==='banks')     buildBank();
+}
 
-const built = {{}};
-function buildChart(id) {{
-  if (built[id]) return; built[id] = true;
-  if (id === 'trend')     buildTrend();
-  if (id === 'managers')  buildManagers();
-  if (id === 'mom')       buildMom();
-  if (id === 'forecast')  buildForecast();
-  if (id === 'campaigns') buildCampaigns();
-  if (id === 'banks')     buildBanks();
-  if (id === 'heatmap')   buildHeatmap();
-}}
+const chartOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>'₹'+c.raw+'L'}}},
+  scales:{
+    x:{ticks:{font:{size:10},color:'#94a3b8'},grid:{color:'rgba(255,255,255,.05)'},border:{color:'#334155'}},
+    y:{ticks:{font:{size:10},color:'#94a3b8',callback:v=>v+'L'},grid:{color:'rgba(255,255,255,.05)'},border:{color:'#334155'}}
+  }
+};
 
-function buildTrend() {{
-  const best = D.months[D.disb_l.indexOf(Math.max(...D.disb_l))];
-  const worst = D.months[D.disb_l.indexOf(Math.min(...D.disb_l))];
-  const avgMom = (D.mom_pct.reduce((a,b)=>a+b,0)/D.mom_pct.filter(v=>v!==0).length).toFixed(1);
-  const growth = (((D.disb_l[D.disb_l.length-1]-D.disb_l[0])/D.disb_l[0])*100).toFixed(1);
-  document.getElementById('trend-insight').innerHTML = `
-    <div class="ins"><b>Best month</b>${{best}} (₹${{Math.max(...D.disb_l)}}L)</div>
-    <div class="ins"><b>Weakest month</b>${{worst}} (₹${{Math.min(...D.disb_l)}}L)</div>
-    <div class="ins"><b>Overall growth</b>+${{growth}}%</div>
-    <div class="ins"><b>Avg MoM</b>+${{avgMom}}%</div>
-    <div class="ins"><b>Trend slope</b>+${{D.slope}}L/month</div>`;
+function buildTrend(){
+  // Linear trendline
+  const n=D.disb_l.length, xi=Array.from({length:n},(_,i)=>i);
+  const xm=(n-1)/2, ym=D.disb_l.reduce((a,b)=>a+b,0)/n;
+  const sl=xi.reduce((s,x,i)=>s+(x-xm)*(D.disb_l[i]-ym),0)/xi.reduce((s,x)=>s+(x-xm)**2,0);
+  const ic=ym-sl*xm;
+  const tl=xi.map(x=>+(sl*x+ic).toFixed(1));
 
-  // Trend line via linear regression
-  const n = D.disb_l.length, xi = Array.from({{length:n}},(_,i)=>i);
-  const xm = (n-1)/2, ym = D.disb_l.reduce((a,b)=>a+b,0)/n;
-  const slope = xi.reduce((s,x,i)=>s+(x-xm)*(D.disb_l[i]-ym),0)/xi.reduce((s,x)=>s+(x-xm)**2,0);
-  const intercept = ym - slope*xm;
-  const trendLine = xi.map(x => +(slope*x+intercept).toFixed(1));
-
-  new Chart(document.getElementById('trendC').getContext('2d'), {{
+  new Chart(document.getElementById('tC').getContext('2d'),{
     type:'line',
-    data:{{labels:D.months,datasets:[
-      {{label:'Actual',data:D.disb_l,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#6366f1',pointBorderColor:'#fff',pointBorderWidth:2}},
-      {{label:'Trend',data:trendLine,borderColor:'#f59e0b',borderDash:[6,4],fill:false,tension:0,pointRadius:0}}
-    ]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}}}}}},y:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}}}}
-    }}
-  }});
+    data:{labels:D.months,datasets:[
+      {label:'Actual',data:D.disb_l,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.15)',
+       fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#6366f1',pointBorderColor:'#0f172a',pointBorderWidth:2,borderWidth:2.5},
+      {label:'Trend',data:tl,borderColor:'#f59e0b',borderDash:[6,4],fill:false,tension:0,pointRadius:0,borderWidth:1.5}
+    ]},
+    options:{...chartOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}
+  });
 
-  new Chart(document.getElementById('momBarC').getContext('2d'), {{
+  new Chart(document.getElementById('momBC').getContext('2d'),{
     type:'bar',
-    data:{{labels:D.months,datasets:[{{data:D.mom_pct,backgroundColor:D.mom_pct.map(v=>v>=0?'#10b981':'#ef4444'),borderRadius:4,borderWidth:0,label:'MoM %'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>c.raw+'%'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:9}}}}}},y:{{ticks:{{font:{{size:9}},callback:v=>v+'%'}}}}}}
-    }}
-  }});
+    data:{labels:D.months,datasets:[{data:D.mom_pct,backgroundColor:D.mom_pct.map(v=>v>=0?'rgba(74,222,128,.7)':'rgba(248,113,113,.7)'),borderRadius:4,borderWidth:0}]},
+    options:{...chartOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}},
+      scales:{...chartOpts.scales,y:{...chartOpts.scales.y,ticks:{...chartOpts.scales.y.ticks,callback:v=>v+'%'}}}}
+  });
 
-  new Chart(document.getElementById('revC').getContext('2d'), {{
+  new Chart(document.getElementById('revC').getContext('2d'),{
     type:'line',
-    data:{{labels:D.months,datasets:[{{label:'Revenue',data:D.rev_l,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#10b981'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>'₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:9}}}}}},y:{{ticks:{{font:{{size:9}},callback:v=>'₹'+v+'L'}}}}}}
-    }}
-  }});
+    data:{labels:D.months,datasets:[{label:'Revenue',data:D.rev_l,borderColor:'#10b981',
+      backgroundColor:'rgba(16,185,129,.12)',fill:true,tension:.4,pointRadius:4,
+      pointBackgroundColor:'#10b981',pointBorderColor:'#0f172a',pointBorderWidth:2,borderWidth:2}]},
+    options:chartOpts
+  });
+}
 
-  new Chart(document.getElementById('txnC').getContext('2d'), {{
+function buildMgr(){
+  document.getElementById('mgr-lbl').textContent = 'Disbursed by manager — '+D.sel_month+' (₹L)';
+  new Chart(document.getElementById('mgrC').getContext('2d'),{
     type:'bar',
-    data:{{labels:D.months,datasets:[{{label:'Txns',data:D.txns,backgroundColor:PAL,borderRadius:4,borderWidth:0}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>c.raw+' txns'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:9}}}}}},y:{{ticks:{{font:{{size:9}}}}}}}}
-    }}
-  }});
-}}
+    data:{labels:D.mgr_names,datasets:[{data:D.mgr_disb,backgroundColor:P.slice(0,D.mgr_names.length),borderRadius:4,borderWidth:0}]},
+    options:{...chartOpts,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.raw+'L'}}},
+      scales:{x:{...chartOpts.scales.x,ticks:{...chartOpts.scales.x.ticks,callback:v=>v+'L'}},y:{...chartOpts.scales.y}}}
+  });
+  const maxD=Math.max(...D.mgr_disb);
+  const em=['🥇','🥈','🥉','4','5','6','7','8'];
+  document.getElementById('mgr-tbl').innerHTML=D.mgr_names.map((n,i)=>{
+    const a=D.mgr_ach[i],pb=(D.mgr_disb[i]/maxD*100).toFixed(0);
+    const ab=a>=100?'bg':a>=75?'bb':a>=50?'ba':'br';
+    const pp=D.mgr_payout[i],pb2=pp>=5?'bg':pp>=4.5?'bb':'ba';
+    return `<tr><td>${em[i]||i+1}</td><td style="font-weight:600">${n}</td>
+      <td>₹${D.mgr_disb[i]}L</td><td>₹${D.mgr_rev[i]}L</td><td>${D.mgr_txns[i]}</td>
+      <td><span class="badge ${pb2}">${pp}%</span></td>
+      <td style="color:#94a3b8">${D.mgr_tgt[i]}L</td>
+      <td><span class="badge ${ab}">${a}%</span></td></tr>`;
+  }).join('');
+}
 
-function buildManagers() {{
-  document.getElementById('mgr-month-lbl').textContent = D.sel_month;
-  new Chart(document.getElementById('mgrC').getContext('2d'), {{
+function buildMom(){
+  document.getElementById('mom-lbl').textContent = D.prev_month+' vs '+D.sel_month+' — manager comparison (₹L)';
+  new Chart(document.getElementById('momC').getContext('2d'),{
     type:'bar',
-    data:{{labels:D.mgr_names,datasets:[{{data:D.mgr_disb,backgroundColor:PAL.slice(0,D.mgr_names.length),borderRadius:4,borderWidth:0,label:'Disbursed (L)'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>'₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}},y:{{ticks:{{font:{{size:11}}}}}}}}
-    }}
-  }});
-  const maxD = Math.max(...D.mgr_disb);
-  const emojis = ['🥇','🥈','🥉','4','5','6','7','8','9','10'];
-  document.getElementById('mgr-tbl').innerHTML = D.mgr_names.map((n,i) => {{
-    const pb = (D.mgr_disb[i]/maxD*100).toFixed(0);
-    const achBadge = D.mgr_ach[i]>=100?'bg':D.mgr_ach[i]>=75?'bb':D.mgr_ach[i]>=50?'ba':'br';
-    const payBadge = D.mgr_payout[i]>=5?'bg':D.mgr_payout[i]>=4.5?'bb':'ba';
-    return `<tr>
-      <td>${{emojis[i]||i+1}}</td>
-      <td style="font-weight:600">${{n}}</td>
-      <td>₹${{D.mgr_disb[i]}}L</td>
-      <td>₹${{D.mgr_rev[i]}}L</td>
-      <td>${{D.mgr_txns[i]}}</td>
-      <td><span class="badge ${{payBadge}}">${{D.mgr_payout[i]}}%</span></td>
-      <td>${{D.mgr_tgt[i]}}L</td>
-      <td><span class="badge ${{achBadge}}">${{D.mgr_ach[i]}}%</span></td>
-    </tr>`;
-  }}).join('');
-}}
+    data:{labels:D.mgr_names,datasets:[
+      {label:D.prev_month,data:D.mgr_prev,backgroundColor:'rgba(148,163,184,.3)',borderRadius:3,borderWidth:0},
+      {label:D.sel_month,data:D.mgr_disb,backgroundColor:P.slice(0,D.mgr_names.length),borderRadius:3,borderWidth:0}
+    ]},
+    options:{...chartOpts,barPercentage:.75,
+      plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}
+  });
+  document.getElementById('mom-tbl').innerHTML=D.mgr_names.map((n,i)=>{
+    const v=D.mgr_mom[i],chg=(D.mgr_disb[i]-D.mgr_prev[i]).toFixed(1);
+    return `<tr><td style="font-weight:600">${n}</td><td>₹${D.mgr_prev[i]}L</td><td>₹${D.mgr_disb[i]}L</td>
+      <td style="color:${v>=0?'#4ade80':'#f87171'};font-weight:600">${v>=0?'+':''}₹${chg}L</td>
+      <td><span class="badge ${v>=0?'bg':'br'}">${v>=0?'▲':'▼'} ${Math.abs(v)}%</span></td></tr>`;
+  }).join('');
+}
 
-function buildMom() {{
-  document.getElementById('mom-lbl').textContent = D.prev_month + ' vs ' + D.sel_month + ' — manager comparison (₹L)';
-  new Chart(document.getElementById('momC').getContext('2d'), {{
-    type:'bar',
-    data:{{labels:D.mgr_names,datasets:[
-      {{label:D.prev_month,data:D.mgr_prev,backgroundColor:'rgba(148,163,184,.5)',borderRadius:3,borderWidth:0}},
-      {{label:D.sel_month,data:D.mgr_disb,backgroundColor:PAL.slice(0,D.mgr_names.length),borderRadius:3,borderWidth:0}}
-    ]}},
-    options:{{responsive:true,maintainAspectRatio:false,barPercentage:.75,
-      plugins:{{legend:{{position:'top',labels:{{font:{{size:11}}}}}},tooltip:{{callbacks:{{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}}}}}},y:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}}}}
-    }}
-  }});
-  document.getElementById('mom-tbl').innerHTML = D.mgr_names.map((n,i) => {{
-    const v = D.mgr_mom[i];
-    const chg = (D.mgr_disb[i] - D.mgr_prev[i]).toFixed(1);
-    const badge = v>=0?'bg':'br';
-    const arrow = v>=0?'▲':'▼';
-    return `<tr>
-      <td style="font-weight:600">${{n}}</td>
-      <td>₹${{D.mgr_prev[i]}}L</td>
-      <td>₹${{D.mgr_disb[i]}}L</td>
-      <td style="color:${{v>=0?'#16a34a':'#dc2626'}};font-weight:600">${{v>=0?'+':''}}₹${{chg}}L</td>
-      <td><span class="badge ${{badge}}">${{arrow}} ${{Math.abs(v)}}%</span></td>
-    </tr>`;
-  }}).join('');
-}}
-
-function buildForecast() {{
-  document.getElementById('fbox').innerHTML = `
-    <div class="fc"><div class="fl">Current</div><div class="fv" style="color:#6366f1">₹${{D.disb_l[D.disb_l.length-1]}}L</div></div>
-    <div class="fc"><div class="fl">Next month forecast</div><div class="fv" style="color:#10b981">₹${{D.next1}}L</div></div>
-    <div class="fc"><div class="fl">Month +2 forecast</div><div class="fv" style="color:#10b981">₹${{D.next2}}L</div></div>`;
-
-  new Chart(document.getElementById('fcastC').getContext('2d'), {{
+function buildFcast(){
+  document.getElementById('fc-grid').innerHTML=`
+    <div class="fc"><div class="fl">Current</div><div class="fv" style="color:#6366f1">₹${D.disb_l[D.disb_l.length-1]}L</div></div>
+    <div class="fc"><div class="fl">Next month forecast</div><div class="fv" style="color:#10b981">₹${D.next1}L</div></div>
+    <div class="fc"><div class="fl">Month +2 forecast</div><div class="fv" style="color:#10b981">₹${D.next2}L</div></div>`;
+  new Chart(document.getElementById('fC').getContext('2d'),{
     type:'line',
-    data:{{labels:D.forecast_months,datasets:[
-      {{label:'Actual',data:D.forecast_actual,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#6366f1',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:false}},
-      {{label:'Forecast',data:D.forecast_line,borderColor:'#10b981',borderDash:[7,4],fill:false,tension:.3,pointRadius:6,pointBackgroundColor:'#10b981',pointBorderColor:'#fff',pointBorderWidth:2,spanGaps:false}}
-    ]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{position:'top',labels:{{font:{{size:11}}}}}},tooltip:{{callbacks:{{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}}}}}},y:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}}}}
-    }}
-  }});
+    data:{labels:D.forecast_months,datasets:[
+      {label:'Actual',data:D.forecast_actual,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.12)',
+       fill:true,tension:.4,pointRadius:5,pointBackgroundColor:'#6366f1',pointBorderColor:'#0f172a',pointBorderWidth:2,spanGaps:false,borderWidth:2.5},
+      {label:'Forecast',data:D.forecast_line,borderColor:'#10b981',borderDash:[7,4],fill:false,
+       tension:.3,pointRadius:6,pointBackgroundColor:'#10b981',pointBorderColor:'#0f172a',pointBorderWidth:2,spanGaps:false,borderWidth:2}
+    ]},
+    options:{...chartOpts,plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:11}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': ₹'+c.raw+'L'}}}}
+  });
+  document.getElementById('ftbl').innerHTML=
+    D.months.map((m,i)=>`<tr><td>${m}</td><td><span class="badge bb">Actual</span></td><td>₹${D.disb_l[i]}L</td></tr>`).join('')+
+    `<tr><td>Next Month</td><td><span class="badge bg">Forecast</span></td><td>₹${D.next1}L</td></tr>`+
+    `<tr><td>Month +2</td><td><span class="badge bg">Forecast</span></td><td>₹${D.next2}L</td></tr>`;
+}
 
-  document.getElementById('ftbl').innerHTML =
-    D.months.map((m,i) => `<tr><td>${{m}}</td><td><span class="badge bb">Actual</span></td><td>₹${{D.disb_l[i]}}L</td></tr>`).join('') +
-    `<tr><td>Next Month</td><td><span class="badge bg">Forecast</span></td><td>₹${{D.next1}}L</td></tr>` +
-    `<tr><td>Month +2</td><td><span class="badge bg">Forecast</span></td><td>₹${{D.next2}}L</td></tr>`;
-}}
-
-function buildCampaigns() {{
-  new Chart(document.getElementById('campBarC').getContext('2d'), {{
+function buildCamp(){
+  new Chart(document.getElementById('cbC').getContext('2d'),{
     type:'bar',
-    data:{{labels:D.camp_names,datasets:[{{data:D.camp_disb,backgroundColor:PAL.slice(0,D.camp_names.length),borderRadius:4,borderWidth:0,label:'Disbursed'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>'₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}},maxRotation:30}}}},y:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}}}}
-    }}
-  }});
-  new Chart(document.getElementById('campDonutC').getContext('2d'), {{
+    data:{labels:D.camp_names,datasets:[{data:D.camp_disb,backgroundColor:P.slice(0,D.camp_names.length),borderRadius:4,borderWidth:0}]},
+    options:{...chartOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.raw+'L'}}}}
+  });
+  new Chart(document.getElementById('cdC').getContext('2d'),{
     type:'doughnut',
-    data:{{labels:D.camp_names,datasets:[{{data:D.camp_disb,backgroundColor:PAL.slice(0,D.camp_names.length),borderWidth:2,borderColor:'#fff'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,cutout:'58%',
-      plugins:{{legend:{{position:'right',labels:{{font:{{size:10}},boxWidth:10}}}},tooltip:{{callbacks:{{label:c=>c.label+': ₹'+c.raw+'L ('+D.camp_share[c.dataIndex]+'%)'}}}}}}
-    }}
-  }});
-  const maxD = Math.max(...D.camp_disb);
-  document.getElementById('camp-tbl').innerHTML = D.camp_names.map((n,i) => `<tr>
-    <td>${{i+1}}</td><td style="font-weight:600">${{n}}</td>
-    <td>₹${{D.camp_disb[i]}}L</td><td>${{D.camp_txns[i]}}</td><td>${{D.camp_share[i]}}%</td>
-    <td><span class="bar-mini" style="width:${{(D.camp_disb[i]/maxD*80).toFixed(0)}}px;background:${{PAL[i]}}"></span></td>
+    data:{labels:D.camp_names,datasets:[{data:D.camp_disb,backgroundColor:P.slice(0,D.camp_names.length),borderWidth:2,borderColor:'#1e293b'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:c=>c.label+': ₹'+c.raw+'L ('+D.camp_share[c.dataIndex]+'%)'}}}}
+  });
+  const mx=Math.max(...D.camp_disb);
+  document.getElementById('camp-tbl').innerHTML=D.camp_names.map((n,i)=>`<tr>
+    <td style="color:#64748b">${i+1}</td><td style="font-weight:600">${n}</td>
+    <td>₹${D.camp_disb[i]}L</td><td>${D.camp_txns[i]}</td><td>${D.camp_share[i]}%</td>
+    <td><div class="bar-bg"><div class="bar-f" style="width:${(D.camp_disb[i]/mx*100).toFixed(0)}%;background:${P[i]};height:5px;border-radius:3px"></div></div></td>
   </tr>`).join('');
-}}
+}
 
-function buildBanks() {{
-  new Chart(document.getElementById('bankBarC').getContext('2d'), {{
+function buildBank(){
+  new Chart(document.getElementById('bbC').getContext('2d'),{
     type:'bar',
-    data:{{labels:D.bank_names,datasets:[{{data:D.bank_disb,backgroundColor:PAL.slice(0,D.bank_names.length),borderRadius:4,borderWidth:0,label:'Disbursed'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,
-      plugins:{{legend:{{display:false}},tooltip:{{callbacks:{{label:c=>'₹'+c.raw+'L'}}}}}},
-      scales:{{x:{{ticks:{{font:{{size:10}}}}}},y:{{ticks:{{font:{{size:10}},callback:v=>v+'L'}},grid:{{color:'rgba(0,0,0,.04)'}}}}}}
-    }}
-  }});
-  new Chart(document.getElementById('bankDonutC').getContext('2d'), {{
+    data:{labels:D.bank_names,datasets:[{data:D.bank_disb,backgroundColor:P.slice(0,D.bank_names.length),borderRadius:4,borderWidth:0}]},
+    options:{...chartOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.raw+'L'}}}}
+  });
+  new Chart(document.getElementById('bdC').getContext('2d'),{
     type:'doughnut',
-    data:{{labels:D.bank_names,datasets:[{{data:D.bank_disb,backgroundColor:PAL.slice(0,D.bank_names.length),borderWidth:2,borderColor:'#fff'}}]}},
-    options:{{responsive:true,maintainAspectRatio:false,cutout:'58%',
-      plugins:{{legend:{{position:'right',labels:{{font:{{size:10}},boxWidth:10}}}},tooltip:{{callbacks:{{label:c=>c.label+': ₹'+c.raw+'L ('+D.bank_share[c.dataIndex]+'%)'}}}}}}
-    }}
-  }});
-  const maxD = Math.max(...D.bank_disb);
-  document.getElementById('bank-tbl').innerHTML = D.bank_names.map((n,i) => `<tr>
-    <td>${{i+1}}</td><td style="font-weight:600">${{n}}</td>
-    <td>₹${{D.bank_disb[i]}}L</td><td>${{D.bank_txns[i]}}</td><td>${{D.bank_share[i]}}%</td>
-    <td><span class="bar-mini" style="width:${{(D.bank_disb[i]/maxD*80).toFixed(0)}}px;background:${{PAL[i]}}"></span></td>
+    data:{labels:D.bank_names,datasets:[{data:D.bank_disb,backgroundColor:P.slice(0,D.bank_names.length),borderWidth:2,borderColor:'#1e293b'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:c=>c.label+': ₹'+c.raw+'L ('+D.bank_share[c.dataIndex]+'%)'}}}}
+  });
+  const mx=Math.max(...D.bank_disb);
+  document.getElementById('bank-tbl').innerHTML=D.bank_names.map((n,i)=>`<tr>
+    <td style="color:#64748b">${i+1}</td><td style="font-weight:600">${n}</td>
+    <td>₹${D.bank_disb[i]}L</td><td>${D.bank_txns[i]}</td><td>${D.bank_share[i]}%</td>
+    <td><div class="bar-bg"><div class="bar-f" style="width:${(D.bank_disb[i]/mx*100).toFixed(0)}%;background:${P[i]};height:5px;border-radius:3px"></div></div></td>
   </tr>`).join('');
-}}
+}
 
-function buildHeatmap() {{
-  // Manager × Campaign matrix
-  const mgrs = D.mgr_names;
-  const camps = D.camp_names;
-  // Build approximate matrix from share proportions
-  const matrix = mgrs.map((m,mi) => camps.map((c,ci) => {{
-    const base = D.mgr_disb[mi] * (D.camp_share[ci]/100);
-    return +(base + (Math.random()-0.5)*base*0.3).toFixed(1);
-  }}));
-  const allVals = matrix.flat();
-  const maxV = Math.max(...allVals);
+build('trend');
+</script></body></html>"""
 
-  const ctx = document.getElementById('heatC').getContext('2d');
-  document.getElementById('heatC').style.height = (mgrs.length * 45 + 60) + 'px';
-  document.getElementById('heatC').height = mgrs.length * 45 + 60;
-
-  new Chart(ctx, {{
-    type: 'matrix',
-    data: {{
-      datasets: [{{
-        label: 'Disbursed (L)',
-        data: mgrs.flatMap((m,mi) => camps.map((c,ci) => ({{x:c, y:m, v:matrix[mi][ci]}})) ),
-        backgroundColor(ctx) {{
-          const v = ctx.dataset.data[ctx.dataIndex].v;
-          const t = v/maxV;
-          const r = Math.round(99 + (0-99)*t);
-          const g = Math.round(102 + (0-102)*t*0.3);
-          const b = Math.round(241 + (0-241)*t*0.1);
-          return `rgba(${{Math.round(99+t*56)}},${{Math.round(102-t*50)}},${{Math.round(241-t*100)}},${{0.15+t*0.85}})`;
-        }},
-        borderWidth: 1, borderColor: '#fff',
-        width(ctx) {{ return ctx.chart.chartArea ? (ctx.chart.chartArea.width/camps.length - 2) : 40; }},
-        height(ctx) {{ return ctx.chart.chartArea ? (ctx.chart.chartArea.height/mgrs.length - 2) : 35; }},
-      }}]
-    }},
-    options: {{
-      responsive: true, maintainAspectRatio: false,
-      plugins: {{
-        legend: {{display:false}},
-        tooltip: {{ callbacks: {{ label: ctx => `${{ctx.raw.y}} × ${{ctx.raw.x}}: ₹${{ctx.raw.v}}L` }} }}
-      }},
-      scales: {{
-        x: {{ type:'category', labels:camps, ticks:{{font:{{size:10}}}}, grid:{{display:false}} }},
-        y: {{ type:'category', labels:mgrs, ticks:{{font:{{size:10}}}}, grid:{{display:false}} }}
-      }}
-    }}
-  }});
-}}
-
-buildChart('trend');
-</script>
-</body>
-</html>
-""".replace("{json_data}", chart_json)
-
-    st.components.v1.html(html_dashboard, height=900, scrolling=True)
-
-
-# ══════════════════════════════════════════
-# 🔔 ALERTS & NOTIFICATIONS
-# ══════════════════════════════════════════
-elif dashboard_type == "🔔 Alerts & Notifications":
-    st.title("🔔 Alerts & Notifications")
-
-    tab1, tab2, tab3 = st.tabs(["📱 WhatsApp Alert", "📧 Email Alert", "📋 Daily Summary"])
-
-    with tab1:
-        st.markdown(f"""<div style="background:{CARD_BG};border-radius:16px;padding:24px;
-            border:1px solid {CARD_BOR};margin-bottom:20px;">
-            <div style="font-size:16px;font-weight:700;color:{TEXT_PRI};margin-bottom:4px;">📱 WhatsApp Alert Setup</div>
-            <div style="font-size:13px;color:{TEXT_SEC};">Send instant alerts via WhatsApp Business API (Meta Graph API)</div>
-        </div>""", unsafe_allow_html=True)
-
-        with st.expander("⚙️ WhatsApp API Configuration", expanded=True):
-            wa_token    = st.text_input("WhatsApp Access Token", type="password", placeholder="Bearer token from Meta developer console")
-            wa_phone_id = st.text_input("Phone Number ID", placeholder="Meta WhatsApp Business Phone Number ID")
-            wa_to_phone = st.text_input("Recipient Phone", placeholder="91XXXXXXXXXX (with country code, no +)")
-
-        with st.sidebar.expander("🔔 Alert Filters", expanded=True):
-            sel_month_al = st.selectbox("Month", months, index=current_month_index, key="al_month")
-
-        mgr_actual_al = df[df["Disb Month"]==sel_month_al].groupby("Manager")["Disbursed AMT"].sum().reset_index()
-        mgr_actual_al.columns = ["Manager","Actual"]
-
-        st.markdown("#### 📝 Select Alert Type")
-        alert_type_wa = st.radio("Alert Type", [
-            "🎯 Target Achievement Summary",
-            "⚠️ At-Risk Managers Alert",
-            "🏆 Top Performer Shoutout",
-            "📊 Custom Message"
-        ], key="wa_alert_type")
-
-        if alert_type_wa == "🎯 Target Achievement Summary":
-            lines = [f"📊 *Prime PL — {sel_month_al} Target Summary*\n"]
-            for _,row in mgr_actual_al.iterrows():
-                t = get_target_for_manager(row["Manager"],sel_month_al,target_raw)
-                target_l = t if t>0 else 50; actual_l = row["Actual"]/100000
-                pct = round(actual_l/target_l*100,1) if target_l>0 else 0
-                icon = "✅" if pct>=100 else "🔵" if pct>=75 else "🟡" if pct>=50 else "🔴"
-                lines.append(f"{icon} *{row['Manager']}*: {actual_l:.1f}L / {target_l:.1f}L ({pct}%)")
-            total_act = mgr_actual_al["Actual"].sum()/100000
-            lines.append(f"\n💼 *Team Total*: {total_act:.1f}L")
-            lines.append(f"🕐 Sent at: {now_ist.strftime('%d %b %Y %I:%M %p')} IST")
-            wa_message = "\n".join(lines)
-        elif alert_type_wa == "⚠️ At-Risk Managers Alert":
-            at_risk = []
-            for _,row in mgr_actual_al.iterrows():
-                t = get_target_for_manager(row["Manager"],sel_month_al,target_raw)
-                target_l = t if t>0 else 50; actual_l = row["Actual"]/100000
-                pct = round(actual_l/target_l*100,1) if target_l>0 else 0
-                if pct < 75: at_risk.append((row["Manager"],actual_l,target_l,pct))
-            lines = [f"⚠️ *Prime PL — At-Risk Alert ({sel_month_al})*\n"]
-            if at_risk:
-                for mgr,act,tgt,pct in sorted(at_risk,key=lambda x:x[3]):
-                    icon = "🔴" if pct<50 else "🟡"
-                    lines.append(f"{icon} *{mgr}*: {act:.1f}L / {tgt:.1f}L ({pct}%) — Gap: {tgt-act:.1f}L")
-            else:
-                lines.append("✅ All managers on track!")
-            lines.append(f"\n🕐 {now_ist.strftime('%d %b %Y %I:%M %p')} IST")
-            wa_message = "\n".join(lines)
-        elif alert_type_wa == "🏆 Top Performer Shoutout":
-            top_mgr_al = mgr_actual_al.sort_values("Actual",ascending=False).iloc[0]
-            wa_message = (f"🏆 *Prime PL — Top Performer Alert!*\n\n"
-                f"🥇 *{top_mgr_al['Manager']}* is leading in {sel_month_al}!\n"
-                f"💰 Disbursed: *{top_mgr_al['Actual']/100000:.2f}L*\n\n"
-                f"Keep up the amazing work! 🚀\n"
-                f"🕐 {now_ist.strftime('%d %b %Y %I:%M %p')} IST")
-        else:
-            wa_message = st.text_area("Custom Message", placeholder="Type your message here...", height=150)
-
-        st.markdown("#### 📤 Preview")
-        st.code(wa_message, language=None)
-
-        if st.button("📤 Send WhatsApp Alert", use_container_width=True, type="primary"):
-            if not wa_token or not wa_phone_id or not wa_to_phone:
-                st.error("❌ Please fill in WhatsApp API Token, Phone Number ID, and Recipient Phone.")
-            else:
-                with st.spinner("Sending..."):
-                    ok = send_whatsapp_alert(wa_to_phone, wa_message, wa_token, wa_phone_id)
-                if ok:
-                    st.success("✅ WhatsApp alert sent successfully!")
-                else:
-                    st.error("❌ Failed to send. Check your API credentials.")
-
-    with tab2:
-        st.markdown(f"""<div style="background:{CARD_BG};border-radius:16px;padding:24px;
-            border:1px solid {CARD_BOR};margin-bottom:20px;">
-            <div style="font-size:16px;font-weight:700;color:{TEXT_PRI};margin-bottom:4px;">📧 Email Alert Setup</div>
-            <div style="font-size:13px;color:{TEXT_SEC};">Send HTML email reports via Gmail SMTP</div>
-        </div>""", unsafe_allow_html=True)
-
-        with st.expander("⚙️ Email Configuration", expanded=True):
-            smtp_user = st.text_input("Gmail Address", placeholder="yourname@gmail.com")
-            smtp_pass = st.text_input("Gmail App Password", type="password", placeholder="16-char App Password")
-            email_to  = st.text_input("Recipient Email", placeholder="manager@company.com")
-            email_subject = st.text_input("Subject", value=f"Prime PL Dashboard Report — {now_ist.strftime('%d %b %Y')}")
-        st.info("💡 Use a Gmail App Password. Go to Google Account → Security → App Passwords.")
-
-        sel_month_em = st.selectbox("Month for Report", months, index=current_month_index, key="em_month")
-        mgr_actual_em = df[df["Disb Month"]==sel_month_em].groupby("Manager")["Disbursed AMT"].sum().reset_index()
-        mgr_actual_em.columns = ["Manager","Actual"]
-        total_em = mgr_actual_em["Actual"].sum()
-
-        table_rows_em = ""
-        for _,row in mgr_actual_em.iterrows():
-            t = get_target_for_manager(row["Manager"],sel_month_em,target_raw)
-            target_l = t if t>0 else 50; actual_l = row["Actual"]/100000
-            pct = round(actual_l/target_l*100,1) if target_l>0 else 0
-            bg_em = "#d1fae5" if pct>=100 else "#fef3c7" if pct>=75 else "#fee2e2"
-            clr_em = "#065f46" if pct>=100 else "#b45309" if pct>=75 else "#991b1b"
-            table_rows_em += f"<tr><td style='padding:10px 14px;font-weight:600'>{row['Manager']}</td><td style='padding:10px 14px;text-align:right'>{actual_l:.2f}L</td><td style='padding:10px 14px;text-align:right'>{target_l:.1f}L</td><td style='padding:10px 14px;text-align:right'><span style='background:{bg_em};color:{clr_em};padding:3px 8px;border-radius:5px;font-weight:700'>{pct}%</span></td></tr>"
-
-        email_body = f"""<html><body style="font-family:Arial,sans-serif;background:#f8fafc;padding:20px;">
-        <div style="max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
-            <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:24px;color:white;">
-                <h2 style="margin:0;font-size:22px;">💼 Prime PL Dashboard</h2>
-                <p style="margin:6px 0 0;opacity:0.85;">{sel_month_em} Report · {now_ist.strftime('%d %b %Y %I:%M %p')} IST</p>
-            </div>
-            <div style="padding:24px;">
-                <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead><tr style="background:#0f172a;color:white;">
-                        <th style="padding:10px 14px;text-align:left;">Manager</th>
-                        <th style="padding:10px 14px;text-align:right;">Disbursed</th>
-                        <th style="padding:10px 14px;text-align:right;">Target</th>
-                        <th style="padding:10px 14px;text-align:right;">Achievement</th>
-                    </tr></thead>
-                    <tbody>{table_rows_em}</tbody>
-                </table>
-            </div>
-        </div></body></html>"""
-
-        if st.button("📧 Send Email Report", use_container_width=True, type="primary"):
-            if not smtp_user or not smtp_pass or not email_to:
-                st.error("❌ Please fill in all email fields.")
-            else:
-                with st.spinner("Sending email..."):
-                    ok = send_email_alert(email_to, email_subject, email_body, smtp_user, smtp_pass)
-                if ok:
-                    st.success(f"✅ Email sent to {email_to}!")
-                else:
-                    st.error("❌ Failed to send. Check SMTP credentials.")
-
-    with tab3:
-        sel_month_ds = st.selectbox("Month", months, index=current_month_index, key="ds_month")
-        ds_df = df[df["Disb Month"]==sel_month_ds]
-        total_disb = ds_df["Disbursed AMT"].sum()
-        total_rev  = ds_df["Total_Revenue"].sum()
-        total_txn  = len(ds_df)
-        avg_payout = (total_rev/total_disb*100) if total_disb else 0
-        top_mgr_ds = ds_df.groupby("Manager")["Disbursed AMT"].sum().idxmax() if not ds_df.empty else "N/A"
-        top_camp_ds= ds_df.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not ds_df.empty else "N/A"
-        top_bank_ds= ds_df.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not ds_df.empty else "N/A"
-
-        st.markdown(f"""<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;padding:24px;color:white;margin-bottom:20px;">
-            <div style="font-size:18px;font-weight:700;margin-bottom:16px;">📋 Daily Summary — {sel_month_ds}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
-                    <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;">Total Disbursed</div>
-                    <div style="font-size:20px;font-weight:800;color:#a5b4fc;margin-top:4px;">{format_inr(total_disb)}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
-                    <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;">Total Revenue</div>
-                    <div style="font-size:20px;font-weight:800;color:#6ee7b7;margin-top:4px;">{format_inr(total_rev)}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
-                    <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;">Avg Payout %</div>
-                    <div style="font-size:20px;font-weight:800;color:#fcd34d;margin-top:4px;">{avg_payout:.2f}%</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
-                    <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:600;">Transactions</div>
-                    <div style="font-size:20px;font-weight:800;color:#f9a8d4;margin-top:4px;">{total_txn:,}</div>
-                </div>
-            </div>
-        </div>""", unsafe_allow_html=True)
-
-        summary_text = (f"📊 Prime PL Daily Summary — {sel_month_ds}\n\n"
-            f"💰 Total Disbursed: {format_inr(total_disb)}\n"
-            f"📈 Total Revenue: {format_inr(total_rev)}\n"
-            f"📊 Avg Payout: {avg_payout:.2f}%\n"
-            f"🔁 Transactions: {total_txn:,}\n\n"
-            f"🏆 Top Manager: {top_mgr_ds}\n"
-            f"🚀 Top Campaign: {top_camp_ds}\n"
-            f"🏦 Top Bank: {top_bank_ds}\n\n"
-            f"Generated: {now_ist.strftime('%d %b %Y %I:%M %p')} IST")
-        st.download_button("⬇️ Download Summary Text", summary_text, "daily_summary.txt", "text/plain")
-        
+    st.components.v1.html(html_deep, height=950, scrolling=True)
