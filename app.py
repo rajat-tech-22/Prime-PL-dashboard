@@ -1664,3 +1664,410 @@ build('trend');
 </script></body></html>"""
 
     st.components.v1.html(html_deep, height=950, scrolling=True)
+
+# ══════════════════════════════════════════
+# ⚖️ COMPARISON WITH RADAR CHART
+# ══════════════════════════════════════════
+elif dashboard_type == "⚖️ Comparison":
+    with st.sidebar.expander("🔧 First Selection", expanded=True):
+        m1   = st.selectbox("Month", months, index=current_month_index, key="m1")
+        mgr1 = st.selectbox("Manager", sorted(df[df["Disb Month"]==m1]["Manager"].dropna().unique()), key="mgr1")
+    
+    f1 = df[(df["Disb Month"]==m1)&(df["Manager"]==mgr1)]
+    
+    with st.sidebar.expander("🔧 Second Selection", expanded=True):
+        m2   = st.selectbox("Month", months, index=current_month_index, key="m2")
+        mgr2 = st.selectbox("Manager", sorted(df[df["Disb Month"]==m2]["Manager"].dropna().unique()), key="mgr2")
+    
+    f2 = df[(df["Disb Month"]==m2)&(df["Manager"]==mgr2)]
+    
+    with st.sidebar.expander("📌 Campaigns — 1", expanded=False):
+        sc1 = st.multiselect("Campaigns", sorted(f1["Campaign"].dropna().unique()), 
+                            default=sorted(f1["Campaign"].dropna().unique()), key="c1")
+    with st.sidebar.expander("📌 Campaigns — 2", expanded=False):
+        sc2 = st.multiselect("Campaigns", sorted(f2["Campaign"].dropna().unique()), 
+                            default=sorted(f2["Campaign"].dropna().unique()), key="c2")
+    
+    if sc1: f1 = f1[f1["Campaign"].isin(sc1)]
+    if sc2: f2 = f2[f2["Campaign"].isin(sc2)]
+    
+    lbl1=f"{mgr1} ({m1})"
+    lbl2=f"{mgr2} ({m2})"
+    
+    st.title("⚖️ Comparison")
+    
+    if f1.empty or f2.empty: 
+        st.warning("No data for one or both selections.")
+        st.stop()
+    
+    d1,r1,p1,t1,a1,tb1,tc1,tcall1 = calc_metrics(f1)
+    d2,r2,p2,t2,a2,tb2,tc2,tcall2 = calc_metrics(f2)
+    
+    winner = lbl1 if d1>d2 else lbl2
+    st.success(f"🏆 Winner: **{winner}** with {format_inr(max(d1,d2))}")
+    
+    # RADAR CHART COMPARISON
+    section_header("Multi-Dimensional Comparison")
+    mgr1_data = {
+        'disbursed': d1/100000,
+        'revenue': r1/100000,
+        'txns': t1,
+        'avg_ticket': a1/100000,
+        'payout_pct': p1
+    }
+    
+    mgr2_data = {
+        'disbursed': d2/100000,
+        'revenue': r2/100000,
+        'txns': t2,
+        'avg_ticket': a2/100000,
+        'payout_pct': p2
+    }
+    
+    st.plotly_chart(
+        create_radar_comparison_chart(mgr1_data, mgr2_data, lbl1, lbl2),
+        use_container_width=True
+    )
+    
+    # METRIC CARDS
+    col1,col2 = st.columns(2)
+    cards_meta=[
+        ("Total Disbursed","#6366f1"),
+        ("Total Revenue","#10b981"),
+        ("Avg Payout %","#f59e0b"),
+        ("Transactions","#ef4444")
+    ]
+    vals1=[format_inr(d1),format_inr(r1),f"{p1:.2f}%",f"{t1:,}"]
+    vals2=[format_inr(d2),format_inr(r2),f"{p2:.2f}%",f"{t2:,}"]
+    
+    with col1:
+        st.subheader(lbl1)
+        for (lbl,clr),val,ico in zip(cards_meta,vals1,["💰","📈","📊","🔁"]):
+            st.markdown(metric_card(lbl,val,ico,clr),unsafe_allow_html=True)
+    
+    with col2:
+        st.subheader(lbl2)
+        for (lbl,clr),val,ico in zip(cards_meta,vals2,["💰","📈","📊","🔁"]):
+            st.markdown(metric_card(lbl,val,ico,clr),unsafe_allow_html=True)
+    
+    insight_strip({
+        f"{lbl1} Bank":tb1,
+        f"{lbl1} Campaign":tc1,
+        f"{lbl2} Bank":tb2,
+        f"{lbl2} Campaign":tc2
+    })
+    
+    # HEAD-TO-HEAD BAR
+    section_header("Head-to-Head")
+    comp_df = pd.DataFrame({
+        "Metric":["Disbursed (L)","Revenue (L)","Transactions"],
+        lbl1:[d1/100000,r1/100000,t1],
+        lbl2:[d2/100000,r2/100000,t2]
+    })
+    
+    fig_c = go.Figure()
+    for lbl,vals,clr in [(lbl1,comp_df[lbl1],"#6366f1"),(lbl2,comp_df[lbl2],"#ef4444")]:
+        fig_c.add_trace(go.Bar(
+            name=lbl,
+            x=comp_df["Metric"],
+            y=vals,
+            text=[f"<b>{v:.2f}</b>" for v in vals],
+            textposition="outside",
+            marker_color=clr
+        ))
+    
+    fig_c.update_layout(
+        barmode="group",
+        template="plotly_white",
+        height=420,
+        font=dict(family="Inter"),
+        plot_bgcolor=PLOT_BG,
+        paper_bgcolor=PAPER_BG
+    )
+    st.plotly_chart(fig_c,use_container_width=True)
+    
+    growth = ((d1-d2)/d2*100) if d2 else 0
+    st.info(f"📈 {lbl1} is **{abs(growth):.2f}%** {'higher' if growth>=0 else 'lower'} than {lbl2}")
+ 
+ 
+# ══════════════════════════════════════════
+# 🎯 TARGET TRACKER WITH CIRCULAR PROGRESS
+# ══════════════════════════════════════════
+elif dashboard_type == "🎯 Target Tracker":
+    st.title("🎯 Target Tracker")
+    
+    with st.sidebar.expander("🔧 Filter", expanded=True):
+        sel_month = st.selectbox("Month", months, index=current_month_index)
+    
+    col_ref,col_info = st.columns([1,5])
+    with col_ref:
+        if st.button("🔄 Reload"):
+            st.cache_data.clear()
+            st.rerun()
+    
+    with col_info:
+        if target_err: 
+            st.error(f"Target sheet load failed: {target_err}")
+        elif target_raw.empty: 
+            st.warning("Target sheet is empty.")
+        else: 
+            st.success(f"✅ Targets loaded — {len(target_raw)} rows")
+    
+    filtered_mgr_df = df[df["Disb Month"]==sel_month]
+    mgr_actual = filtered_mgr_df.groupby("Manager")["Disbursed AMT"].sum().reset_index()
+    mgr_actual.columns = ["Manager","Actual"]
+    
+    targets_dict = {}
+    for _,row in mgr_actual.iterrows():
+        t = get_target_for_manager(row["Manager"],sel_month,target_raw)
+        targets_dict[row["Manager"]] = t if t>0 else 50
+    
+    # CIRCULAR PROGRESS GRID
+    section_header("Manager Progress Overview")
+    
+    mgr_goals = {}
+    for _,row in mgr_actual.iterrows():
+        mgr_goals[row["Manager"]] = {
+            'actual': row["Actual"]/100000,
+            'target': targets_dict.get(row["Manager"], 50)
+        }
+    
+    cols_per_row = 4
+    mgr_list = list(mgr_goals.keys())
+    
+    for i in range(0, len(mgr_list), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for j, col in enumerate(cols):
+            if i + j < len(mgr_list):
+                mgr = mgr_list[i + j]
+                data = mgr_goals[mgr]
+                achievement = (data['actual'] / data['target'] * 100) if data['target'] > 0 else 0
+                
+                with col:
+                    st.markdown(
+                        create_circular_progress(
+                            achievement,
+                            title=mgr,
+                            subtitle=f"₹{data['actual']:.1f}L / ₹{data['target']:.1f}L"
+                        ),
+                        unsafe_allow_html=True
+                    )
+    
+    # TEAM OVERVIEW
+    section_header("Team Overview")
+    total_actual = mgr_actual["Actual"].sum()/100000
+    total_target = sum(targets_dict.values())
+    team_pct = (total_actual/total_target*100) if total_target else 0
+    
+    col_a,col_b,col_c = st.columns(3)
+    col_a.markdown(metric_card("Team Disbursed",f"{total_actual:.1f}L","💼","#6366f1"),unsafe_allow_html=True)
+    col_b.markdown(metric_card("Team Target",f"{total_target:.1f}L","🎯","#f59e0b"),unsafe_allow_html=True)
+    col_c.markdown(metric_card("Achievement %",f"{team_pct:.1f}%","📊","#10b981" if team_pct>=75 else "#ef4444"),unsafe_allow_html=True)
+ 
+ 
+# ══════════════════════════════════════════
+# 📊 STATISTICAL ANALYSIS
+# ══════════════════════════════════════════
+elif dashboard_type == "📊 Statistical Analysis":
+    st.title("📊 Statistical Analysis")
+    
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        month_curr = st.selectbox("Current Month", months, index=current_month_index, key="stat_curr")
+        month_prev_idx = max(0, current_month_index - 1)
+        month_prev = st.selectbox("Previous Month", months, index=month_prev_idx, key="stat_prev")
+    
+    df_curr = df[df["Disb Month"] == month_curr]
+    df_prev = df[df["Disb Month"] == month_prev]
+    
+    if df_curr.empty or df_prev.empty:
+        st.warning("Insufficient data for statistical analysis")
+    else:
+        # PERFORM ANALYSIS
+        stats_results = perform_statistical_analysis(df_curr, df_prev)
+        display_statistical_dashboard(stats_results)
+        
+        # CORRELATION HEATMAP
+        section_header("Correlation Analysis")
+        st.plotly_chart(create_correlation_heatmap(df_curr), use_container_width=True)
+        
+        # MANAGER x CAMPAIGN HEATMAP
+        section_header("Manager × Campaign Performance Heatmap")
+        st.plotly_chart(create_manager_campaign_heatmap(df_curr), use_container_width=True)
+ 
+ 
+# ══════════════════════════════════════════
+# 🔮 INTERACTIVE EXPLORER
+# ══════════════════════════════════════════
+elif dashboard_type == "🔮 Interactive Explorer":
+    st.title("🔮 Interactive Data Explorer")
+    
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        exp_month = st.selectbox("Month", months, index=current_month_index, key="exp_month")
+    
+    exp_df = df[df["Disb Month"] == exp_month]
+    
+    if exp_df.empty:
+        st.warning("No data available")
+    else:
+        # BUBBLE CHART
+        section_header("Performance Matrix (Bubble Chart)")
+        st.plotly_chart(create_performance_bubble_chart(exp_df), use_container_width=True)
+        
+        # INTERACTIVE FILTERS
+        section_header("Dynamic Filtering")
+        
+        col_f1, col_f2, col_f3 = st.columns(3)
+        
+        with col_f1:
+            selected_managers = st.multiselect(
+                "Select Managers",
+                sorted(exp_df["Manager"].unique()),
+                default=sorted(exp_df["Manager"].unique())[:5]
+            )
+        
+        with col_f2:
+            selected_banks = st.multiselect(
+                "Select Banks",
+                sorted(exp_df["Bank"].unique()),
+                default=sorted(exp_df["Bank"].unique())
+            )
+        
+        with col_f3:
+            min_disb = float(exp_df["Disbursed AMT"].min())
+            max_disb = float(exp_df["Disbursed AMT"].max())
+            disb_range = st.slider(
+                "Disbursement Range (₹)",
+                min_value=min_disb,
+                max_value=max_disb,
+                value=(min_disb, max_disb)
+            )
+        
+        # APPLY FILTERS
+        filtered_exp = exp_df[
+            (exp_df["Manager"].isin(selected_managers)) &
+            (exp_df["Bank"].isin(selected_banks)) &
+            (exp_df["Disbursed AMT"] >= disb_range[0]) &
+            (exp_df["Disbursed AMT"] <= disb_range[1])
+        ]
+        
+        # FILTERED RESULTS
+        section_header("Filtered Results")
+        
+        col_r1, col_r2, col_r3 = st.columns(3)
+        
+        filt_disb = filtered_exp["Disbursed AMT"].sum()
+        filt_rev = filtered_exp["Total_Revenue"].sum()
+        filt_txns = len(filtered_exp)
+        
+        col_r1.markdown(metric_card("Filtered Disbursed", format_inr(filt_disb), "💰", "#6366f1"), unsafe_allow_html=True)
+        col_r2.markdown(metric_card("Filtered Revenue", format_inr(filt_rev), "📈", "#10b981"), unsafe_allow_html=True)
+        col_r3.markdown(metric_card("Filtered Transactions", f"{filt_txns:,}", "🔁", "#ef4444"), unsafe_allow_html=True)
+        
+        # FILTERED DATA TABLE
+        st.dataframe(filtered_exp, use_container_width=True, height=400)
+ 
+ 
+# ══════════════════════════════════════════
+# 🏆 LEADERBOARD & GAMIFICATION
+# ══════════════════════════════════════════
+elif dashboard_type == "🏆 Leaderboard & Gamification":
+    st.title("🏆 Leaderboard & Gamification")
+    
+    with st.sidebar.expander("🔧 Filters", expanded=True):
+        lb_month = st.selectbox("Month", months, index=current_month_index, key="lb_month")
+        lb_by = st.radio("Rank By", ["Disbursed AMT","Total_Revenue","Transactions"], key="lb_by")
+        top_n = st.slider("Top N", 3, 20, 10, key="lb_topn")
+    
+    lb_df = df[df["Disb Month"]==lb_month].copy()
+    
+    if lb_by == "Transactions":
+        lb_agg = lb_df.groupby("Manager").size().reset_index(name="Value")
+    else:
+        lb_agg = lb_df.groupby("Manager")[lb_by].sum().reset_index()
+        lb_agg.columns = ["Manager","Value"]
+    
+    lb_agg = lb_agg.sort_values("Value",ascending=False).head(top_n).reset_index(drop=True)
+    
+    if lb_agg.empty:
+        st.warning("No data for selected filters.")
+    else:
+        # PODIUM
+        if len(lb_agg) >= 3:
+            section_header("🎖️ Podium")
+            pc1,pc2,pc3 = st.columns([1,1.2,1])
+            
+            podium_data = [
+                (pc2, 0, "#f59e0b","🥇","Gold"), 
+                (pc1, 1, "#94a3b8","🥈","Silver"), 
+                (pc3, 2, "#cd7f32","🥉","Bronze")
+            ]
+            
+            for col,idx,clr,emoji,title_p in podium_data:
+                row_p = lb_agg.iloc[idx]
+                val_display = f"{row_p['Value']/100000:.2f}L" if lb_by!="Transactions" else f"{int(row_p['Value'])}"
+                
+                # Calculate badges for podium managers
+                target_val = get_target_for_manager(row_p["Manager"], lb_month, target_raw)
+                achievement = (row_p['Value']/100000 / target_val * 100) if target_val > 0 and lb_by == "Disbursed AMT" else 0
+                
+                mgr_txns = lb_df[lb_df["Manager"] == row_p["Manager"]].shape[0]
+                badges = calculate_manager_badges(achievement, mgr_txns)
+                
+                badges_html = "".join([f'<span style="font-size:16px;margin:0 2px">{b["icon"]}</span>' for b in badges[:3]])
+                
+                col.markdown(f"""<div style="background:{CARD_BG};border-radius:16px;padding:20px;
+                    border:2px solid {clr};text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+                    <div style="font-size:36px">{emoji}</div>
+                    <div style="font-size:13px;font-weight:700;color:{TEXT_PRI};margin:8px 0 4px">{row_p["Manager"]}</div>
+                    <div style="font-size:20px;font-weight:800;color:{clr}">{val_display}</div>
+                    <div style="font-size:11px;color:{TEXT_MUT};margin-top:4px">{title_p}</div>
+                    <div style="margin-top:8px">{badges_html}</div>
+                </div>""", unsafe_allow_html=True)
+        
+        # FULL RANKINGS WITH BADGES
+        section_header("📊 Full Rankings")
+        
+        for i, row in lb_agg.iterrows():
+            rank = i + 1
+            val = row["Value"]
+            
+            rank_colors_local = ["#f59e0b","#94a3b8","#cd7f32","#6366f1","#10b981","#8b5cf6","#ec4899"]
+            rank_emojis_local = ["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣","7️⃣"]
+            
+            clr = rank_colors_local[i] if i < len(rank_colors_local) else "#6366f1"
+            emoji = rank_emojis_local[i] if i < len(rank_emojis_local) else f"#{rank}"
+            val_display = f"{val/100000:.2f}L" if lb_by != "Transactions" else f"{int(val)}"
+            sub_text = f"₹{val/100000:.2f} Lakhs" if lb_by != "Transactions" else f"{int(val)} transactions"
+            
+            # Get badges
+            target_val = get_target_for_manager(row["Manager"], lb_month, target_raw)
+            achievement = (val/100000 / target_val * 100) if target_val > 0 and lb_by == "Disbursed AMT" else 0
+            mgr_txns = lb_df[lb_df["Manager"] == row["Manager"]].shape[0]
+            badges = calculate_manager_badges(achievement, mgr_txns)
+            
+            badges_html = "".join([
+                f'<span style="font-size:14px;margin:0 3px" title="{b["name"]}">{b["icon"]}</span>' 
+                for b in badges
+            ])
+            
+            st.markdown(f"""<div style="background:{CARD_BG};border-radius:16px;padding:16px 20px;
+                border:1px solid {CARD_BOR};margin-bottom:10px;display:flex;align-items:center;gap:16px;
+                transition:transform 0.15s">
+                <div style="font-size:22px;font-weight:800;min-width:40px;text-align:center;color:{clr}">{emoji}</div>
+                <div style="flex:1">
+                    <div style="font-size:15px;font-weight:700;color:{TEXT_PRI}">{row["Manager"]}</div>
+                    <div style="font-size:12px;color:{TEXT_SEC};margin-top:2px">{sub_text}</div>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                    {badges_html}
+                </div>
+                <div style="font-size:18px;font-weight:800;color:{clr}">{val_display}</div>
+            </div>""", unsafe_allow_html=True)
+ 
+st.markdown("---")
+st.markdown("""
+<div style="text-align:center;padding:20px;color:{};font-size:12px">
+    <b>Prime PL Dashboard Pro</b> • Powered by Advanced Analytics & AI 
+    <br>MyMoneyMantra © 2025 • All Rights Reserved
+</div>
+""".format(TEXT_MUT), unsafe_allow_html=True)
