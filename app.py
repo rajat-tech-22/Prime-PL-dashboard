@@ -5,273 +5,323 @@ import plotly.express as px
 from streamlit_autorefresh import st_autorefresh
 import os
 import time
+import requests
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
+import json
 import numpy as np
 
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 # PAGE CONFIG
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 st.set_page_config(
-    page_title="Prime PL Dashboard 🚀",
-    page_icon="🚀",
+    page_title="Prime PL Dashboard",
+    page_icon="💼",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Auto refresh every minute
 st_autorefresh(interval=60 * 1000, key="refresh")
 
-# ═══════════════════════════════════════════════════════════════
-# WORKING CSS - TESTED & VERIFIED
-# ═══════════════════════════════════════════════════════════════
-st.markdown("""
+# ─────────────────────────────────────────
+# DARK MODE STATE
+# ─────────────────────────────────────────
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+DM = st.session_state.dark_mode
+
+if DM:
+    BG        = "#0f172a"
+    CARD_BG   = "#1e293b"
+    CARD_BOR  = "#334155"
+    TEXT_PRI  = "#f1f5f9"
+    TEXT_SEC  = "#94a3b8"
+    TEXT_MUT  = "#64748b"
+    PLOT_BG   = "#1e293b"
+    PAPER_BG  = "#1e293b"
+    TABLE_HDR = "#0f172a"
+    EVEN_ROW  = "#1e293b"
+    ODD_ROW   = "#263148"
+else:
+    BG        = "#f8fafc"
+    CARD_BG   = "#ffffff"
+    CARD_BOR  = "#e2e8f0"
+    TEXT_PRI  = "#0f172a"
+    TEXT_SEC  = "#64748b"
+    TEXT_MUT  = "#94a3b8"
+    PLOT_BG   = "white"
+    PAPER_BG  = "white"
+    TABLE_HDR = "#0f172a"
+    EVEN_ROW  = "#f8fafc"
+    ODD_ROW   = "#ffffff"
+
+# ─────────────────────────────────────────
+# GLOBAL CSS
+# ─────────────────────────────────────────
+st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+html, body, [class*="css"] {{ font-family: 'Inter', sans-serif !important; }}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif !important;
-}
+.stApp {{ background-color: {BG} !important; }}
 
-/* Animated Gradient Background */
-.stApp {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-}
+[data-testid="stSidebar"] {{
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}}
+[data-testid="stSidebar"] * {{ color: #e2e8f0 !important; }}
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stMultiSelect label,
+[data-testid="stSidebar"] .stNumberInput label {{
+    color: #cbd5e1 !important; font-size: 12px !important;
+    text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600 !important;
+}}
+[data-testid="stSidebar"] .stSelectbox div[data-baseweb="select"] *,
+[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] *,
+[data-testid="stSidebar"] div[data-baseweb="select"] span,
+[data-testid="stSidebar"] div[data-baseweb="select"] div {{ color: #000000 !important; font-weight: 500 !important; }}
+[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
+    background-color: #ffffff !important; border-radius: 8px !important; border: 1px solid #334155 !important;
+}}
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p,
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label span {{ color: #e2e8f0 !important; font-size: 14px !important; }}
+[data-testid="stSidebar"] span[data-baseweb="tag"] {{ background-color: #e0e7ff !important; }}
+[data-testid="stSidebar"] span[data-baseweb="tag"] span {{ color: #1e1b4b !important; font-weight: 600 !important; }}
+[data-testid="stSidebar"] details {{
+    background: rgba(255,255,255,0.05) !important; border-radius: 10px !important;
+    border: 1px solid rgba(255,255,255,0.08) !important; margin-bottom: 8px !important;
+}}
+[data-testid="stSidebar"] .stButton > button {{
+    background: #ef4444 !important; color: white !important;
+    border: none !important; border-radius: 8px !important; width: 100%;
+}}
 
-@keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
+.metric-card {{
+    background: {CARD_BG}; border-radius: 16px; padding: 20px 24px;
+    border: 1px solid {CARD_BOR}; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    text-align: center; transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 110px; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+}}
+.metric-card:hover {{ transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }}
+.metric-label {{
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: {TEXT_MUT}; margin-bottom: 8px;
+}}
+.metric-value {{ font-size: 26px; font-weight: 700; color: {TEXT_PRI}; line-height: 1.1; }}
+.metric-icon {{ font-size: 20px; margin-bottom: 6px; }}
 
-/* Glass Card Effect */
-.glass-box {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 30px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    transition: all 0.3s ease;
-}
+.section-header {{
+    font-size: 18px; font-weight: 700; color: {TEXT_PRI};
+    margin: 28px 0 16px 0; padding-left: 12px; border-left: 4px solid #6366f1;
+}}
 
-.glass-box:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
-}
+.insight-strip {{
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 12px; padding: 14px 20px;
+    display: flex; justify-content: space-around; flex-wrap: wrap;
+    gap: 10px; margin: 16px 0; color: white;
+}}
+.insight-item {{ text-align: center; font-size: 13px; }}
+.insight-item b {{
+    display: block; font-size: 11px; opacity: 0.8;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;
+}}
 
-/* Metric Cards */
-.metric-box {
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 2px solid rgba(255,255,255,0.4);
-    padding: 25px;
-    text-align: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
+.target-card {{
+    background: {CARD_BG}; border-radius: 16px; padding: 20px;
+    border: 1px solid {CARD_BOR}; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px;
+}}
+.progress-bar-bg {{
+    background: {"#1e293b" if DM else "#f1f5f9"}; border-radius: 999px;
+    height: 12px; overflow: hidden; margin: 10px 0 6px 0;
+}}
+.progress-bar-fill {{ height: 12px; border-radius: 999px; transition: width 0.5s ease; }}
 
-.metric-box:hover {
-    transform: scale(1.05) translateY(-5px);
-    box-shadow: 0 8px 30px rgba(255,255,255,0.3);
-    border-color: rgba(255,255,255,0.8);
-}
+.leader-card {{
+    background: {CARD_BG}; border-radius: 16px; padding: 16px 20px;
+    border: 1px solid {CARD_BOR}; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 16px;
+    transition: transform 0.15s;
+}}
+.leader-card:hover {{ transform: translateX(4px); }}
+.leader-rank {{
+    font-size: 22px; font-weight: 800; min-width: 40px; text-align: center;
+}}
+.leader-info {{ flex: 1; }}
+.leader-name {{ font-size: 15px; font-weight: 700; color: {TEXT_PRI}; }}
+.leader-sub {{ font-size: 12px; color: {TEXT_SEC}; margin-top: 2px; }}
+.leader-amt {{ font-size: 18px; font-weight: 800; color: #6366f1; }}
+.leader-bar-bg {{
+    background: {"#1e293b" if DM else "#f1f5f9"}; border-radius: 999px; height: 6px;
+    margin-top: 8px; overflow: hidden;
+}}
+.leader-bar-fill {{ height: 6px; border-radius: 999px; }}
 
-.metric-label {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.9);
-    margin-bottom: 10px;
-}
+.alert-card {{
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
+    display: flex; align-items: flex-start; gap: 12px;
+}}
+.alert-danger {{ background: {"#2d1515" if DM else "#fef2f2"}; border: 1px solid #fca5a5; }}
+.alert-warning {{ background: {"#2d2415" if DM else "#fffbeb"}; border: 1px solid #fcd34d; }}
+.alert-success {{ background: {"#152d1e" if DM else "#f0fdf4"}; border: 1px solid #86efac; }}
 
-.metric-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
+.stDownloadButton > button {{
+    background: #6366f1 !important; color: white !important;
+    border: none !important; border-radius: 8px !important; font-weight: 600 !important;
+}}
 
-.metric-icon {
-    font-size: 30px;
-    margin-bottom: 10px;
-}
-
-/* Title Styling */
-.main-title {
-    font-size: 48px;
-    font-weight: 800;
-    text-align: center;
-    color: white;
-    text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-    margin: 20px 0;
-    animation: fadeInDown 1s ease;
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Sidebar Styling */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-}
-
-[data-testid="stSidebar"] * {
-    color: white !important;
-}
-
-[data-testid="stSidebar"] .stRadio > label {
-    color: white !important;
-    font-weight: 600 !important;
-}
-
-[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid rgba(255,255,255,0.2);
-    transition: all 0.3s ease;
-}
-
-[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover {
-    background: rgba(255,255,255,0.2);
-    transform: translateX(5px);
-}
-
-/* Button Styling */
-.stButton > button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 30px;
-    font-weight: 700;
-    font-size: 16px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s ease;
-}
-
-.stButton > button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-/* Progress Bar */
-.progress-bar-container {
-    background: rgba(255,255,255,0.2);
-    border-radius: 20px;
-    height: 25px;
-    overflow: hidden;
-    margin: 15px 0;
-    position: relative;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    border-radius: 20px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    transition: width 0.5s ease;
-    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-}
-
-.progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: 700;
-    font-size: 12px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Leaderboard Card */
-.leader-box {
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 10px 0;
-    border: 1px solid rgba(255,255,255,0.3);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    transition: all 0.3s ease;
-}
-
-.leader-box:hover {
-    transform: translateX(10px);
-    box-shadow: 0 5px 20px rgba(255,255,255,0.2);
-}
-
-.rank-number {
-    font-size: 28px;
-    font-weight: 900;
-    color: white;
-    min-width: 50px;
-    text-align: center;
-}
-
-.leader-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: white;
-}
-
-.leader-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: white;
-    margin-left: auto;
-}
-
-/* Alert Cards */
-.alert-box {
-    border-radius: 15px;
-    padding: 20px;
-    margin: 15px 0;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    backdrop-filter: blur(10px);
-}
-
-.alert-critical {
-    background: rgba(239, 68, 68, 0.3);
-    border: 2px solid rgba(239, 68, 68, 0.6);
-}
-
-.alert-warning {
-    background: rgba(245, 158, 11, 0.3);
-    border: 2px solid rgba(245, 158, 11, 0.6);
-}
-
-.alert-success {
-    background: rgba(16, 185, 129, 0.3);
-    border: 2px solid rgba(16, 185, 129, 0.6);
-}
-
-/* Hide Streamlit Elements */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+h1 {{ color: {TEXT_PRI} !important; font-weight: 700 !important; }}
+h2 {{ color: {TEXT_PRI} !important; font-weight: 600 !important; }}
+h3 {{ color: {TEXT_PRI} !important; font-weight: 600 !important; }}
+p, span, div {{ color: {TEXT_PRI}; }}
 </style>
 """, unsafe_allow_html=True)
+
+# ─────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────
+USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
+PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
+MAX_ATTEMPTS = 4
+LOCK_TIME = 43200
+
+for key, val in [("login", False), ("attempts", 0), ("lock_time", None)]:
+    if key not in st.session_state:
+        st.session_state[key] = val
+
+# ─────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────
+def format_inr(n):
+    if not n or n == 0: return "₹0"
+    s = str(int(n)); last3 = s[-3:]; rest = s[:-3]; parts = []
+    while len(rest) > 2: parts.append(rest[-2:]); rest = rest[:-2]
+    if rest: parts.append(rest)
+    parts.reverse()
+    return "₹" + ",".join(parts) + "," + last3 if parts else "₹" + last3
+
+COLORS = ["#6366f1","#f59e0b","#10b981","#ef4444","#3b82f6","#8b5cf6","#ec4899","#14b8a6"]
+GOLD = "#f59e0b"
+RANK_COLORS = ["#f59e0b","#94a3b8","#cd7f32","#6366f1","#10b981"]
+RANK_EMOJIS = ["🥇","🥈","🥉","4️⃣","5️⃣"]
+
+def get_colors(index_list, top_val):
+    return [GOLD if v == top_val else COLORS[i % len(COLORS)] for i, v in enumerate(index_list)]
+
+def calc_metrics(f):
+    td = f["Disbursed AMT"].sum(); tr = f["Total_Revenue"].sum()
+    ap = (tr / td * 100) if td else 0; tc = len(f); ad = td / tc if tc else 0
+    tb    = f.groupby("Bank")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    tcamp = f.groupby("Campaign")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    tcall = f.groupby("Caller")["Disbursed AMT"].sum().idxmax() if not f.empty else "N/A"
+    return td, tr, ap, tc, ad, tb, tcamp, tcall
+
+def metric_card(label, value, icon="", color="#6366f1"):
+    return f"""<div class="metric-card">
+        <div class="metric-icon">{icon}</div>
+        <div class="metric-label">{label}</div>
+        <div class="metric-value" style="color:{color}">{value}</div>
+    </div>"""
+
+def section_header(title):
+    st.markdown(f'<div class="section-header">{title}</div>', unsafe_allow_html=True)
+
+def insight_strip(items: dict):
+    inner = "".join([f'<div class="insight-item"><b>{k}</b>{v}</div>' for k, v in items.items()])
+    st.markdown(f'<div class="insight-strip">{inner}</div>', unsafe_allow_html=True)
+
+def styled_bar(df_group, col, x_col, y_col, title, top_val=None, height=400):
+    colors = get_colors(df_group[x_col], top_val or df_group.loc[df_group[y_col].idxmax(), x_col])
+    fig = go.Figure(go.Bar(
+        x=df_group[x_col], y=df_group[y_col] / 100000,
+        text=[f"<b>{v/100000:.2f}L</b>" for v in df_group[y_col]],
+        textposition="outside", marker_color=colors, marker_line_width=0,
+    ))
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=15, color=TEXT_PRI)),
+        yaxis_title="Amount (Lakhs)", template="plotly_white", height=height,
+        plot_bgcolor=PLOT_BG, paper_bgcolor=PAPER_BG,
+        font=dict(family="Inter, sans-serif", size=12, color=TEXT_PRI),
+        margin=dict(t=50, b=60, l=40, r=20), xaxis=dict(tickangle=-30),
+    )
+    if DM:
+        fig.update_layout(
+            xaxis=dict(tickangle=-30, color=TEXT_SEC, gridcolor="#334155"),
+            yaxis=dict(color=TEXT_SEC, gridcolor="#334155"),
+        )
+    fig.update_traces(cliponaxis=False)
+    return fig
+
+def generate_pdf_bytes(df_display: pd.DataFrame, title: str) -> bytes:
+    try:
+        from fpdf import FPDF
+        pdf = FPDF(); pdf.add_page()
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 12, title, ln=True, align="C")
+        pdf.set_font("Helvetica", "", 8); pdf.ln(4)
+        cols = list(df_display.columns)
+        col_w = min(190 // len(cols), 40)
+        pdf.set_fill_color(99, 102, 241); pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 8)
+        for c in cols: pdf.cell(col_w, 8, str(c)[:18], border=1, fill=True)
+        pdf.ln(); pdf.set_text_color(15, 23, 42); pdf.set_font("Helvetica", "", 7)
+        for _, row in df_display.iterrows():
+            for c in cols: pdf.cell(col_w, 7, str(row[c])[:18], border=1)
+            pdf.ln()
+        return pdf.output()
+    except Exception: return b""
+
+def get_current_month_index(months_list):
+    if not months_list: return 0
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist)
+    all_formats = [
+        "%Y/%m/%d", "%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y",
+        "%B %Y", "%b %Y", "%b-%y", "%b-%Y", "%m-%Y",
+        "%Y-%m", "%B-%Y", "%m/%Y", "%b/%Y", "%B/%Y",
+        "%Y/%m", "%B %y", "%b %y", "%d-%b-%Y",
+    ]
+    for i, m in enumerate(months_list):
+        m_str = str(m).strip()
+        for fmt in all_formats:
+            try:
+                parsed = datetime.strptime(m_str, fmt)
+                if parsed.month == now.month and parsed.year == now.year: return i
+            except: continue
+    cur_year_4 = str(now.year); cur_year_2 = str(now.year)[-2:]
+    cur_month_abbr = now.strftime("%b").lower(); cur_month_full = now.strftime("%B").lower()
+    cur_mm = now.strftime("%m")
+    for i, m in enumerate(months_list):
+        m_str = str(m).strip().lower()
+        has_year  = cur_year_4 in m_str or cur_year_2 in m_str
+        has_month = cur_month_abbr in m_str or cur_month_full in m_str or cur_mm in m_str
+        if has_year and has_month: return i
+    return len(months_list) - 1
+
+def send_whatsapp_alert(phone, message, wa_token, wa_phone_id):
+    try:
+        url = f"https://graph.facebook.com/v18.0/{wa_phone_id}/messages"
+        headers = {"Authorization": f"Bearer {wa_token}", "Content-Type": "application/json"}
+        payload = {"messaging_product": "whatsapp", "to": phone, "type": "text", "text": {"body": message}}
+        r = requests.post(url, headers=headers, json=payload, timeout=10)
+        return r.status_code == 200
+    except: return False
+
+def send_email_alert(to_email, subject, body, smtp_user, smtp_pass):
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        msg = MIMEText(body, "html")
+        msg["Subject"] = subject; msg["From"] = smtp_user; msg["To"] = to_email
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+            s.login(smtp_user, smtp_pass); s.send_message(msg)
+        return True
+    except: return False
+
+ist = timezone(timedelta(hours=5, minutes=30))
+now_ist = datetime.now(ist)
+
 # ─────────────────────────────────────────
 # DATA LOADING
 # ─────────────────────────────────────────
@@ -323,124 +373,196 @@ def get_target_for_manager(mgr_name, month_name, tdf):
     try: return float(str(mgr_rows.iloc[0][tgt_col]).replace(",","").replace("₹","").strip())
     except: return 0.0
 
-
-# ═══════════════════════════════════════════════════════════════
-# HELPER FUNCTIONS
-# ═══════════════════════════════════════════════════════════════
-def format_inr(n):
-    if not n or n == 0: return "₹0"
-    s = str(int(n))
-    last3 = s[-3:]
-    rest = s[:-3]
-    parts = []
-    while len(rest) > 2:
-        parts.append(rest[-2:])
-        rest = rest[:-2]
-    if rest:
-        parts.append(rest)
-    parts.reverse()
-    return "₹" + ",".join(parts) + "," + last3 if parts else "₹" + last3
-
-def metric_card(label, value, icon, color="#667eea"):
-    return f"""
-    <div class="metric-box">
-        <div class="metric-icon">{icon}</div>
-        <div class="metric-label">{label}</div>
-        <div class="metric-value">{value}</div>
-    </div>
-    """
-
-
-# ═══════════════════════════════════════════════════════════════
-# AUTH
-# ═══════════════════════════════════════════════════════════════
-USERNAME = os.getenv("APP_USERNAME", "Mymoneymantra")
-PASSWORD = os.getenv("APP_PASSWORD", "Prime110")
-
-if "login" not in st.session_state:
-    st.session_state.login = False
-
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 # LOGIN PAGE
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 if not st.session_state.login:
-    st.markdown('<div class="main-title">🚀 PRIME PL DASHBOARD 🚀</div>', unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown("""
-        <div class="glass-box" style="text-align:center;">
-            <h2 style="color:white;margin-bottom:20px;">🔐 LOGIN</h2>
-            <p style="color:rgba(255,255,255,0.8);margin-bottom:30px;">Enter your credentials to access the dashboard</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        username = st.text_input("👤 Username", placeholder="Enter username")
-        password = st.text_input("🔒 Password", type="password", placeholder="Enter password")
-        
-        if st.button("🚀 LOGIN", use_container_width=True):
-            if username == USERNAME and password == PASSWORD:
-                st.session_state.login = True
-                st.success("✅ Login Successful!")
-                time.sleep(1)
-                st.rerun()
+    if st.session_state.lock_time:
+        elapsed = time.time() - st.session_state.lock_time
+        remaining = LOCK_TIME - elapsed
+        if remaining > 0:
+            h_r = int(remaining // 3600); m_r = int((remaining % 3600) // 60)
+            st.error(f"🔒 Account locked. Try again in {h_r}h {m_r}m.")
+            st.stop()
+        else:
+            st.session_state.attempts = 0; st.session_state.lock_time = None
+
+    try:
+        _df_login = load_data()
+        _months_login = sorted(_df_login["Disb Month"].dropna().unique())
+        _latest = _months_login[-1] if _months_login else ""
+        _disb_total = _df_login[_df_login["Disb Month"] == _latest]["Disbursed AMT"].sum()
+        _rev_total  = _df_login[_df_login["Disb Month"] == _latest]["Total_Revenue"].sum()
+        stat1_val = "Rs." + str(round(_disb_total / 10000000, 1)) + "Cr"
+        stat1_lbl = str(_latest) + " Disbursed"
+        stat2_val = str(round((_rev_total / _disb_total * 100) if _disb_total else 0, 1)) + "%"
+        stat2_lbl = "Avg Payout"
+    except Exception:
+        stat1_val = "Prime PL"; stat1_lbl = "Dashboard"; stat2_val = "Live"; stat2_lbl = "Analytics"
+
+    today_str = now_ist.strftime("%d %b")
+    time_str  = now_ist.strftime("%d %b %Y  %I:%M %p")
+    attempts_left = MAX_ATTEMPTS - st.session_state.attempts
+    dot_color = "#10b981" if attempts_left >= 3 else "#f59e0b" if attempts_left == 2 else "#ef4444"
+
+    st.markdown("""
+    <style>
+    [data-testid='stSidebar']{display:none!important;}
+    [data-testid='stHeader']{display:none!important;}
+    [data-testid='stToolbar']{display:none!important;}
+    footer{display:none!important;}
+    .stApp { background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 40%,#312e81 70%,#4c1d95 100%) !important; min-height: 100vh; }
+    [data-testid='stAppViewContainer'] > .main > .block-container {
+        max-width: 320px !important; margin: 0 auto !important; padding: 1.5rem 0.5rem !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input {
+        border-radius: 8px !important; border: 1.5px solid rgba(255,255,255,0.15) !important;
+        padding: 8px 12px !important; font-size: 13px !important;
+        background: rgba(255,255,255,0.92) !important; color: #000000 !important; height: 38px !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input:focus {
+        border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+        background: #ffffff !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput label {
+        font-size: 11px !important; font-weight: 600 !important;
+        color: rgba(255,255,255,0.5) !important; text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+    }
+    [data-testid='stAppViewContainer'] .stTextInput > div > div > input::placeholder { color: rgba(0,0,0,0.4) !important; }
+    [data-testid='stAppViewContainer'] .stButton > button {
+        background: linear-gradient(135deg,#6366f1,#8b5cf6) !important; color: white !important;
+        border: none !important; border-radius: 10px !important; font-weight: 700 !important;
+        font-size: 14px !important; padding: 0.55rem 1rem !important;
+        box-shadow: 0 4px 16px rgba(99,102,241,0.4) !important; margin-top: 4px !important; width: 100% !important;
+    }
+    </style>""", unsafe_allow_html=True)
+
+    st.markdown("""<div style="text-align:center;margin-bottom:12px;">
+        <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.14);border-radius:40px;padding:6px 14px;">
+            <span style="font-size:15px;">💼</span>
+            <span style="font-size:12px;font-weight:600;color:#e0e7ff;">Prime PL Dashboard</span>
+        </span></div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""<div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:19px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:4px;">
+            Track. Analyze.<br><span style="color:#a5b4fc;">Grow your portfolio.</span></div>
+        <div style="font-size:11px;color:#7c8cba;">Real-time disbursement &nbsp;·&nbsp; Campaign insights &nbsp;·&nbsp; Team targets</div>
+    </div>""", unsafe_allow_html=True)
+
+    chart_svg = (
+        "<svg viewBox='0 0 300 95' width='50%' style='display:block;margin:0 auto 6px;' xmlns='http://www.w3.org/2000/svg'>"
+        "<rect x='5' y='62' width='32' height='32' rx='4' fill='#3730a3' opacity='0.85'/>"
+        "<rect x='50' y='50' width='32' height='44' rx='4' fill='#4338ca' opacity='0.9'/>"
+        "<rect x='95' y='36' width='32' height='58' rx='4' fill='#4f46e5' opacity='0.9'/>"
+        "<rect x='140' y='22' width='32' height='72' rx='4' fill='#6366f1' opacity='0.9'/>"
+        "<rect x='185' y='10' width='32' height='84' rx='4' fill='#818cf8' opacity='0.9'/>"
+        "<rect x='230' y='2' width='32' height='92' rx='4' fill='#a5b4fc' opacity='0.9'/>"
+        "<polyline points='21,62 66,50 111,36 156,22 201,10 246,2' fill='none' stroke='#fbbf24' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"
+        "<circle cx='21' cy='62' r='4' fill='#fbbf24'/><circle cx='66' cy='50' r='4' fill='#fbbf24'/>"
+        "<circle cx='111' cy='36' r='4' fill='#fbbf24'/><circle cx='156' cy='22' r='4' fill='#fbbf24'/>"
+        "<circle cx='201' cy='10' r='4' fill='#fbbf24'/><circle cx='246' cy='2' r='4' fill='#fbbf24'/>"
+        "<text x='21' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Nov</text>"
+        "<text x='66' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Dec</text>"
+        "<text x='111' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Jan</text>"
+        "<text x='156' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Feb</text>"
+        "<text x='201' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Mar</text>"
+        "<text x='246' y='90' fill='#818cf8' font-size='8' text-anchor='middle' font-family='Inter,sans-serif'>Apr</text>"
+        "</svg>"
+    )
+    pill_style = "background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:5px 10px;text-align:center;min-width:70px;"
+    stats_row = (
+        "<div style='display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap;'>"
+        f"<div style='{pill_style}'><div style='font-size:12px;font-weight:700;color:#fff;'>{stat1_val}</div><div style='font-size:10px;color:#a5b4fc;'>{stat1_lbl}</div></div>"
+        f"<div style='{pill_style}'><div style='font-size:12px;font-weight:700;color:#fff;'>{stat2_val}</div><div style='font-size:10px;color:#a5b4fc;'>{stat2_lbl}</div></div>"
+        f"<div style='{pill_style}'><div style='font-size:12px;font-weight:700;color:#fff;'>{today_str}</div><div style='font-size:10px;color:#a5b4fc;'>Today IST</div></div>"
+        "</div>"
+    )
+    st.markdown(f"<div style='background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 14px 10px;margin:0 auto 12px;'>{chart_svg}{stats_row}</div>", unsafe_allow_html=True)
+    st.markdown("""<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 16px 4px;">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Welcome back 👋</div>
+        <div style="font-size:11px;color:#7c8cba;margin-bottom:4px;">Sign in to your account</div>
+    </div>""", unsafe_allow_html=True)
+
+    u = st.text_input("Username", placeholder="Enter username", key="login_user")
+    p = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
+    st.markdown("<div style='margin-top:-6px;margin-bottom:6px;'><button onclick=\"(function(){var i=window.parent.document.querySelector('input[type=password]');if(i)i.type=i.type==='password'?'text':'password';})()\" style='background:none;border:none;cursor:pointer;color:rgba(165,180,252,0.8);font-size:11px;font-weight:600;padding:0;font-family:Inter,sans-serif;'>👁 Show / Hide password</button></div>", unsafe_allow_html=True)
+
+    if st.button("Sign in  →", use_container_width=True, key="login_btn"):
+        if u == USERNAME and p == PASSWORD:
+            st.session_state.login = True; st.session_state.attempts = 0; st.rerun()
+        else:
+            st.session_state.attempts += 1
+            left_att = MAX_ATTEMPTS - st.session_state.attempts
+            if left_att <= 0:
+                st.session_state.lock_time = time.time()
+                st.error("🔒 Too many attempts. Account locked for 12 hours.")
             else:
-                st.error("❌ Invalid credentials")
-    
+                st.warning(f"❌ Invalid credentials — {left_att} attempt(s) remaining.")
+
+    chips_html = (
+        "<div style='text-align:center;margin-top:10px;'>"
+        "<div style='display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;'>"
+        f"<span style='display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'><span style='width:5px;height:5px;border-radius:50%;background:{dot_color};display:inline-block;'></span>{attempts_left}/{MAX_ATTEMPTS} attempts left</span>"
+        "<span style='display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'><span style='width:5px;height:5px;border-radius:50%;background:#f59e0b;display:inline-block;'></span>12h lockout</span>"
+        "<span style='display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 9px;font-size:10px;color:#94a3b8;'><span style='width:5px;height:5px;border-radius:50%;background:#6366f1;display:inline-block;'></span>Auto-refresh on</span>"
+        f"</div><div style='font-size:10px;color:#475569;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);'>Prime PL &nbsp;·&nbsp; MyMoneyMantra &nbsp;·&nbsp; {time_str} IST</div></div>"
+    )
+    st.markdown(chips_html, unsafe_allow_html=True)
     st.stop()
 
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 # LOAD DATA
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 df = load_data()
+campaign_df = load_campaign_data()
 target_raw, target_err = load_targets()
 months = sorted(df["Disb Month"].dropna().unique())
-current_month_index = len(months) - 1
+verticals = ["All"] + sorted(df["Vertical"].dropna().unique())
+managers = sorted(df["Manager"].dropna().unique())
+current_month_index = get_current_month_index(months)
 
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 # SIDEBAR
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 💼 Prime PL Dashboard")
+    st.markdown("## 💼 Prime PL")
+    dm_label = "☀️ Light Mode" if DM else "🌙 Dark Mode"
+    if st.button(dm_label, key="dm_toggle"):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
     st.markdown("---")
-    
     dashboard_type = st.radio(
-        "Select Dashboard",
-        ["🏠 Overview", "👤 Manager View", "🏆 Leaderboard", "🎯 Target Tracker"],
+        "Navigation",
+        ["🏠 Overview", "👤 Single Manager", "⚖️ Comparison",
+         "🎯 Target Tracker", "📅 Team vs Month",
+         "🏆 Leaderboard", "📈 Advanced Analytics",
+         "🔬 Deep Analysis"],
         label_visibility="collapsed"
     )
-    
     st.markdown("---")
-    
-    if st.button("🚪 Logout", use_container_width=True):
-        st.session_state.login = False
-        st.rerun()
+    if st.button("🚪 Logout"):
+        st.session_state.login = False; st.rerun()
 
-# ═══════════════════════════════════════════════════════════════
-# HEADER
-# ═══════════════════════════════════════════════════════════════
+# ─────────────────────────────────────────
+# GREETING
+# ─────────────────────────────────────────
 ist_tz = timezone(timedelta(hours=5, minutes=30))
-now_ist = datetime.now(ist_tz)
-hour = now_ist.hour
-
-if 5 <= hour < 12:
-    greet = "Good Morning 🌅"
-elif hour < 16:
-    greet = "Good Afternoon ☀️"
-elif hour < 20:
-    greet = "Good Evening 🌇"
-else:
-    greet = "Good Night 🌙"
+now_ist2 = datetime.now(ist_tz)
+hour = now_ist2.hour
+greet = ("Good Morning 🌅" if 5 <= hour < 12 else "Good Afternoon ☀️" if hour < 16
+         else "Good Evening 🌇" if hour < 20 else "Good Night 🌙")
 
 st.markdown(f"""
-<div class="glass-box">
-    <h1 style="color:white;font-size:32px;margin:0;">{greet}</h1>
-    <p style="color:rgba(255,255,255,0.8);margin:10px 0 0 0;">{now_ist.strftime("%A, %d %B %Y • %I:%M %p IST")}</p>
-</div>
-""", unsafe_allow_html=True)
+<div style="background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);
+    border-radius:16px;padding:20px 28px;margin-bottom:24px;color:white;">
+    <div style="font-size:22px;font-weight:700;">{greet}, Welcome to Prime PL!</div>
+    <div style="font-size:13px;opacity:0.85;margin-top:4px;">
+        {now_ist2.strftime("%A, %d %B %Y  •  %I:%M %p")} IST
+    </div>
+</div>""", unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════
 # 🏠 OVERVIEW
